@@ -1,0 +1,17 @@
+E:\DEV\Antigravity\aura\aura-api\src\Aura.Infrastructure\obj\Debug\net10.0\Aura.Infrastructure.csproj.AssemblyReference.cache
+E:\DEV\Antigravity\aura\aura-api\src\Aura.Infrastructure\obj\Debug\net10.0\Aura.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+E:\DEV\Antigravity\aura\aura-api\src\Aura.Infrastructure\obj\Debug\net10.0\Aura.Infrastructure.AssemblyInfoInputs.cache
+E:\DEV\Antigravity\aura\aura-api\src\Aura.Infrastructure\obj\Debug\net10.0\Aura.Infrastructure.AssemblyInfo.cs
+E:\DEV\Antigravity\aura\aura-api\src\Aura.Infrastructure\obj\Debug\net10.0\Aura.Infrastructure.csproj.CoreCompileInputs.cache
+E:\DEV\Antigravity\aura\aura-api\src\Aura.Infrastructure\bin\Debug\net10.0\Aura.Infrastructure.deps.json
+E:\DEV\Antigravity\aura\aura-api\src\Aura.Infrastructure\bin\Debug\net10.0\Aura.Infrastructure.dll
+E:\DEV\Antigravity\aura\aura-api\src\Aura.Infrastructure\bin\Debug\net10.0\Aura.Infrastructure.pdb
+E:\DEV\Antigravity\aura\aura-api\src\Aura.Infrastructure\bin\Debug\net10.0\Aura.Application.dll
+E:\DEV\Antigravity\aura\aura-api\src\Aura.Infrastructure\bin\Debug\net10.0\Aura.Domain.dll
+E:\DEV\Antigravity\aura\aura-api\src\Aura.Infrastructure\bin\Debug\net10.0\Aura.Domain.pdb
+E:\DEV\Antigravity\aura\aura-api\src\Aura.Infrastructure\bin\Debug\net10.0\Aura.Application.pdb
+E:\DEV\Antigravity\aura\aura-api\src\Aura.Infrastructure\obj\Debug\net10.0\Aura.Inf.CD36263C.Up2Date
+E:\DEV\Antigravity\aura\aura-api\src\Aura.Infrastructure\obj\Debug\net10.0\Aura.Infrastructure.dll
+E:\DEV\Antigravity\aura\aura-api\src\Aura.Infrastructure\obj\Debug\net10.0\refint\Aura.Infrastructure.dll
+E:\DEV\Antigravity\aura\aura-api\src\Aura.Infrastructure\obj\Debug\net10.0\Aura.Infrastructure.pdb
+E:\DEV\Antigravity\aura\aura-api\src\Aura.Infrastructure\obj\Debug\net10.0\ref\Aura.Infrastructure.dll

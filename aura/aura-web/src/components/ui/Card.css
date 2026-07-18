@@ -1,0 +1,17 @@
+.card {
+  background: var(--bg-card); border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg); padding: var(--space-lg);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  transition: all var(--transition-base);
+}
+.card-elevated { box-shadow: var(--shadow-md); }
+.card-outlined { border-width: 1.5px; }
+.card-hoverable { cursor: pointer; }
+.card-hoverable:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--border-hover); }
+.card-accent-primary { border-top: 3px solid var(--accent-primary); }
+.card-accent-secondary { border-top: 3px solid var(--accent-secondary); }
+.card-accent-success { border-top: 3px solid var(--success); }
+.card-accent-danger { border-top: 3px solid var(--danger); }
+.card-accent-warning { border-top: 3px solid var(--warning); }
+.card-hoverable.card-accent-primary:hover { box-shadow: var(--shadow-glow-primary); }
+.card-hoverable.card-accent-secondary:hover { box-shadow: var(--shadow-glow-secondary); }

@@ -1,0 +1,107 @@
+.page-loading { display: flex; align-items: center; justify-content: center; min-height: 400px; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-lg); margin-bottom: var(--space-xl); }
+.stat-card { display: flex; align-items: center; gap: var(--space-lg); }
+.stat-icon-wrap {
+  width: 52px; height: 52px; border-radius: var(--radius-md); display: flex;
+  align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0;
+}
+.stat-icon-wrap[data-color="primary"] { background: var(--accent-primary-light); color: var(--accent-primary); }
+.stat-icon-wrap[data-color="secondary"] { background: var(--accent-secondary-light); color: var(--accent-secondary); }
+.stat-icon-wrap[data-color="success"] { background: var(--success-light); color: var(--success); }
+.stat-icon-wrap[data-color="danger"] { background: var(--danger-light); color: var(--danger); }
+
+.stat-label { font-size: 13px; color: var(--text-secondary); margin-bottom: 2px; }
+.stat-value { font-size: 24px; font-weight: 800; }
+.dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: var(--space-lg); }
+.card-section-header { display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-lg); font-size: 18px; color: var(--accent-primary); }
+.card-section-header h3 { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+
+.lesson-list { display: flex; flex-direction: column; gap: var(--space-sm); }
+.lesson-item {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-md);
+  padding: var(--space-md); background: var(--bg-tertiary); border-radius: var(--radius-md);
+  border: 1px solid var(--border-color); transition: all var(--transition-fast);
+}
+.lesson-item:hover { border-color: var(--border-hover); transform: translateX(4px); }
+.lesson-student { font-weight: 600; font-size: 14px; }
+.lesson-title { font-size: 12px; color: var(--text-secondary); }
+.lesson-meta { display: flex; align-items: center; gap: var(--space-sm); }
+.lesson-duration { font-size: 12px; color: var(--text-muted); }
+
+/* Empty lessons style */
+.empty-lessons-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xl);
+  text-align: center;
+  gap: var(--space-sm);
+  background: rgba(255, 255, 255, 0.01);
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--border-color);
+}
+
+.font-bold {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.next-lesson-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.next-lesson-highlight {
+  color: var(--accent-secondary);
+  font-weight: 700;
+}
+
+/* Birthday List style */
+.birthday-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.birthday-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: 10px 14px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
+.birthday-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.birthday-student-name {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.birthday-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.birthday-header-icon {
+  color: var(--accent-secondary);
+}
+
+.subject-stats { display: flex; flex-direction: column; gap: var(--space-md); }
+.subject-stat-item { display: flex; align-items: center; gap: var(--space-md); }
+.subject-name { font-size: 14px; font-weight: 500; min-width: 100px; }
+.subject-count-bar { flex: 1; height: 8px; background: var(--bg-tertiary); border-radius: var(--radius-full); overflow: hidden; }
+.subject-count-fill { height: 100%; background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary)); border-radius: var(--radius-full); transition: width 0.5s ease; }
+.subject-count { font-size: 14px; font-weight: 700; color: var(--accent-primary); min-width: 30px; text-align: right; }
+.empty-text { color: var(--text-muted); font-size: 14px; text-align: center; padding: var(--space-lg); }
+
+@media (max-width: 768px) {
+  .stats-grid { grid-template-columns: 1fr; }
+  .dashboard-grid { grid-template-columns: 1fr; }
+}

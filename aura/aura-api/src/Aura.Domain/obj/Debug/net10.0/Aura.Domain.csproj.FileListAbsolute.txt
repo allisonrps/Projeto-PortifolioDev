@@ -1,0 +1,11 @@
+E:\DEV\Antigravity\aura\aura-api\src\Aura.Domain\bin\Debug\net10.0\Aura.Domain.deps.json
+E:\DEV\Antigravity\aura\aura-api\src\Aura.Domain\bin\Debug\net10.0\Aura.Domain.dll
+E:\DEV\Antigravity\aura\aura-api\src\Aura.Domain\bin\Debug\net10.0\Aura.Domain.pdb
+E:\DEV\Antigravity\aura\aura-api\src\Aura.Domain\obj\Debug\net10.0\Aura.Domain.GeneratedMSBuildEditorConfig.editorconfig
+E:\DEV\Antigravity\aura\aura-api\src\Aura.Domain\obj\Debug\net10.0\Aura.Domain.AssemblyInfoInputs.cache
+E:\DEV\Antigravity\aura\aura-api\src\Aura.Domain\obj\Debug\net10.0\Aura.Domain.AssemblyInfo.cs
+E:\DEV\Antigravity\aura\aura-api\src\Aura.Domain\obj\Debug\net10.0\Aura.Domain.csproj.CoreCompileInputs.cache
+E:\DEV\Antigravity\aura\aura-api\src\Aura.Domain\obj\Debug\net10.0\Aura.Domain.dll
+E:\DEV\Antigravity\aura\aura-api\src\Aura.Domain\obj\Debug\net10.0\refint\Aura.Domain.dll
+E:\DEV\Antigravity\aura\aura-api\src\Aura.Domain\obj\Debug\net10.0\Aura.Domain.pdb
+E:\DEV\Antigravity\aura\aura-api\src\Aura.Domain\obj\Debug\net10.0\ref\Aura.Domain.dll

@@ -1,0 +1,209 @@
+/* ── Studies Section ───────────────────────────── */
+
+.studies {
+  padding: 100px 0;
+}
+
+.studiesInner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ── Timeline ─────────────────────────────────── */
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 20px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--border);
+}
+
+.timelineItem {
+  display: flex;
+  gap: 24px;
+  padding: 24px 0;
+  position: relative;
+}
+
+.timelineDot {
+  width: 12px;
+  height: 12px;
+  background: var(--purple-primary);
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 6px;
+  position: relative;
+  z-index: 1;
+  border: 3px solid var(--bg-dark);
+}
+
+.timelineDotActive {
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.5);
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 8px rgba(139, 92, 246, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.7);
+  }
+}
+
+/* ── Timeline Content ─────────────────────────── */
+
+.timelineContent {
+  flex: 1;
+}
+
+.institution {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--white);
+  margin-bottom: 4px;
+}
+
+.course {
+  font-size: 16px;
+  color: var(--purple-light);
+  margin-bottom: 8px;
+}
+
+.period {
+  font-size: 13px;
+  color: var(--white-muted);
+  font-family: var(--font-mono);
+}
+
+.description {
+  font-size: 14px;
+  color: var(--white-muted);
+  line-height: 1.7;
+  margin-top: 12px;
+}
+
+/* ── Certificates Grid ────────────────────────── */
+
+.sectionLabel {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--white);
+  margin: 48px 0 24px;
+}
+
+.certificatesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 48px;
+}
+
+/* ── Certificate Card ─────────────────────────── */
+
+.certCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  padding: 24px;
+  transition: all var(--transition-normal);
+}
+
+.certCard:hover {
+  border-color: var(--purple-primary);
+  background: var(--bg-card-hover);
+  transform: translateY(-3px);
+}
+
+.certName {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--white);
+  margin-bottom: 8px;
+}
+
+.certIssuer {
+  font-size: 13px;
+  color: var(--white-muted);
+  font-family: var(--font-mono);
+}
+
+.certYear {
+  font-size: 12px;
+  color: var(--white-muted);
+}
+
+.certStatus {
+  margin-top: 12px;
+}
+
+.certLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  color: var(--purple-light);
+  font-size: 13px;
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.certLink:hover {
+  color: var(--purple-primary);
+}
+
+/* ── Responsive ───────────────────────────────── */
+
+@media (max-width: 768px) {
+  .studies {
+    padding: 64px 0;
+  }
+
+  .studiesInner {
+    padding: 0 16px;
+  }
+
+  .timeline::before {
+    left: 14px;
+  }
+
+  .timelineItem {
+    gap: 16px;
+    padding: 16px 0;
+  }
+
+  .timelineDot {
+    width: 10px;
+    height: 10px;
+  }
+
+  .institution {
+    font-size: 17px;
+  }
+
+  .course {
+    font-size: 14px;
+  }
+
+  .sectionLabel {
+    font-size: 19px;
+    margin: 36px 0 20px;
+  }
+
+  .certificatesGrid {
+    grid-template-columns: 1fr;
+    margin-top: 32px;
+  }
+}

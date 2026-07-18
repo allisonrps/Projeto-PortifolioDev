@@ -1,0 +1,16 @@
+.subjects-list { display: flex; flex-direction: column; gap: var(--space-md); }
+.subject-item { cursor: pointer; }
+.subject-header { display: flex; align-items: center; justify-content: space-between; }
+.subject-info { display: flex; align-items: center; gap: var(--space-md); }
+.subject-info h3 { font-size: 16px; font-weight: 700; }
+.subject-actions { display: flex; align-items: center; gap: var(--space-xs); }
+.expand-icon { font-size: 24px; color: var(--text-muted); }
+.levels-section { margin-top: var(--space-lg); padding-top: var(--space-lg); border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: var(--space-sm); }
+.levels-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-sm); }
+.levels-header h4 { font-size: 14px; font-weight: 600; color: var(--text-secondary); }
+.level-item {
+  display: flex; align-items: center; gap: var(--space-md); padding: var(--space-sm) var(--space-md);
+  background: var(--bg-tertiary); border-radius: var(--radius-md); border: 1px solid var(--border-color);
+}
+.level-item span:first-child { flex: 1; font-weight: 500; font-size: 14px; }
+.level-actions { display: flex; gap: 4px; }

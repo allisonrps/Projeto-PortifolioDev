@@ -1,0 +1,94 @@
+/* ============================================
+   DESIGN SYSTEM — Portfolio Allison Rodrigues
+   Graphite + Verde Marinho Pastel
+   ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* --- CSS Reset --- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+ul, ol { list-style: none; }
+a { text-decoration: none; color: inherit; }
+img, svg { display: block; max-width: 100%; }
+button { font: inherit; cursor: pointer; border: none; background: none; }
+
+/* --- Design Tokens --- */
+:root {
+  /* Backgrounds */
+  --bg-primary: #0f1117;
+  --bg-secondary: #161822;
+  --bg-card: #1a1d2e;
+  --bg-card-hover: #1f2337;
+  --bg-elevated: #232738;
+
+  /* Brand – Verde Marinho Pastel */
+  --accent: #5eead4;
+  --accent-light: #99f6e4;
+  --accent-dark: #2dd4bf;
+  --accent-glow: rgba(94, 234, 212, 0.12);
+  --accent-glow-strong: rgba(94, 234, 212, 0.25);
+  --accent-gradient: linear-gradient(135deg, #5eead4, #2dd4bf);
+  --accent-gradient-hover: linear-gradient(135deg, #99f6e4, #5eead4);
+
+  /* Neutrals */
+  --white: #f1f5f9;
+  --white-pure: #ffffff;
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --border: rgba(148, 163, 184, 0.1);
+  --border-hover: rgba(94, 234, 212, 0.3);
+
+  /* Typography */
+  --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 30px rgba(94, 234, 212, 0.15);
+
+  /* Layout */
+  --header-height: 72px;
+  --max-width: 1200px;
+  --section-padding: 100px;
+}
+
+/* --- Base Styles --- */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: var(--header-height);
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-main);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+::selection {
+  background-color: var(--accent);
+  color: var(--bg-primary);
+}
+
+/* --- Scrollbar --- */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--accent-dark); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+* { scrollbar-width: thin; scrollbar-color: var(--accent-dark) var(--bg-primary); }

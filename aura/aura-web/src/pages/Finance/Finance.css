@@ -1,0 +1,302 @@
+.finance-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+
+.finance-header {
+  margin-bottom: var(--space-sm);
+}
+
+.finance-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: var(--space-xs);
+}
+
+.finance-subtitle {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+/* Stats summary grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-lg);
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+}
+
+.stat-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.stat-icon-wrap[data-color="primary"] {
+  background: var(--accent-primary-light);
+  color: var(--accent-primary);
+}
+
+.stat-icon-wrap[data-color="secondary"] {
+  background: var(--accent-secondary-light);
+  color: var(--accent-secondary);
+}
+
+.stat-icon-wrap[data-color="success"] {
+  background: var(--success-light);
+  color: var(--success);
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-top: 2px;
+}
+
+/* Charts Grid Layout */
+.finance-charts-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: var(--space-lg);
+}
+
+.chart-card {
+  padding: var(--space-lg) !important;
+}
+
+.chart-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-lg);
+}
+
+.chart-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+}
+
+.empty-chart {
+  color: var(--text-muted);
+  font-size: 14px;
+  font-style: italic;
+}
+
+.pie-container .recharts-legend-wrapper {
+  bottom: 0px !important;
+}
+
+/* Student Billing status table */
+.students-payments-card {
+  padding: var(--space-lg) !important;
+}
+
+.card-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+}
+
+.table-card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.payments-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.payments-table th {
+  padding: var(--space-md);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.payments-table td {
+  padding: var(--space-md);
+  border-bottom: 1px solid var(--border-color);
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.payments-table tbody tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.empty-table-row {
+  text-align: center;
+  padding: var(--space-xl) !important;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.student-profile-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.profile-cell-name {
+  font-weight: 700;
+}
+
+.monthly-price-badge {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.paid-value-cell {
+  font-weight: 700;
+}
+
+.paid-value-cell.is-paid-val {
+  color: var(--success);
+}
+
+.paid-value-cell.is-pending-val {
+  color: var(--text-muted);
+}
+
+/* Manage payment redirection button */
+.manage-payment-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.manage-payment-btn:hover {
+  background: var(--accent-primary-light);
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+
+.manage-payment-btn:hover .btn-chevron-icon {
+  transform: translateX(3px);
+}
+
+.btn-chevron-icon {
+  font-size: 16px;
+  transition: transform var(--transition-fast);
+}
+
+/* Responsive queries */
+@media (max-width: 992px) {
+  .finance-charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  .finance-header.flex-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
+  }
+  .period-selectors {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+/* Custom selectors style */
+.finance-header.flex-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+}
+
+.period-selectors {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.selector-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.selector-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--text-muted);
+  font-size: 16px;
+  pointer-events: none;
+}
+
+.finance-select {
+  padding: 8px 12px 8px 36px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.finance-select:hover {
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+}
+
+.finance-select:focus {
+  border-color: var(--accent-primary);
+}

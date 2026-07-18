@@ -1,0 +1,103 @@
+/* ── Section Container ─────────────────────── */
+.sectionContainer {
+  max-width: var(--max-width, 1200px);
+  padding: 0 24px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ── Section Title ─────────────────────────── */
+.sectionTitle {
+  margin-bottom: 56px;
+}
+
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 16px;
+}
+
+.labelDot {
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+  border-radius: 50%;
+}
+
+.sectionTitle h2 {
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--white);
+  line-height: 1.2;
+}
+
+.sectionTitle h2 .highlight {
+  color: var(--accent);
+}
+
+.sectionTitle p {
+  font-size: 16px;
+  color: var(--text-secondary);
+  margin-top: 12px;
+  max-width: 500px;
+  line-height: 1.7;
+}
+
+/* ── Badge ─────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: nowrap;
+  user-select: none;
+  letter-spacing: 0.3px;
+}
+
+.badge svg {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.badgeDefault {
+  background: var(--accent-glow);
+  color: var(--accent);
+}
+
+.badgeSuccess {
+  background: rgba(74, 222, 128, 0.12);
+  color: #4ade80;
+}
+
+.badgeWarning {
+  background: rgba(251, 191, 36, 0.12);
+  color: #fbbf24;
+}
+
+.badgeInfo {
+  background: rgba(96, 165, 250, 0.12);
+  color: #60a5fa;
+}
+
+/* ── Responsive ────────────────────────────── */
+@media (max-width: 768px) {
+  .sectionTitle h2 {
+    font-size: 28px;
+  }
+  .sectionContainer {
+    padding: 0 16px;
+  }
+}
