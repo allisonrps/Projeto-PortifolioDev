@@ -54,41 +54,44 @@
   font-weight: 600;
 }
 
-/* ── Stats ── */
-.statsGrid {
+/* ── Skills Grid ── */
+.skillsGrid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-top: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
 }
 
-.statCard {
+.skillCard {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 20px;
+  padding: 14px 10px;
   text-align: center;
   transition: all var(--transition-normal);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
 }
 
-.statCard:hover {
+.skillCard:hover {
   border-color: var(--border-hover);
+  background: var(--bg-card-hover);
   transform: translateY(-2px);
   box-shadow: var(--shadow-glow);
 }
 
-.statCard .number {
-  font-size: 28px;
-  font-weight: 800;
+.skillCard svg {
+  font-size: 26px;
   color: var(--accent);
-  line-height: 1;
 }
 
-.statCard .label {
+.skillCard span {
   font-size: 12px;
   color: var(--text-secondary);
-  margin-top: 6px;
   font-family: var(--font-mono);
+  font-weight: 500;
 }
 
 .moreBtn {
@@ -127,10 +130,16 @@
     width: 220px;
     height: 220px;
   }
-  .statsGrid {
-    grid-template-columns: repeat(2, 1fr);
+  .skillsGrid {
+    grid-template-columns: repeat(3, 1fr);
   }
   .moreBtn {
     margin: 8px auto 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .skillsGrid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }

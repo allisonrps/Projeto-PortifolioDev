@@ -51,12 +51,12 @@ export default function Hero() {
 
           <motion.div className={styles.stats} variants={item}>
             <div className={styles.statItem}>
-              <span className={styles.statNumber}>5+</span>
-              <span className={styles.statLabel}>Anos de Exp.</span>
-            </div>
-            <div className={styles.statItem}>
               <span className={styles.statNumber}>20+</span>
               <span className={styles.statLabel}>Projetos</span>
+            </div>
+            <div className={styles.statItem}>
+              <span className={styles.statNumber}>12+</span>
+              <span className={styles.statLabel}>Certificados</span>
             </div>
             <div className={styles.statItem}>
               <span className={styles.statNumber}>10+</span>
@@ -72,15 +72,6 @@ export default function Hero() {
             <div className={styles.photoCircle}>
               <img src="/profile-photo.jpg" alt="Allison Rodrigues" />
             </div>
-            <motion.div
-              className={styles.floatingBadge}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.8, duration: 0.4, ease: 'easeOut' }}
-            >
-              <span className={styles.floatingBadgeNumber}>5+</span>
-              <span className={styles.floatingBadgeText}>Anos de Experiência</span>
-            </motion.div>
           </div>
         </motion.div>
       </motion.div>

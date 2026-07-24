@@ -1,12 +1,21 @@
 import AnimatedSection from '../common/AnimatedSection';
 import SectionTitle from '../common/SectionTitle';
+import { FaReact, FaNodeJs, FaDocker, FaGitAlt } from 'react-icons/fa';
+import { SiTypescript, SiDotnet, SiMongodb, SiPostgresql, SiTailwindcss } from 'react-icons/si';
+import { VscAzure } from 'react-icons/vsc';
 import styles from './About.module.css';
 
-const stats = [
-  { number: '20+', label: 'Projetos' },
-  { number: '10+', label: 'Clientes' },
-  { number: '5+', label: 'Anos Exp.' },
-  { number: '12+', label: 'Certificados' },
+const skills = [
+  { name: '.NET / C#', icon: SiDotnet },
+  { name: 'Node.js', icon: FaNodeJs },
+  { name: 'React', icon: FaReact },
+  { name: 'TypeScript', icon: SiTypescript },
+  { name: 'Azure', icon: VscAzure },
+  { name: 'Docker', icon: FaDocker },
+  { name: 'PostgreSQL', icon: SiPostgresql },
+  { name: 'MongoDB', icon: SiMongodb },
+  { name: 'Tailwind CSS', icon: SiTailwindcss },
+  { name: 'Git', icon: FaGitAlt },
 ];
 
 export default function About() {
@@ -47,17 +56,17 @@ export default function About() {
               Docker e serviços Azure.
             </p>
 
-            <div className={styles.statsGrid}>
-              {stats.map((s) => (
-                <div key={s.label} className={styles.statCard}>
-                  <div className="number" style={{ fontSize: '28px', fontWeight: 800, color: 'var(--accent)' }}>{s.number}</div>
-                  <div className="label" style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '6px', fontFamily: 'var(--font-mono)' }}>{s.label}</div>
+            <div className={styles.skillsGrid}>
+              {skills.map(({ name, icon: Icon }) => (
+                <div key={name} className={styles.skillCard}>
+                  <Icon />
+                  <span>{name}</span>
                 </div>
               ))}
             </div>
 
             <a href="#contact" className={styles.moreBtn}>
-              Mais Sobre Mim →
+              Contato →
             </a>
           </div>
         </div>
