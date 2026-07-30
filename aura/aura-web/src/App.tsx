@@ -11,6 +11,8 @@ import SubjectsPage from './pages/Subjects/Subjects';
 import SchedulePage from './pages/Schedule/Schedule';
 import SettingsPage from './pages/Settings/Settings';
 import FinancePage from './pages/Finance/Finance';
+import ActivityTemplatesPage from './pages/ActivityTemplates/ActivityTemplates';
+import PublicQuizPage from './pages/PublicQuiz/PublicQuiz';
 import './styles/global.css';
 
 export default function App() {
@@ -31,7 +33,9 @@ export default function App() {
               <Route path="/schedule" element={<SchedulePage />} />
               <Route path="/finance" element={<FinancePage />} />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/activities" element={<ActivityTemplatesPage />} />
             </Route>
+            <Route path="/quiz/:activityId" element={<PublicQuizPage />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </ThemeProvider>

@@ -41,4 +41,11 @@ public class AuthController : BaseApiController
         var result = await _authService.UpdateProfileAsync(GetProfessorId(), dto);
         return Ok(result);
     }
+
+    [HttpPost("change-password")]
+    public async Task<ActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
+    {
+        await _authService.ChangePasswordAsync(GetProfessorId(), dto);
+        return Ok(new { message = "Senha alterada com sucesso." });
+    }
 }

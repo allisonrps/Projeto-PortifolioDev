@@ -56,8 +56,8 @@ public class DashboardController : BaseApiController
     public DashboardController(IDashboardService dashboardService) => _dashboardService = dashboardService;
 
     [HttpGet]
-    public async Task<ActionResult> Get()
-        => Ok(await _dashboardService.GetDashboardAsync(GetProfessorId()));
+    public async Task<ActionResult> Get([FromQuery] int? month = null, [FromQuery] int? year = null)
+        => Ok(await _dashboardService.GetDashboardAsync(GetProfessorId(), month, year));
 }
 
 [Route("api/payments")]

@@ -18,10 +18,17 @@ public class AuraDbContext : DbContext
     public DbSet<Schedule> Schedules => Set<Schedule>();
     public DbSet<Holiday> Holidays => Set<Holiday>();
     public DbSet<Subscription> Subscriptions => Set<Subscription>();
+    public DbSet<TemplateActivity> TemplateActivities => Set<TemplateActivity>();
+    public DbSet<TemplateQuestion> TemplateQuestions => Set<TemplateQuestion>();
+    public DbSet<StudentActivity> StudentActivities => Set<StudentActivity>();
+    public DbSet<StudentAnswer> StudentAnswers => Set<StudentAnswer>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // Define schema aura to isolate from public schema
+        modelBuilder.HasDefaultSchema("aura");
 
         // Global query filter for soft delete
         modelBuilder.Entity<Professor>().HasQueryFilter(e => !e.IsDeleted);
@@ -35,6 +42,10 @@ public class AuraDbContext : DbContext
         modelBuilder.Entity<Schedule>().HasQueryFilter(e => !e.IsDeleted);
         modelBuilder.Entity<Holiday>().HasQueryFilter(e => !e.IsDeleted);
         modelBuilder.Entity<Subscription>().HasQueryFilter(e => !e.IsDeleted);
+        modelBuilder.Entity<TemplateActivity>().HasQueryFilter(e => !e.IsDeleted);
+        modelBuilder.Entity<TemplateQuestion>().HasQueryFilter(e => !e.IsDeleted);
+        modelBuilder.Entity<StudentActivity>().HasQueryFilter(e => !e.IsDeleted);
+        modelBuilder.Entity<StudentAnswer>().HasQueryFilter(e => !e.IsDeleted);
 
         // Professor
         modelBuilder.Entity<Professor>(e =>
@@ -131,6 +142,50 @@ public class AuraDbContext : DbContext
             e.Property(s => s.Price).HasPrecision(18, 2);
             e.Property(s => s.Status).HasMaxLength(20).HasDefaultValue("active");
             e.HasOne(s => s.Professor).WithMany(p => p.Subscriptions).HasForeignKey(s => s.ProfessorId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // TemplateActivity
+        modelBuilder.Entity<TemplateActivity>(e =>
+        {
+            e.Property(ta => ta.Title).HasMaxLength(200).IsRequired();
+            e.Property(ta => ta.Type).HasMaxLength(20).HasDefaultValue("exercise");
+            e.HasOne(ta => ta.Professor).WithMany().HasForeignKey(ta => ta.ProfessorId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(ta => ta.Subject).WithMany().HasForeignKey(ta => ta.SubjectId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(ta => ta.Level).WithMany().HasForeignKey(ta => ta.LevelId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // TemplateQuestion
+        modelBuilder.Entity<TemplateQuestion>(e =>
+        {
+            e.Property(q => q.QuestionText).IsRequired();
+            e.Property(q => q.OptionA).IsRequired();
+            e.Property(q => q.OptionB).IsRequired();
+            e.Property(q => q.OptionC).IsRequired();
+            e.Property(q => q.OptionD).IsRequired();
+            e.Property(q => q.CorrectOption).IsRequired();
+            e.HasOne(q => q.TemplateActivity).WithMany(ta => ta.Questions).HasForeignKey(q => q.TemplateActivityId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // StudentActivity
+        modelBuilder.Entity<StudentActivity>(e =>
+        {
+            e.Property(sa => sa.Status).HasMaxLength(20).HasDefaultValue("pending");
+            e.Property(sa => sa.Grade).HasPrecision(5, 2);
+            e.Property(sa => sa.MaxGrade).HasPrecision(5, 2).HasDefaultValue(10);
+            e.HasOne(sa => sa.Student).WithMany().HasForeignKey(sa => sa.StudentId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(sa => sa.TemplateActivity).WithMany().HasForeignKey(sa => sa.TemplateActivityId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // StudentAnswer
+        modelBuilder.Entity<StudentAnswer>(e =>
+        {
+            e.Property(a => a.QuestionText).IsRequired();
+            e.Property(a => a.OptionA).IsRequired();
+            e.Property(a => a.OptionB).IsRequired();
+            e.Property(a => a.OptionC).IsRequired();
+            e.Property(a => a.OptionD).IsRequired();
+            e.Property(a => a.CorrectOption).IsRequired();
+            e.HasOne(a => a.StudentActivity).WithMany(sa => sa.Answers).HasForeignKey(a => a.StudentActivityId).OnDelete(DeleteBehavior.Cascade);
         });
     }
 

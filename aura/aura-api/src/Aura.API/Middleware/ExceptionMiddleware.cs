@@ -47,6 +47,7 @@ public class ExceptionMiddleware
         var response = JsonSerializer.Serialize(new
         {
             error = message,
+            message = message,
             statusCode = (int)statusCode
         });
 

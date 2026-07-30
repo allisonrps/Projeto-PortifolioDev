@@ -4,6 +4,7 @@ import { MdEmail, MdLock, MdPerson } from 'react-icons/md';
 import { useAuth } from '../../contexts/AuthContext';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
+import Logo from '../../components/ui/Logo';
 import toast from 'react-hot-toast';
 import './Login.css';
 
@@ -42,8 +43,10 @@ export default function LoginPage() {
       </div>
       <div className="login-container animate-scaleIn">
         <div className="login-header">
-          <h1 className="login-logo">Aura</h1>
-          <p className="login-subtitle">{isRegister ? 'Crie sua conta' : 'Bem-vindo de volta'}</p>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
+            <Logo size="lg" href="https://aura-teacher.vercel.app" />
+          </div>
+          <p className="login-subtitle">{isRegister ? 'Crie sua conta' : 'Gestão de Alunos'}</p>
         </div>
         <form onSubmit={handleSubmit} className="login-form">
           {isRegister && (

@@ -11,6 +11,8 @@ public class LessonResponseDto
     public string Status { get; set; } = string.Empty;
     public string? Notes { get; set; }
     public string? StudentName { get; set; }
+    public string? SubjectName { get; set; }
+    public string? LevelName { get; set; }
     public DateTime CreatedAt { get; set; }
 }
 

@@ -125,17 +125,17 @@ public class LessonRepository : GenericRepository<Lesson>, ILessonRepository
     public LessonRepository(AuraDbContext context) : base(context) { }
 
     public async Task<IEnumerable<Lesson>> GetByStudentIdAsync(Guid studentId)
-        => await _dbSet.Include(l => l.Student)
+        => await _dbSet.Include(l => l.Student).ThenInclude(s => s.Subject).Include(l => l.Student).ThenInclude(s => s.Level)
             .Where(l => l.StudentId == studentId)
             .OrderByDescending(l => l.ScheduledAt).ToListAsync();
 
     public async Task<IEnumerable<Lesson>> GetByProfessorIdAsync(Guid professorId)
-        => await _dbSet.Include(l => l.Student)
+        => await _dbSet.Include(l => l.Student).ThenInclude(s => s.Subject).Include(l => l.Student).ThenInclude(s => s.Level)
             .Where(l => l.ProfessorId == professorId)
             .OrderByDescending(l => l.ScheduledAt).ToListAsync();
 
     public async Task<IEnumerable<Lesson>> GetUpcomingByProfessorIdAsync(Guid professorId, int count = 5)
-        => await _dbSet.Include(l => l.Student)
+        => await _dbSet.Include(l => l.Student).ThenInclude(s => s.Subject).Include(l => l.Student).ThenInclude(s => s.Level)
             .Where(l => l.ProfessorId == professorId && l.ScheduledAt >= DateTime.UtcNow && l.Status == "scheduled")
             .OrderBy(l => l.ScheduledAt)
             .Take(count).ToListAsync();

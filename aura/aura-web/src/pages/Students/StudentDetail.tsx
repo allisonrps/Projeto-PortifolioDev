@@ -2,8 +2,11 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   MdArrowBack, MdSchool, MdPayment, MdAssignment, MdCalendarToday,
-  MdSchedule, MdDelete, MdAdd, MdEdit, MdCheckCircle, MdCancel, MdPercent, MdAttachMoney
+  MdSchedule, MdDelete, MdAdd, MdEdit, MdCheckCircle, MdCancel, MdPercent, MdAttachMoney,
+  MdExpandMore, MdExpandLess, MdTimer, MdPhone, MdCake, MdEventAvailable, MdEventBusy, MdPerson, MdSwapVert,
+  MdAssignmentTurnedIn, MdContentCopy
 } from 'react-icons/md';
+import { FaWhatsapp } from 'react-icons/fa';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
@@ -11,8 +14,9 @@ import Avatar from '../../components/ui/Avatar';
 import Modal from '../../components/ui/Modal';
 import Input from '../../components/ui/Input';
 import { studentService } from '../../services/studentService';
-import { scheduleService, lessonService, paymentService, examService, exerciseService } from '../../services/dataServices';
-import type { StudentDetail, ScheduleEntry, Lesson, Exam, Exercise } from '../../types';
+import { activityService } from '../../services/activityService';
+import { scheduleService, lessonService, paymentService, examService, exerciseService, subjectService, levelService } from '../../services/dataServices';
+import type { StudentDetail, ScheduleEntry, Lesson, Exam, Exercise, Subject, Level, StudentActivity, TemplateActivity } from '../../types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import toast from 'react-hot-toast';
@@ -43,6 +47,14 @@ const MONTHS = [
   { value: 12, label: 'Dez' },
 ];
 
+const getWhatsappUrl = (phoneStr?: string) => {
+  if (!phoneStr) return '#';
+  const cleanNumber = phoneStr.replace(/\D/g, '');
+  if (!cleanNumber) return '#';
+  const formattedNumber = cleanNumber.length <= 11 && !cleanNumber.startsWith('55') ? `55${cleanNumber}` : cleanNumber;
+  return `https://wa.me/${formattedNumber}`;
+};
+
 export default function StudentDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -51,7 +63,16 @@ export default function StudentDetailPage() {
   const [loading, setLoading] = useState(true);
   const location = useLocation();
   const initialTab = (location.state as any)?.activeTab || 'lessons';
-  const [tab, setTab] = useState<'lessons' | 'schedules' | 'payments' | 'exams' | 'exercises'>(initialTab);
+  const [tab, setTab] = useState<'lessons' | 'schedules' | 'payments' | 'exams' | 'exercises' | 'activities'>(initialTab);
+
+  // Online Activities states
+  const [studentActivities, setStudentActivities] = useState<StudentActivity[]>([]);
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [templates, setTemplates] = useState<TemplateActivity[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState('');
+  const [assigning, setAssigning] = useState(false);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [reviewActivity, setReviewActivity] = useState<StudentActivity | null>(null);
 
   // Year filter for payments
   const [paymentYear, setPaymentYear] = useState(new Date().getFullYear());
@@ -66,7 +87,11 @@ export default function StudentDetailPage() {
   const [lessonModalOpen, setLessonModalOpen] = useState(false);
   const [lessonStatus, setLessonStatus] = useState<'scheduled' | 'completed' | 'cancelled' | 'holiday'>('scheduled');
   const [lessonNotes, setLessonNotes] = useState('');
+  const [lessonDate, setLessonDate] = useState('');
+  const [lessonStartTime, setLessonStartTime] = useState('');
+  const [lessonEndTime, setLessonEndTime] = useState('');
   const [savingLesson, setSavingLesson] = useState(false);
+  const [lessonSortOrder, setLessonSortOrder] = useState<'asc' | 'desc'>('desc');
 
   // Schedule Modal state
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
@@ -77,6 +102,9 @@ export default function StudentDetailPage() {
   const [validFrom, setValidFrom] = useState('');
   const [validUntil, setValidUntil] = useState('');
   const [savingSchedule, setSavingSchedule] = useState(false);
+
+  // Expandable Info Card state
+  const [showFullDetails, setShowFullDetails] = useState(false);
 
   // Exam Modal state
   const [examModalOpen, setExamModalOpen] = useState(false);
@@ -98,18 +126,177 @@ export default function StudentDetailPage() {
   const [exerciseMaxGrade, setExerciseMaxGrade] = useState('10');
   const [savingExercise, setSavingExercise] = useState(false);
 
+  // Lessons Month & Year Filter states
+  const [selectedMonth, setSelectedMonth] = useState<string>(format(new Date(), 'MM'));
+  const [selectedYear, setSelectedYear] = useState<string>(format(new Date(), 'yyyy'));
+
+  // Extra Lesson Modal state
+  const [extraLessonModalOpen, setExtraLessonModalOpen] = useState(false);
+  const [extraLessonForm, setExtraLessonForm] = useState({
+    title: 'Aula Extra',
+    date: format(new Date(), 'yyyy-MM-dd'),
+    startTime: '14:00',
+    endTime: '15:00',
+    notes: ''
+  });
+  const [savingExtraLesson, setSavingExtraLesson] = useState(false);
+
+  const openExtraLessonModal = () => {
+    setExtraLessonForm({
+      title: 'Aula Extra',
+      date: format(new Date(), 'yyyy-MM-dd'),
+      startTime: '14:00',
+      endTime: '15:00',
+      notes: ''
+    });
+    setExtraLessonModalOpen(true);
+  };
+
+  const handleSaveExtraLesson = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!id) return;
+    setSavingExtraLesson(true);
+
+    const [startH, startM] = extraLessonForm.startTime.split(':').map(Number);
+    const [endH, endM] = extraLessonForm.endTime.split(':').map(Number);
+    const startTotalMinutes = startH * 60 + startM;
+    const endTotalMinutes = endH * 60 + endM;
+    let diffMinutes = endTotalMinutes - startTotalMinutes;
+    if (diffMinutes <= 0) diffMinutes = 60;
+
+    const scheduledDateStr = `${extraLessonForm.date}T${extraLessonForm.startTime}:00`;
+
+    try {
+      await lessonService.create({
+        studentId: id,
+        title: extraLessonForm.title || 'Aula Extra',
+        scheduledAt: scheduledDateStr,
+        durationMinutes: diffMinutes,
+        notes: extraLessonForm.notes || undefined,
+        status: 'scheduled'
+      });
+      toast.success('Aula extra agendada com sucesso!');
+      setExtraLessonModalOpen(false);
+      loadData();
+    } catch {
+      toast.error('Erro ao agendar aula extra.');
+    } finally {
+      setSavingExtraLesson(false);
+    }
+  };
+
+  const handleDeleteLesson = async (lessonId: string) => {
+    if (!confirm('Deseja excluir esta aula? Ela deixará de aparecer na agenda.')) return;
+    try {
+      await lessonService.delete(lessonId);
+      toast.success('Aula excluída!');
+      loadData();
+    } catch {
+      toast.error('Erro ao excluir aula.');
+    }
+  };
+
+  // Edit Student Modal state
+  const [editStudentModalOpen, setEditStudentModalOpen] = useState(false);
+  const [savingStudent, setSavingStudent] = useState(false);
+  const [subjectsList, setSubjectsList] = useState<Subject[]>([]);
+  const [formLevelsList, setFormLevelsList] = useState<Level[]>([]);
+  const [editStudentForm, setEditStudentForm] = useState({
+    name: '', birthDate: '', phone: '', guardianName: '', guardianPhone: '', subjectId: '', levelId: '',
+    observation: '', monthlyPrice: '', isActive: 'true', firstClassDate: '', lastClassDate: ''
+  });
+
   const loadData = () => {
     if (!id) return;
     setLoading(true);
     Promise.all([
       studentService.getById(id),
-      scheduleService.getByStudent(id)
-    ]).then(([studentRes, scheduleRes]) => {
+      scheduleService.getByStudent(id),
+      subjectService.getAll(),
+      activityService.getStudentActivities(id)
+    ]).then(([studentRes, scheduleRes, subjectRes, activityRes]) => {
       setStudent(studentRes.data);
       setMonthlyPriceInput(String(studentRes.data.monthlyPrice || 0));
       setSchedules(scheduleRes.data);
+      setSubjectsList(subjectRes.data);
+      setStudentActivities(activityRes.data);
     }).catch(() => navigate('/students'))
       .finally(() => setLoading(false));
+  };
+
+  const handleEditStudentSubjectChange = async (subjectId: string) => {
+    setEditStudentForm(prev => ({ ...prev, subjectId, levelId: '' }));
+    if (subjectId) {
+      const res = await levelService.getBySubject(subjectId);
+      setFormLevelsList(res.data);
+    } else setFormLevelsList([]);
+  };
+
+  const openEditStudentModal = async () => {
+    if (!student) return;
+    setEditStudentForm({
+      name: student.name,
+      birthDate: student.birthDate ? student.birthDate.split('T')[0] : '',
+      phone: student.phone || '',
+      guardianName: student.guardianName || '',
+      guardianPhone: student.guardianPhone || '',
+      subjectId: student.subjectId || '',
+      levelId: student.levelId || '',
+      observation: student.observation || '',
+      monthlyPrice: String(student.monthlyPrice || 0),
+      isActive: String(student.isActive),
+      firstClassDate: student.firstClassDate ? student.firstClassDate.split('T')[0] : '',
+      lastClassDate: student.lastClassDate ? student.lastClassDate.split('T')[0] : ''
+    });
+
+    if (student.subjectId) {
+      const res = await levelService.getBySubject(student.subjectId);
+      setFormLevelsList(res.data);
+    } else {
+      setFormLevelsList([]);
+    }
+    setEditStudentModalOpen(true);
+  };
+
+  const handleSaveEditStudent = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!student) return;
+    setSavingStudent(true);
+    const body = {
+      name: editStudentForm.name,
+      birthDate: editStudentForm.birthDate || null,
+      phone: editStudentForm.phone || null,
+      guardianName: editStudentForm.guardianName || null,
+      guardianPhone: editStudentForm.guardianPhone || null,
+      subjectId: editStudentForm.subjectId,
+      levelId: editStudentForm.levelId,
+      observation: editStudentForm.observation || null,
+      monthlyPrice: parseFloat(editStudentForm.monthlyPrice || '0'),
+      isActive: editStudentForm.isActive === 'true',
+      firstClassDate: editStudentForm.firstClassDate ? editStudentForm.firstClassDate : null,
+      lastClassDate: editStudentForm.isActive === 'false' && editStudentForm.lastClassDate ? editStudentForm.lastClassDate : null
+    };
+    try {
+      await studentService.update(student.id, body as any);
+      toast.success('Dados do aluno atualizados!');
+      setEditStudentModalOpen(false);
+      loadData();
+    } catch {
+      toast.error('Erro ao atualizar aluno.');
+    }
+    setSavingStudent(false);
+  };
+
+  const handleDeleteStudent = async () => {
+    if (!student) return;
+    if (!confirm(`Deseja excluir o aluno "${student.name}"?`)) return;
+    try {
+      await studentService.delete(student.id);
+      toast.success('Aluno excluído com sucesso!');
+      navigate('/students');
+    } catch {
+      toast.error('Erro ao excluir aluno.');
+    }
   };
 
   useEffect(() => {
@@ -124,6 +311,25 @@ export default function StudentDetailPage() {
   const cancelledCount = student.lessons.filter(l => l.status === 'cancelled').length;
   const totalAtts = completedCount + cancelledCount;
   const attendanceRate = totalAtts > 0 ? Math.round((completedCount / totalAtts) * 100) : 100;
+
+  // Calculate Past Class Hours Rate (Only for classes that have already occurred)
+  const now = new Date();
+  const pastLessons = student.lessons.filter(l => 
+    (l.status === 'completed' || l.status === 'cancelled') && new Date(l.scheduledAt) <= now
+  );
+  const completedPastLessons = pastLessons.filter(l => l.status === 'completed');
+  
+  const totalPastMinutes = pastLessons.reduce((acc, l) => acc + l.durationMinutes, 0);
+  const completedMinutes = completedPastLessons.reduce((acc, l) => acc + l.durationMinutes, 0);
+  
+  const totalPastHours = (totalPastMinutes / 60).toFixed(1).replace('.0', '');
+  const completedHours = (completedMinutes / 60).toFixed(1).replace('.0', '');
+  const hoursAttendanceRate = totalPastMinutes > 0 ? Math.round((completedMinutes / totalPastMinutes) * 100) : 100;
+
+  // First and Last Class dates
+  const sortedLessons = [...student.lessons].sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
+  const firstClassDate = sortedLessons.length > 0 ? sortedLessons[0].scheduledAt : null;
+  const lastClassDate = student.lastClassDate || (sortedLessons.length > 0 ? sortedLessons[sortedLessons.length - 1].scheduledAt : null);
 
   // Monthly Price update handler
   const handleSaveMonthlyPrice = async () => {
@@ -145,16 +351,36 @@ export default function StudentDetailPage() {
     setSelectedLesson(lesson);
     setLessonStatus(lesson.status);
     setLessonNotes(lesson.notes || '');
+
+    const sTime = new Date(lesson.scheduledAt);
+    const eTime = new Date(sTime.getTime() + (lesson.durationMinutes || 60) * 60000);
+
+    setLessonDate(format(sTime, 'yyyy-MM-dd'));
+    setLessonStartTime(format(sTime, 'HH:mm'));
+    setLessonEndTime(format(eTime, 'HH:mm'));
+
     setLessonModalOpen(true);
   };
 
   const handleSaveLesson = async () => {
     if (!selectedLesson) return;
     setSavingLesson(true);
+
+    const [startH, startM] = lessonStartTime.split(':').map(Number);
+    const [endH, endM] = lessonEndTime.split(':').map(Number);
+    const startTotalMinutes = startH * 60 + startM;
+    const endTotalMinutes = endH * 60 + endM;
+    let diffMinutes = endTotalMinutes - startTotalMinutes;
+    if (diffMinutes <= 0) diffMinutes = 60;
+
+    const newScheduledAt = `${lessonDate}T${lessonStartTime}:00`;
+
     try {
       await lessonService.update(selectedLesson.id, {
         status: lessonStatus,
-        notes: lessonNotes
+        notes: lessonNotes,
+        scheduledAt: newScheduledAt,
+        durationMinutes: diffMinutes
       });
       toast.success('Aula atualizada!');
       setLessonModalOpen(false);
@@ -227,19 +453,47 @@ export default function StudentDetailPage() {
   // Payments handlers
   const handleTogglePayment = async (month: number) => {
     const payment = student.payments.find(p => p.month === month && p.year === paymentYear);
+    const previousPayments = [...student.payments];
+
     if (payment) {
-      // If paid, click deletes payment instantly
+      // Optimistic update: remove local payment instantly
+      setStudent({
+        ...student,
+        payments: student.payments.filter(p => p.id !== payment.id)
+      });
+
       try {
         await paymentService.delete(payment.id);
-        toast.success('Pagamento removido!');
-        loadData();
+        // Silently reload in background to make sure totals sync up perfectly
+        const res = await studentService.getById(student.id);
+        setStudent(res.data);
       } catch {
+        // Rollback
+        setStudent({
+          ...student,
+          payments: previousPayments
+        });
         toast.error('Erro ao remover pagamento.');
       }
     } else {
-      // If unpaid, click creates payment
+      const tempId = `temp-${Date.now()}`;
+      const newPayment = {
+        id: tempId,
+        studentId: student.id,
+        month,
+        year: paymentYear,
+        amount: student.monthlyPrice,
+        isPaid: true
+      };
+
+      // Optimistic update: add local payment instantly
+      setStudent({
+        ...student,
+        payments: [...student.payments, newPayment]
+      });
+
       try {
-        await paymentService.create({
+        const res = await paymentService.create({
           studentId: student.id,
           month,
           year: paymentYear,
@@ -247,9 +501,22 @@ export default function StudentDetailPage() {
           isPaid: true,
           paidAt: new Date().toISOString()
         });
-        toast.success('Pagamento registrado com sucesso!');
-        loadData();
+        setStudent(prev => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            payments: prev.payments.map(p => p.id === tempId ? res.data : p)
+          };
+        });
+        // Silently reload to ensure totals sync
+        const fresh = await studentService.getById(student.id);
+        setStudent(fresh.data);
       } catch {
+        // Rollback
+        setStudent({
+          ...student,
+          payments: previousPayments
+        });
         toast.error('Erro ao registrar pagamento.');
       }
     }
@@ -267,7 +534,7 @@ export default function StudentDetailPage() {
     } else {
       setSelectedExam(null);
       setExamTitle('');
-      setExamDate(new Date().toISOString().substring(0, 10));
+      setExamDate(format(new Date(), 'yyyy-MM-dd'));
       setExamNotes('');
       setExamGrade('');
       setExamMaxGrade('10');
@@ -281,7 +548,7 @@ export default function StudentDetailPage() {
     const body = {
       studentId: student.id,
       title: examTitle,
-      scheduledAt: new Date(examDate).toISOString(),
+      scheduledAt: `${examDate}T00:00:00`,
       notes: examNotes,
       grade: examGrade ? parseFloat(examGrade) : undefined,
       maxGrade: parseFloat(examMaxGrade)
@@ -325,7 +592,7 @@ export default function StudentDetailPage() {
     } else {
       setSelectedExercise(null);
       setExerciseTitle('');
-      setExerciseDate(new Date().toISOString().substring(0, 10));
+      setExerciseDate(format(new Date(), 'yyyy-MM-dd'));
       setExerciseNotes('');
       setExerciseGrade('');
       setExerciseMaxGrade('10');
@@ -339,7 +606,7 @@ export default function StudentDetailPage() {
     const body = {
       studentId: student.id,
       title: exerciseTitle,
-      scheduledAt: new Date(exerciseDate).toISOString(),
+      scheduledAt: `${exerciseDate}T00:00:00`,
       notes: exerciseNotes,
       grade: exerciseGrade ? parseFloat(exerciseGrade) : undefined,
       maxGrade: parseFloat(exerciseMaxGrade)
@@ -371,56 +638,258 @@ export default function StudentDetailPage() {
     }
   };
 
+  // Online Activities handlers
+  const openAssignModal = async () => {
+    try {
+      const res = await activityService.getTemplates();
+      // Filter templates matching the student's level or subject (optional, let's keep all templates of this teacher)
+      setTemplates(res.data);
+      setSelectedTemplateId('');
+      setAssignModalOpen(true);
+    } catch {
+      toast.error('Erro ao buscar modelos de atividades.');
+    }
+  };
+
+  const handleAssignActivity = async () => {
+    if (!selectedTemplateId || !id) {
+      toast.error('Selecione um modelo de atividade.');
+      return;
+    }
+    setAssigning(true);
+    try {
+      await activityService.assignActivity({
+        studentId: id,
+        templateActivityId: selectedTemplateId
+      });
+      toast.success('Atividade atribuída com sucesso!');
+      setAssignModalOpen(false);
+      loadData();
+    } catch {
+      toast.error('Erro ao atribuir atividade.');
+    }
+    setAssigning(false);
+  };
+
+  const handleCopyActivityLink = (activityId: string) => {
+    const link = `${window.location.origin}/quiz/${activityId}`;
+    navigator.clipboard.writeText(link);
+    toast.success('Link de resolução copiado!');
+  };
+
+  const handleOpenReview = async (activityId: string) => {
+    try {
+      const res = await activityService.getActivityReview(activityId);
+      setReviewActivity(res.data);
+      setReviewModalOpen(true);
+    } catch {
+      toast.error('Erro ao abrir revisão da atividade.');
+    }
+  };
+
+  const calculateAge = (birthDateStr?: string) => {
+    if (!birthDateStr) return null;
+    const birth = new Date(birthDateStr);
+    if (isNaN(birth.getTime())) return null;
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
   const tabs = [
     { key: 'lessons' as const, icon: <MdCalendarToday />, label: 'Aulas', count: student.lessons.length },
     { key: 'schedules' as const, icon: <MdSchedule />, label: 'Horários', count: schedules.length },
     { key: 'payments' as const, icon: <MdPayment />, label: 'Mensalidades', count: student.payments.length },
     { key: 'exams' as const, icon: <MdSchool />, label: 'Provas', count: student.exams.length },
     { key: 'exercises' as const, icon: <MdAssignment />, label: 'Exercícios', count: student.exercises.length },
+    { key: 'activities' as const, icon: <MdAssignmentTurnedIn />, label: 'Provas & Exercícios Online', count: studentActivities.length },
   ];
 
   return (
-    <div className="student-detail">
+    <div className="student-detail animate-fadeIn">
       <div className="back-bar">
         <Button variant="ghost" icon={<MdArrowBack />} onClick={() => navigate('/students')}>Voltar</Button>
       </div>
 
       <div className="profile-grid">
         <Card variant="elevated" className="student-profile animate-slideUp">
-          <Avatar src={student.photoUrl} name={student.name} size="xl" />
-          <div className="profile-info">
-            <h2>{student.name}</h2>
-            <div className="profile-tags">
-              {student.subjectName && <Badge variant="primary">{student.subjectName}</Badge>}
-              {student.levelName && <Badge variant="secondary">{student.levelName}</Badge>}
-            </div>
-            {student.phone && <p className="profile-phone">{student.phone}</p>}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
-              <p className="profile-created-at" style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                Cadastrado em: {student.createdAt ? format(new Date(student.createdAt), 'dd/MM/yyyy') : '-'}
-              </p>
-              {!student.isActive && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Badge variant="danger">Arquivado</Badge>
-                  <span className="profile-archived-at" style={{ fontSize: '0.85rem', color: 'var(--danger)', fontWeight: 500 }}>
-                    Última Aula: {student.lastClassDate ? format(new Date(student.lastClassDate), 'dd/MM/yyyy') : '-'}
-                  </span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)', width: '100%' }}>
+            <div className="profile-header-wrap">
+              {/* Square rounded avatar occupying 3 rows height */}
+              <div className="profile-avatar-wrap">
+                <Avatar src={student.photoUrl} name={student.name} size="xl" shape="square" />
+              </div>
+              
+              {/* Right side content divided into 3 rows */}
+              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: 1, minWidth: 0, gap: '6px' }}>
+                {/* Row 1: Larger Student Name + Enquadrados Edit and Delete Action Buttons */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
+                  <h2 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)', margin: 0, wordBreak: 'break-word' }}>
+                    {student.name}
+                  </h2>
+                  <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+                    <button className="icon-btn" onClick={openEditStudentModal} title="Editar Aluno"><MdEdit /></button>
+                    <button className="icon-btn icon-btn-danger" onClick={handleDeleteStudent} title="Excluir Aluno"><MdDelete /></button>
+                  </div>
                 </div>
-              )}
-            </div>
-            {student.observation && <p className="profile-obs" style={{ marginTop: '8px' }}>{student.observation}</p>}
-          </div>
-        </Card>
 
-        {/* Attendance Rate Display */}
-        <Card variant="elevated" className="attendance-rate-card animate-slideUp stagger-1">
-          <div className="rate-icon"><MdPercent /></div>
-          <div className="rate-content">
-            <h3>Presença</h3>
-            <div className="rate-number">{attendanceRate}%</div>
-            <p className="rate-meta">
-              {completedCount} presenças, {cancelledCount} faltas
-            </p>
+                {/* Row 2: Subject - Level - Status */}
+                <div className="profile-tags" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                  {student.subjectName && <Badge variant="primary">{student.subjectName}</Badge>}
+                  {student.levelName && <Badge variant="secondary">{student.levelName}</Badge>}
+                  <Badge variant={student.isActive ? 'success' : 'danger'}>
+                    {student.isActive ? 'Ativo' : 'Arquivado'}
+                  </Badge>
+                </div>
+
+                {/* Row 3: + Detalhes Button */}
+                <div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    icon={showFullDetails ? <MdExpandLess /> : <MdExpandMore />}
+                    onClick={() => setShowFullDetails(!showFullDetails)}
+                    style={{ padding: '2px 8px', fontSize: '12px', height: 'auto' }}
+                  >
+                    {showFullDetails ? 'Ocultar Detalhes' : '+ Detalhes'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Expandable Details Panel */}
+            {showFullDetails && (
+              <div className="expandable-details-panel animate-fadeIn" style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '16px',
+                paddingTop: '16px',
+                borderTop: '1px solid var(--border-color)',
+                marginTop: '4px'
+              }}>
+                {/* Stats Cards incorporados em linha/grid */}
+                <div className="embedded-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
+                  <div className="embedded-stat-card" style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--bg-tertiary)', padding: '12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+                    <div className="rate-icon" style={{ width: '40px', height: '40px', fontSize: '20px', borderRadius: '50%', background: 'var(--accent-primary-light)', color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <MdPercent />
+                    </div>
+                    <div className="rate-content">
+                      <h3 style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)', margin: 0, fontWeight: 700 }}>Presença</h3>
+                      <div className="rate-number" style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.2 }}>{attendanceRate}%</div>
+                      <p className="rate-meta" style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>
+                        {completedCount} ok, {cancelledCount} faltas
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="embedded-stat-card" style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--bg-tertiary)', padding: '12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+                    <div className="rate-icon" style={{ width: '40px', height: '40px', fontSize: '20px', borderRadius: '50%', background: 'var(--accent-secondary-light)', color: 'var(--accent-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <MdTimer />
+                    </div>
+                    <div className="rate-content">
+                      <h3 style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)', margin: 0, fontWeight: 700 }}>Horas Aulas</h3>
+                      <div className="rate-number" style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+                        {completedHours}h <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 500 }}>/ {totalPastHours}h</span>
+                      </div>
+                      <p className="rate-meta" style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>
+                        {hoursAttendanceRate}% cumpridas
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Campos de detalhes em Grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+                  <div className="detail-field">
+                    <span className="field-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-muted)' }}>
+                      <MdCake style={{ color: 'var(--accent-primary)' }} /> Aniversário
+                    </span>
+                    <strong style={{ fontSize: '14px', color: 'var(--text-primary)' }}>
+                      {student.birthDate ? (
+                        <>
+                          {format(new Date(student.birthDate), 'dd/MM/yyyy')}
+                          {calculateAge(student.birthDate) !== null && ` (${calculateAge(student.birthDate)} anos)`}
+                        </>
+                      ) : 'Não informado'}
+                    </strong>
+                  </div>
+
+                  {(student.guardianName || (calculateAge(student.birthDate) !== null && calculateAge(student.birthDate)! < 18)) && (
+                    <div className="detail-field">
+                      <span className="field-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-muted)' }}>
+                        <MdPerson style={{ color: 'var(--accent-primary)' }} /> Responsável
+                      </span>
+                      <strong style={{ fontSize: '14px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                        {student.guardianName || 'Não informado'}
+                        {student.guardianPhone && (
+                          <a
+                            href={getWhatsappUrl(student.guardianPhone)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="Abrir WhatsApp do responsável"
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', color: '#25D366', fontWeight: 700, textDecoration: 'none', fontSize: '13px' }}
+                          >
+                            <FaWhatsapp style={{ fontSize: '15px' }} /> ({student.guardianPhone})
+                          </a>
+                        )}
+                      </strong>
+                    </div>
+                  )}
+
+                  <div className="detail-field">
+                    <span className="field-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-muted)' }}>
+                      <MdPhone style={{ color: 'var(--accent-primary)' }} /> Celular
+                    </span>
+                    <strong style={{ fontSize: '14px', color: 'var(--text-primary)' }}>
+                      {student.phone ? (
+                        <a
+                          href={getWhatsappUrl(student.phone)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Abrir WhatsApp do aluno"
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#25D366', fontWeight: 700, textDecoration: 'none' }}
+                        >
+                          <FaWhatsapp style={{ fontSize: '16px' }} /> {student.phone}
+                        </a>
+                      ) : (
+                        <span style={{ color: 'var(--text-muted)' }}>Não informado</span>
+                      )}
+                    </strong>
+                  </div>
+
+                  <div className="detail-field">
+                    <span className="field-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-muted)' }}>
+                      <MdCalendarToday style={{ color: 'var(--accent-primary)' }} /> Data de Cadastro
+                    </span>
+                    <strong style={{ fontSize: '14px', color: 'var(--text-primary)' }}>
+                      {student.createdAt ? format(new Date(student.createdAt), 'dd/MM/yyyy') : '-'}
+                    </strong>
+                  </div>
+
+                  <div className="detail-field">
+                    <span className="field-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-muted)' }}>
+                      <MdEventAvailable style={{ color: 'var(--success)' }} /> Primeira Aula
+                    </span>
+                    <strong style={{ fontSize: '14px', color: 'var(--text-primary)' }}>
+                      {student.firstClassDate ? format(new Date(student.firstClassDate), 'dd/MM/yyyy') : (firstClassDate ? format(new Date(firstClassDate), 'dd/MM/yyyy') : 'Nenhuma aula')}
+                    </strong>
+                  </div>
+
+                  <div className="detail-field">
+                    <span className="field-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-muted)' }}>
+                      <MdEventBusy style={{ color: 'var(--danger)' }} /> Última Aula
+                    </span>
+                    <strong style={{ fontSize: '14px', color: !student.isActive ? 'var(--danger)' : 'var(--text-muted)' }}>
+                      {!student.isActive && lastClassDate ? format(new Date(lastClassDate), 'dd/MM/yyyy') : '--/--/----'}
+                    </strong>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </Card>
       </div>
@@ -434,34 +903,149 @@ export default function StudentDetailPage() {
       </div>
 
       <div className="tab-content animate-fadeIn">
-        {tab === 'lessons' && (
-          <div className="detail-list">
-            {student.lessons.map(l => {
-              const lessonDate = new Date(l.scheduledAt);
-              const formattedTitle = format(lessonDate, "eeee, dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
-              // Capitalize first letter
-              const capitalizedTitle = formattedTitle.charAt(0).toUpperCase() + formattedTitle.slice(1);
+        {tab === 'lessons' && (() => {
+          const availableYears = Array.from(new Set(
+            student.lessons.map(l => format(new Date(l.scheduledAt), 'yyyy'))
+          )).sort().reverse();
 
-              return (
-                <Card
-                  key={l.id}
-                  className={`detail-item clickable status-${l.status}`}
-                  onClick={() => handleLessonClick(l)}
-                >
-                  <div className="lesson-item-body">
-                    <strong className="lesson-title">{capitalizedTitle}</strong>
-                    <span className="detail-meta">Duração: {l.durationMinutes} minutos</span>
-                    {l.notes && <p className="lesson-notes-preview">📝 {l.notes}</p>}
-                  </div>
-                  <Badge variant={l.status === 'completed' ? 'success' : l.status === 'cancelled' ? 'danger' : l.status === 'holiday' ? 'warning' : 'info'}>
-                    {l.status === 'completed' ? 'Concluída' : l.status === 'cancelled' ? 'Cancelada' : l.status === 'holiday' ? 'Feriado' : 'Agendada'}
-                  </Badge>
+          const monthsList = [
+            { value: '01', label: 'Jan' },
+            { value: '02', label: 'Fev' },
+            { value: '03', label: 'Mar' },
+            { value: '04', label: 'Abr' },
+            { value: '05', label: 'Mai' },
+            { value: '06', label: 'Jun' },
+            { value: '07', label: 'Jul' },
+            { value: '08', label: 'Ago' },
+            { value: '09', label: 'Set' },
+            { value: '10', label: 'Out' },
+            { value: '11', label: 'Nov' },
+            { value: '12', label: 'Dez' },
+          ];
+
+          const filteredLessons = student.lessons.filter(l => {
+            const lessonDate = new Date(l.scheduledAt);
+            const m = format(lessonDate, 'MM');
+            const y = format(lessonDate, 'yyyy');
+
+            const monthMatch = selectedMonth === 'all' || m === selectedMonth;
+            const yearMatch = selectedYear === 'all' || y === selectedYear;
+
+            return monthMatch && yearMatch;
+          }).sort((a, b) => {
+            const timeA = new Date(a.scheduledAt).getTime();
+            const timeB = new Date(b.scheduledAt).getTime();
+            return lessonSortOrder === 'desc' ? timeB - timeA : timeA - timeB;
+          });
+
+          return (
+            <div className="detail-list">
+              <div className="tab-toolbar">
+                <div className="tab-toolbar-actions">
+                  <Button
+                    icon={<MdAdd />}
+                    size="sm"
+                    onClick={openExtraLessonModal}
+                    style={{ height: '36px', padding: '0 12px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', whiteSpace: 'nowrap' }}
+                  >
+                    Aula Extra
+                  </Button>
+
+                  <select
+                    className="input-field"
+                    style={{ height: '36px', padding: '0 8px', fontSize: '13px', width: 'auto', minWidth: '82px', boxSizing: 'border-box' }}
+                    value={selectedMonth}
+                    onChange={e => setSelectedMonth(e.target.value)}
+                  >
+                    <option value="all">Mês</option>
+                    {monthsList.map(m => (
+                      <option key={m.value} value={m.value}>{m.label}</option>
+                    ))}
+                  </select>
+
+                  <select
+                    className="input-field"
+                    style={{ height: '36px', padding: '0 8px', fontSize: '13px', width: 'auto', minWidth: '75px', boxSizing: 'border-box' }}
+                    value={selectedYear}
+                    onChange={e => setSelectedYear(e.target.value)}
+                  >
+                    <option value="all">Ano</option>
+                    {availableYears.map(y => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                  </select>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setLessonSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                    style={{ height: '36px', padding: '0 12px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px', fontSize: '13px', whiteSpace: 'nowrap' }}
+                    title={lessonSortOrder === 'desc' ? "Exibindo decrescente. Clique para crescente." : "Exibindo crescente. Clique para decrescente."}
+                  >
+                    <MdSwapVert style={{ fontSize: '18px' }} />
+                    <span>{lessonSortOrder === 'desc' ? 'Decrescente' : 'Crescente'}</span>
+                  </Button>
+                </div>
+
+                <span className="tab-toolbar-info">
+                  Exibindo {filteredLessons.length} de {student.lessons.length} aula(s)
+                </span>
+              </div>
+
+              {filteredLessons.length === 0 ? (
+                <Card variant="outlined" style={{ textAlign: 'center', padding: 'var(--space-xl)', color: 'var(--text-muted)' }}>
+                  <p>Nenhuma aula encontrada para os filtros selecionados.</p>
                 </Card>
-              );
-            })}
-            {student.lessons.length === 0 && <p className="empty-text">Nenhuma aula registrada</p>}
-          </div>
-        )}
+              ) : (
+                filteredLessons.map(l => {
+                  const lessonDate = new Date(l.scheduledAt);
+                  const endDate = new Date(lessonDate.getTime() + (l.durationMinutes || 60) * 60000);
+                  const formattedTitle = `${format(lessonDate, "eeee, dd/MM/yyyy", { locale: ptBR })} das ${format(lessonDate, "HH:mm")} às ${format(endDate, "HH:mm")}`;
+                  const capitalizedTitle = formattedTitle.charAt(0).toUpperCase() + formattedTitle.slice(1);
+
+                  return (
+                    <Card
+                      key={l.id}
+                      className={`detail-item clickable status-${l.status}`}
+                      onClick={() => handleLessonClick(l)}
+                    >
+                      <div className="lesson-item-body" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          <strong className="lesson-title" style={{ color: 'var(--accent-primary)', fontSize: '13px', fontWeight: 700 }}>
+                            {capitalizedTitle}
+                          </strong>
+                          {l.title && <Badge variant="secondary">{l.title}</Badge>}
+                        </div>
+
+                        {/* Resumo/Observações em destaque principal com letra aumentada */}
+                        <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', marginTop: '2px' }}>
+                          {l.notes ? `📝 ${l.notes}` : <span style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontWeight: 400, fontSize: '13px' }}>Sem resumo gravado para esta aula</span>}
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Badge variant={l.status === 'completed' ? 'success' : l.status === 'cancelled' ? 'danger' : l.status === 'holiday' ? 'warning' : 'info'}>
+                          {l.status === 'completed' ? 'Concluída' : l.status === 'cancelled' ? 'Cancelada' : l.status === 'holiday' ? 'Feriado' : 'Agendada'}
+                        </Badge>
+                        <button
+                          className="icon-btn icon-btn-danger"
+                          title="Excluir Aula"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteLesson(l.id);
+                          }}
+                          style={{ width: '30px', height: '30px', fontSize: '14px', flexShrink: 0 }}
+                        >
+                          <MdDelete />
+                        </button>
+                      </div>
+                    </Card>
+                  );
+                })
+              )}
+            </div>
+          );
+        })()}
 
         {tab === 'schedules' && (
           <div className="schedules-tab">
@@ -544,25 +1128,39 @@ export default function StudentDetailPage() {
 
             {/* Fila Horizontal de Meses Circular */}
             <div className="months-grid-row">
-              {MONTHS.map(m => {
-                const payment = student.payments.find(p => p.month === m.value && p.year === paymentYear);
-                const isPaid = !!payment;
-                return (
-                  <div
-                    key={m.value}
-                    className={`month-circle-card ${isPaid ? 'is-paid' : 'is-unpaid'}`}
-                    onClick={() => handleTogglePayment(m.value)}
-                  >
-                    <div className="month-circle">
-                      <span className="month-label">{m.label}</span>
-                      {isPaid && <MdCheckCircle className="check-icon" />}
+              {(() => {
+                const startDate = student.firstClassDate ? new Date(student.firstClassDate) : new Date(student.createdAt);
+                const endDate = (!student.isActive && student.lastClassDate) ? new Date(student.lastClassDate) : null;
+
+                return MONTHS.map(m => {
+                  const isBeforeStart = paymentYear < startDate.getFullYear() || (paymentYear === startDate.getFullYear() && m.value < (startDate.getMonth() + 1));
+                  const isAfterEnd = !!(endDate && (paymentYear > endDate.getFullYear() || (paymentYear === endDate.getFullYear() && m.value > (endDate.getMonth() + 1))));
+                  const isDisabled = isBeforeStart || isAfterEnd;
+
+                  const payment = student.payments.find(p => p.month === m.value && p.year === paymentYear);
+                  const isPaid = !isDisabled && !!payment;
+
+                  return (
+                    <div
+                      key={m.value}
+                      className={`month-circle-card ${isDisabled ? 'is-disabled' : (isPaid ? 'is-paid' : 'is-unpaid')}`}
+                      onClick={() => {
+                        if (isDisabled) return;
+                        handleTogglePayment(m.value);
+                      }}
+                      title={isDisabled ? 'Mês fora do período de atividade do aluno' : (isPaid ? 'Marcar como pendente' : 'Marcar como pago')}
+                    >
+                      <div className="month-circle">
+                        <span className="month-label">{m.label}</span>
+                        {isPaid && <MdCheckCircle className="check-icon" />}
+                      </div>
+                      <span className="month-value">
+                        {isDisabled ? 'Inativo' : (isPaid ? `R$ ${payment.amount.toFixed(0)}` : 'Pendente')}
+                      </span>
                     </div>
-                    <span className="month-value">
-                      {isPaid ? `R$ ${payment.amount.toFixed(0)}` : 'Pendente'}
-                    </span>
-                  </div>
-                );
-              })}
+                  );
+                });
+              })()}
             </div>
           </div>
         )}
@@ -627,6 +1225,48 @@ export default function StudentDetailPage() {
                 </Card>
               ))}
               {student.exercises.length === 0 && <p className="empty-text">Nenhum exercício registrado.</p>}
+            </div>
+          </div>
+        )}
+
+        {tab === 'activities' && (
+          <div className="activities-tab">
+            <div className="tab-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
+              <h3>Provas & Exercícios Online</h3>
+              <Button icon={<MdAdd />} onClick={openAssignModal}>Atribuir Atividade</Button>
+            </div>
+
+            <div className="detail-list">
+              {studentActivities.map(act => (
+                <Card key={act.id} className="detail-item">
+                  <div className="exam-item-body">
+                    <strong>{act.title}</strong>
+                    <span className="detail-meta">
+                      Matéria: {act.type === 'exam' ? 'Prova' : 'Exercício'} • Agendado: {format(new Date(act.scheduledAt), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                      {act.completedAt && ` • Concluído em: ${format(new Date(act.completedAt), 'dd/MM/yyyy HH:mm', { locale: ptBR })}`}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    {act.status === 'completed' ? (
+                      <>
+                        <Badge variant="success">Nota: {act.grade?.toFixed(1) ?? '10.0'}/{act.maxGrade.toFixed(1)}</Badge>
+                        <Button variant="outline" size="sm" onClick={() => handleOpenReview(act.id)}>
+                          Revisar
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Badge variant="warning">Pendente</Badge>
+                        <Button variant="outline" size="sm" icon={<MdContentCopy />} onClick={() => handleCopyActivityLink(act.id)}>
+                          Copiar Link
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </Card>
+              ))}
+
+              {studentActivities.length === 0 && <p className="empty-text">Nenhuma atividade atribuída.</p>}
             </div>
           </div>
         )}
@@ -695,6 +1335,64 @@ export default function StudentDetailPage() {
         </form>
       </Modal>
 
+      {/* Extra Lesson Modal */}
+      <Modal
+        isOpen={extraLessonModalOpen}
+        onClose={() => setExtraLessonModalOpen(false)}
+        title="Adicionar Aula Extra"
+        size="md"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setExtraLessonModalOpen(false)}>Cancelar</Button>
+            <Button isLoading={savingExtraLesson} onClick={handleSaveExtraLesson}>Agendar Aula Extra</Button>
+          </>
+        }
+      >
+        <form onSubmit={handleSaveExtraLesson} className="modal-form">
+          <Input
+            label="Título / Assunto da Aula Extra"
+            placeholder="Ex: Aula de Reforço / Tira-dúvidas"
+            value={extraLessonForm.title}
+            onChange={e => setExtraLessonForm({ ...extraLessonForm, title: e.target.value })}
+          />
+
+          <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '12px' }}>
+            <Input
+              label="Data *"
+              type="date"
+              value={extraLessonForm.date}
+              onChange={e => setExtraLessonForm({ ...extraLessonForm, date: e.target.value })}
+              required
+            />
+            <Input
+              label="Horário Início *"
+              type="time"
+              value={extraLessonForm.startTime}
+              onChange={e => setExtraLessonForm({ ...extraLessonForm, startTime: e.target.value })}
+              required
+            />
+            <Input
+              label="Horário Fim *"
+              type="time"
+              value={extraLessonForm.endTime}
+              onChange={e => setExtraLessonForm({ ...extraLessonForm, endTime: e.target.value })}
+              required
+            />
+          </div>
+
+          <div className="input-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label className="input-label" style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Observações / Anotações</label>
+            <textarea
+              className="input-field textarea-field"
+              placeholder="Conteúdo planejado para esta aula extra..."
+              value={extraLessonForm.notes}
+              onChange={e => setExtraLessonForm({ ...extraLessonForm, notes: e.target.value })}
+              rows={3}
+            />
+          </div>
+        </form>
+      </Modal>
+
       {/* Edit Lesson Modal */}
       {selectedLesson && (
         <Modal
@@ -714,11 +1412,28 @@ export default function StudentDetailPage() {
               <span className="detail-label">Aluno:</span>
               <strong className="detail-value">{student.name}</strong>
             </div>
-            <div className="detail-row">
-              <span className="detail-label">Data/Hora:</span>
-              <span className="detail-value">
-                {format(new Date(selectedLesson.scheduledAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-              </span>
+            <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+              <Input
+                label="Data *"
+                type="date"
+                value={lessonDate}
+                onChange={e => setLessonDate(e.target.value)}
+                required
+              />
+              <Input
+                label="Início *"
+                type="time"
+                value={lessonStartTime}
+                onChange={e => setLessonStartTime(e.target.value)}
+                required
+              />
+              <Input
+                label="Fim *"
+                type="time"
+                value={lessonEndTime}
+                onChange={e => setLessonEndTime(e.target.value)}
+                required
+              />
             </div>
 
             <div className="input-group">
@@ -881,6 +1596,292 @@ export default function StudentDetailPage() {
             />
           </div>
         </form>
+      </Modal>
+
+      {/* Edit Student Modal */}
+      <Modal
+        isOpen={editStudentModalOpen}
+        onClose={() => setEditStudentModalOpen(false)}
+        title="Editar Aluno"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setEditStudentModalOpen(false)}>Cancelar</Button>
+            <Button isLoading={savingStudent} onClick={handleSaveEditStudent}>Salvar</Button>
+          </>
+        }
+      >
+        <form onSubmit={handleSaveEditStudent} className="modal-form">
+          <Input
+            label="Nome *"
+            placeholder="Nome completo"
+            value={editStudentForm.name}
+            onChange={e => setEditStudentForm({ ...editStudentForm, name: e.target.value })}
+            required
+          />
+
+          <div className="form-row">
+            <Input
+              label="Data da Primeira Aula"
+              type="date"
+              value={editStudentForm.firstClassDate}
+              onChange={e => setEditStudentForm({ ...editStudentForm, firstClassDate: e.target.value })}
+            />
+            <Input
+              label="Data de Nascimento"
+              type="date"
+              value={editStudentForm.birthDate}
+              onChange={e => setEditStudentForm({ ...editStudentForm, birthDate: e.target.value })}
+            />
+          </div>
+
+          {calculateAge(editStudentForm.birthDate) !== null && calculateAge(editStudentForm.birthDate)! < 18 && (
+            <div className="guardian-fields-wrap animate-fadeIn" style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '12px', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', margin: '8px 0' }}>
+              <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--accent-primary)' }}>
+                👨‍👩‍👧 Aluno menor de 18 anos ({calculateAge(editStudentForm.birthDate)} anos) - Dados do Responsável
+              </span>
+              <div className="form-row">
+                <Input
+                  label="Nome do Responsável *"
+                  placeholder="Nome do pai, mãe ou tutor"
+                  value={editStudentForm.guardianName}
+                  onChange={e => setEditStudentForm({ ...editStudentForm, guardianName: e.target.value })}
+                  required
+                />
+                <Input
+                  label="Telefone do Responsável *"
+                  placeholder="(11) 99999-9999"
+                  value={editStudentForm.guardianPhone}
+                  onChange={e => setEditStudentForm({ ...editStudentForm, guardianPhone: e.target.value })}
+                  required
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="form-row">
+            <Input
+              label="Telefone do Aluno"
+              placeholder="(11) 99999-9999"
+              value={editStudentForm.phone}
+              onChange={e => setEditStudentForm({ ...editStudentForm, phone: e.target.value })}
+            />
+            <Input
+              label="Valor da Mensalidade (R$)"
+              type="number"
+              placeholder="Ex: 350.00"
+              value={editStudentForm.monthlyPrice}
+              onChange={e => setEditStudentForm({ ...editStudentForm, monthlyPrice: e.target.value })}
+            />
+          </div>
+
+          <div className="form-row">
+            <div className="input-group">
+              <label className="input-label">Matéria *</label>
+              <select
+                className="input-field"
+                value={editStudentForm.subjectId}
+                onChange={e => handleEditStudentSubjectChange(e.target.value)}
+                required
+              >
+                <option value="">Selecione...</option>
+                {subjectsList.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+            </div>
+            <div className="input-group">
+              <label className="input-label">Nível *</label>
+              <select
+                className="input-field"
+                value={editStudentForm.levelId}
+                onChange={e => setEditStudentForm({ ...editStudentForm, levelId: e.target.value })}
+                required
+              >
+                <option value="">Selecione...</option>
+                {formLevelsList.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <div className="input-group">
+            <label className="input-label">Status *</label>
+            <select
+              className="input-field"
+              value={editStudentForm.isActive}
+              onChange={e => setEditStudentForm({ ...editStudentForm, isActive: e.target.value })}
+              required
+            >
+              <option value="true">Ativo</option>
+              <option value="false">Arquivado</option>
+            </select>
+          </div>
+
+          {/* Conditional field for archived student last class date */}
+          {editStudentForm.isActive === 'false' && (
+            <div className="animate-fadeIn">
+              <Input
+                label="Data da Última Aula *"
+                type="date"
+                value={editStudentForm.lastClassDate}
+                onChange={e => setEditStudentForm({ ...editStudentForm, lastClassDate: e.target.value })}
+                required
+              />
+            </div>
+          )}
+
+          <div className="input-group">
+            <label className="input-label">Observação</label>
+            <textarea
+              className="input-field textarea-field"
+              placeholder="Notas sobre o aluno..."
+              value={editStudentForm.observation}
+              onChange={e => setEditStudentForm({ ...editStudentForm, observation: e.target.value })}
+              rows={3}
+            />
+          </div>
+        </form>
+      </Modal>
+
+      {/* Modal de Atribuição de Atividade */}
+      <Modal
+        isOpen={assignModalOpen}
+        onClose={() => setAssignModalOpen(false)}
+        title="Atribuir Atividade Online"
+        size="sm"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setAssignModalOpen(false)}>Cancelar</Button>
+            <Button isLoading={assigning} onClick={handleAssignActivity}>Atribuir</Button>
+          </>
+        }
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+            Selecione uma das provas ou exercícios criados no seu banco de modelos para atribuir a este aluno. O sistema irá gerar um link público único para ele responder.
+          </p>
+          <div className="input-group" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <label className="input-label" style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)' }}>Modelo de Atividade</label>
+            <select
+              className="select-field"
+              style={{
+                height: '40px',
+                background: 'var(--bg-tertiary)',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--border-color)',
+                borderRadius: 'var(--radius-md)',
+                padding: '0 12px',
+                outline: 'none'
+              }}
+              value={selectedTemplateId}
+              onChange={e => setSelectedTemplateId(e.target.value)}
+            >
+              <option value="">Selecione um modelo...</option>
+              {templates.map(t => (
+                <option key={t.id} value={t.id}>{t.title} ({t.type === 'exam' ? 'Prova' : 'Exercício'})</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal de Revisão da Atividade */}
+      <Modal
+        isOpen={reviewModalOpen}
+        onClose={() => setReviewModalOpen(false)}
+        title={reviewActivity ? `Revisão: ${reviewActivity.title}` : 'Revisão da Atividade'}
+        size="md"
+        footer={<Button onClick={() => setReviewModalOpen(false)}>Fechar Revisão</Button>}
+      >
+        {reviewActivity && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxHeight: '70vh', overflowY: 'auto', paddingRight: '4px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-tertiary)', padding: '12px 16px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+              <div>
+                <strong style={{ display: 'block', fontSize: '14px', color: 'var(--text-primary)' }}>Aluno: {reviewActivity.studentName}</strong>
+                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Status: Concluída em {reviewActivity.completedAt && format(new Date(reviewActivity.completedAt), 'dd/MM/yyyy HH:mm')}</span>
+              </div>
+              <Badge variant="success">
+                Nota: {reviewActivity.grade?.toFixed(1)} / {reviewActivity.maxGrade.toFixed(1)}
+              </Badge>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {reviewActivity.answers.map((q, idx) => (
+                <div key={q.id} style={{ border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)', padding: '16px', background: 'var(--bg-secondary)' }}>
+                  <h5 style={{ color: 'var(--accent-secondary)', fontSize: '12px', textTransform: 'uppercase', marginBottom: '4px' }}>Questão {idx + 1}</h5>
+                  <p style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-primary)', marginBottom: '16px' }}>{q.questionText}</p>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {[
+                      { key: 'A', text: q.optionA },
+                      { key: 'B', text: q.optionB },
+                      { key: 'C', text: q.optionC },
+                      { key: 'D', text: q.optionD }
+                    ].map(opt => {
+                      const isCorrect = q.correctOption === opt.key;
+                      const isSelected = q.selectedOption === opt.key;
+
+                      let itemStyle: React.CSSProperties = {
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        padding: '10px 14px',
+                        borderRadius: 'var(--radius-md)',
+                        border: '1px solid var(--border-color)',
+                        background: 'var(--bg-tertiary)',
+                        fontSize: '13px',
+                        color: 'var(--text-primary)'
+                      };
+
+                      if (isSelected) {
+                        if (isCorrect) {
+                          itemStyle.border = '1px solid var(--success)';
+                          itemStyle.background = 'var(--success-light)';
+                          itemStyle.color = 'var(--success)';
+                        } else {
+                          itemStyle.border = '1px solid var(--danger)';
+                          itemStyle.background = 'var(--danger-light)';
+                          itemStyle.color = 'var(--danger)';
+                        }
+                      } else if (isCorrect) {
+                        itemStyle.border = '1px dashed var(--success)';
+                        itemStyle.background = 'rgba(16, 185, 129, 0.05)';
+                      }
+
+                      return (
+                        <div key={opt.key} style={itemStyle}>
+                          <span style={{
+                            width: '24px',
+                            height: '24px',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontWeight: 700,
+                            fontSize: '11px',
+                            background: isSelected ? (isCorrect ? 'var(--success)' : 'var(--danger)') : 'var(--bg-primary)',
+                            color: isSelected ? 'white' : 'var(--text-primary)',
+                            border: '1px solid var(--border-color)'
+                          }}>
+                            {opt.key}
+                          </span>
+                          <span style={{ flex: 1 }}>{opt.text}</span>
+                          {isSelected && (
+                            <span style={{ fontWeight: 700, fontSize: '11px' }}>
+                              {isCorrect ? '✓ Correta' : '✗ Marcada'}
+                            </span>
+                          )}
+                          {!isSelected && isCorrect && (
+                            <span style={{ fontWeight: 600, fontSize: '11px', color: 'var(--success)' }}>
+                              Gabarito
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

@@ -194,9 +194,12 @@ public class DashboardService : IDashboardService
         _mapper = mapper;
     }
 
-    public async Task<DashboardDto> GetDashboardAsync(Guid professorId)
+    public async Task<DashboardDto> GetDashboardAsync(Guid professorId, int? month = null, int? year = null)
     {
         var now = DateTime.UtcNow;
+        var selectedYear = year ?? now.Year;
+        var selectedMonth = month ?? now.Month;
+
         var todayStart = now.Date;
         var todayEnd = todayStart.AddDays(1).AddTicks(-1);
 
@@ -211,7 +214,8 @@ public class DashboardService : IDashboardService
 
         // Fetch today's lessons
         var todayLessons = await _lessonRepo.Query()
-            .Include(l => l.Student)
+            .Include(l => l.Student).ThenInclude(s => s.Subject)
+            .Include(l => l.Student).ThenInclude(s => s.Level)
             .Where(l => l.ProfessorId == professorId && l.ScheduledAt >= todayStart && l.ScheduledAt <= todayEnd && l.Status == "scheduled" && !l.IsDeleted)
             .OrderBy(l => l.ScheduledAt)
             .ToListAsync();
@@ -221,22 +225,33 @@ public class DashboardService : IDashboardService
         if (todayLessons.Count == 0)
         {
             nextUpcomingLesson = await _lessonRepo.Query()
-                .Include(l => l.Student)
+                .Include(l => l.Student).ThenInclude(s => s.Subject)
+                .Include(l => l.Student).ThenInclude(s => s.Level)
                 .Where(l => l.ProfessorId == professorId && l.ScheduledAt > todayEnd && l.Status == "scheduled" && !l.IsDeleted)
                 .OrderBy(l => l.ScheduledAt)
                 .FirstOrDefaultAsync();
         }
 
-        // Calculate birthday students
-        var currentMonth = now.Month;
+        // Calculate birthday students with resilient timezone handling
         var birthdayStudents = students
-            .Where(s => s.BirthDate.HasValue && s.BirthDate.Value.Month == currentMonth && s.IsActive)
-            .Select(s => new BirthdayStudentDto
+            .Where(s => s.BirthDate.HasValue && s.IsActive)
+            .Select(s => {
+                var rawDate = s.BirthDate.Value;
+                // If saved at night (e.g. 21:00, 22:00, 23:00) due to UTC-3 shift on previous systems, shift it to next day
+                var adjustedDate = rawDate.Hour >= 21 ? rawDate.AddHours(4) : rawDate;
+                return new {
+                    StudentId = s.Id,
+                    StudentName = s.Name,
+                    AdjustedDate = adjustedDate
+                };
+            })
+            .Where(x => x.AdjustedDate.Month == selectedMonth)
+            .Select(x => new BirthdayStudentDto
             {
-                StudentId = s.Id,
-                StudentName = s.Name,
-                BirthDay = s.BirthDate.Value.Day,
-                Age = CalculateAge(s.BirthDate.Value, now)
+                StudentId = x.StudentId,
+                StudentName = x.StudentName,
+                BirthDay = x.AdjustedDate.Day,
+                Age = CalculateAge(x.AdjustedDate, now)
             })
             .OrderBy(b => b.BirthDay)
             .ToList();
@@ -252,18 +267,119 @@ public class DashboardService : IDashboardService
             ? (int)Math.Round((double)completedLessons / totalAttendanceLessons * 100) 
             : 100;
 
+        // Fetch all professor lessons for calculations
+        var allProfessorLessons = await _lessonRepo.Query()
+            .Where(l => l.ProfessorId == professorId && !l.IsDeleted)
+            .ToListAsync();
+
+        // Monthly filter (selectedMonth & selectedYear)
+        var startOfMonth = new DateTime(selectedYear, selectedMonth, 1, 0, 0, 0, DateTimeKind.Utc);
+        var endOfMonth = startOfMonth.AddMonths(1);
+        var monthlyLessons = allProfessorLessons
+            .Where(l => l.ScheduledAt >= startOfMonth && l.ScheduledAt < endOfMonth)
+            .ToList();
+
+        // Yearly filter (selectedYear)
+        var startOfYear = new DateTime(selectedYear, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        var endOfYear = startOfYear.AddYears(1);
+        var yearlyLessons = allProfessorLessons
+            .Where(l => l.ScheduledAt >= startOfYear && l.ScheduledAt < endOfYear)
+            .ToList();
+
+        int monthlyLessonsCount = monthlyLessons.Count(l => l.Status == null || !l.Status.Equals("cancelled", StringComparison.OrdinalIgnoreCase));
+        int yearlyLessonsCount = yearlyLessons.Count(l => l.Status == null || !l.Status.Equals("cancelled", StringComparison.OrdinalIgnoreCase));
+
+        double monthlyWorkloadHours = Math.Round(monthlyLessons.Where(l => l.Status == null || !l.Status.Equals("cancelled", StringComparison.OrdinalIgnoreCase)).Sum(l => l.DurationMinutes) / 60.0, 1);
+        double yearlyWorkloadHours = Math.Round(yearlyLessons.Where(l => l.Status == null || !l.Status.Equals("cancelled", StringComparison.OrdinalIgnoreCase)).Sum(l => l.DurationMinutes) / 60.0, 1);
+
+        var statusGroups = new[] { "completed", "cancelled", "holiday", "scheduled" };
+        var statusLabels = new Dictionary<string, string>
+        {
+            { "completed", "Aulas Dadas" },
+            { "cancelled", "Faltas / Canceladas" },
+            { "holiday", "Feriados / Recessos" },
+            { "scheduled", "Agendadas" }
+        };
+
+        var monthlyTotalCount = monthlyLessons.Count;
+        var monthlyLessonStatusStats = statusGroups.Select(status =>
+        {
+            var matching = monthlyLessons.Where(l => l.Status != null && l.Status.Equals(status, StringComparison.OrdinalIgnoreCase)).ToList();
+            var count = matching.Count;
+            var hours = Math.Round(matching.Sum(l => l.DurationMinutes) / 60.0, 1);
+            var percentage = monthlyTotalCount > 0 ? Math.Round((double)count / monthlyTotalCount * 100.0, 1) : 0;
+            return new LessonStatusStatDto
+            {
+                Status = status,
+                Label = statusLabels.GetValueOrDefault(status, status),
+                Count = count,
+                Hours = hours,
+                Percentage = percentage
+            };
+        }).ToList();
+
+        var yearlyTotalCount = yearlyLessons.Count;
+        var yearlyLessonStatusStats = statusGroups.Select(status =>
+        {
+            var matching = yearlyLessons.Where(l => l.Status != null && l.Status.Equals(status, StringComparison.OrdinalIgnoreCase)).ToList();
+            var count = matching.Count;
+            var hours = Math.Round(matching.Sum(l => l.DurationMinutes) / 60.0, 1);
+            var percentage = yearlyTotalCount > 0 ? Math.Round((double)count / yearlyTotalCount * 100.0, 1) : 0;
+            return new LessonStatusStatDto
+            {
+                Status = status,
+                Label = statusLabels.GetValueOrDefault(status, status),
+                Count = count,
+                Hours = hours,
+                Percentage = percentage
+            };
+        }).ToList();
+
         var subjects = await _subjectRepo.GetByProfessorIdAsync(professorId);
+
+        // Calculate Effectiveness Rate (completed vs (completed + cancelled + holiday + past scheduled))
+        var monthlyPastLessons = monthlyLessons
+            .Where(l => l.Status != null && (
+                l.Status.Equals("completed", StringComparison.OrdinalIgnoreCase) ||
+                l.Status.Equals("cancelled", StringComparison.OrdinalIgnoreCase) ||
+                l.Status.Equals("holiday", StringComparison.OrdinalIgnoreCase) ||
+                (l.Status.Equals("scheduled", StringComparison.OrdinalIgnoreCase) && l.ScheduledAt <= now)
+            ))
+            .ToList();
+        int monthlyCompletedCount = monthlyPastLessons.Count(l => l.Status!.Equals("completed", StringComparison.OrdinalIgnoreCase));
+        int monthlyTotalPastCount = monthlyPastLessons.Count;
+        int monthlyEffectivenessRate = monthlyTotalPastCount > 0 ? (int)Math.Round((double)monthlyCompletedCount / monthlyTotalPastCount * 100) : 100;
+
+        var yearlyPastLessons = yearlyLessons
+            .Where(l => l.Status != null && (
+                l.Status.Equals("completed", StringComparison.OrdinalIgnoreCase) ||
+                l.Status.Equals("cancelled", StringComparison.OrdinalIgnoreCase) ||
+                l.Status.Equals("holiday", StringComparison.OrdinalIgnoreCase) ||
+                (l.Status.Equals("scheduled", StringComparison.OrdinalIgnoreCase) && l.ScheduledAt <= now)
+            ))
+            .ToList();
+        int yearlyCompletedCount = yearlyPastLessons.Count(l => l.Status!.Equals("completed", StringComparison.OrdinalIgnoreCase));
+        int yearlyTotalPastCount = yearlyPastLessons.Count;
+        int yearlyEffectivenessRate = yearlyTotalPastCount > 0 ? (int)Math.Round((double)yearlyCompletedCount / yearlyTotalPastCount * 100) : 100;
 
         return new DashboardDto
         {
             TotalStudents = totalStudents,
             ActiveStudentsCount = activeCount,
             ArchivedStudentsCount = archivedCount,
+            MonthlyLessonsCount = monthlyLessonsCount,
+            YearlyLessonsCount = yearlyLessonsCount,
+            MonthlyWorkloadHours = monthlyWorkloadHours,
+            YearlyWorkloadHours = yearlyWorkloadHours,
             TodayLessons = _mapper.Map<List<LessonResponseDto>>(todayLessons),
             NextUpcomingLesson = nextUpcomingLesson != null ? _mapper.Map<LessonResponseDto>(nextUpcomingLesson) : null,
             BirthdayStudents = birthdayStudents,
             AverageAttendanceRate = averageAttendance,
-            SubjectStats = _mapper.Map<List<SubjectStatDto>>(subjects)
+            SubjectStats = _mapper.Map<List<SubjectStatDto>>(subjects),
+            MonthlyLessonStatusStats = monthlyLessonStatusStats,
+            YearlyLessonStatusStats = yearlyLessonStatusStats,
+            MonthlyEffectivenessRate = monthlyEffectivenessRate,
+            YearlyEffectivenessRate = yearlyEffectivenessRate
         };
     }
 
@@ -474,30 +590,35 @@ public class ScheduleService : IScheduleService
             }
         }
 
-        var baseDate = student != null ? student.CreatedAt.Date : DateTime.Today;
-        var today = DateTime.Today;
-        var startCheckingDate = baseDate > today ? baseDate : today;
+        var baseDate = (student != null && student.FirstClassDate.HasValue) 
+            ? student.FirstClassDate.Value.Date 
+            : schedule.ValidFrom.Date;
 
-        for (int i = 0; i < 28; i++)
+        var endOfYear = schedule.ValidUntil.HasValue 
+            ? schedule.ValidUntil.Value.Date 
+            : new DateTime(baseDate.Year, 12, 31);
+
+        if ((endOfYear - baseDate).TotalDays < 90)
         {
-            var date = startCheckingDate.AddDays(i);
+            endOfYear = new DateTime(baseDate.Year + 1, 12, 31);
+        }
+
+        for (var date = baseDate; date <= endOfYear; date = date.AddDays(1))
+        {
             if (holidayDates.Contains(date.Date)) continue;
 
             if ((int)date.DayOfWeek == dto.DayOfWeek)
             {
                 var lessonDate = date.Add(schedule.StartTime);
                 
-                // Do not schedule classes in the past
-                if (lessonDate <= DateTime.UtcNow)
-                {
-                    continue;
-                }
-
                 // Check schedule validity range
                 if (lessonDate.Date < schedule.ValidFrom.Date || (schedule.ValidUntil.HasValue && lessonDate.Date > schedule.ValidUntil.Value.Date))
                 {
                     continue;
                 }
+
+                var exists = await _lessonRepo.Query().AnyAsync(l => l.StudentId == dto.StudentId && l.ScheduledAt == lessonDate && !l.IsDeleted);
+                if (exists) continue;
 
                 var lesson = new Lesson
                 {
@@ -540,7 +661,7 @@ public class ScheduleService : IScheduleService
             await _lessonRepo.DeleteAsync(lesson);
         }
 
-        // Regenerate future lessons for the next 4 weeks based on new schedule configuration
+        // Regenerate future lessons until end of year based on new schedule configuration
         var student = await _scheduleRepo.Query()
             .Where(s => s.StudentId == schedule.StudentId)
             .Select(s => s.Student)
@@ -558,29 +679,35 @@ public class ScheduleService : IScheduleService
             }
         }
 
-        var baseDate = student != null ? student.CreatedAt.Date : DateTime.Today;
-        var startCheckingDate = baseDate > today ? baseDate : today;
+        var updateBaseDate = (student != null && student.FirstClassDate.HasValue) 
+            ? (student.FirstClassDate.Value.Date > today ? student.FirstClassDate.Value.Date : today)
+            : (schedule.ValidFrom.Date > today ? schedule.ValidFrom.Date : today);
 
-        for (int i = 0; i < 28; i++)
+        var updateEndOfYear = schedule.ValidUntil.HasValue 
+            ? schedule.ValidUntil.Value.Date 
+            : new DateTime(updateBaseDate.Year, 12, 31);
+
+        if ((updateEndOfYear - updateBaseDate).TotalDays < 90)
         {
-            var date = startCheckingDate.AddDays(i);
+            updateEndOfYear = new DateTime(updateBaseDate.Year + 1, 12, 31);
+        }
+
+        for (var date = updateBaseDate; date <= updateEndOfYear; date = date.AddDays(1))
+        {
             if (holidayDates.Contains(date.Date)) continue;
 
             if ((int)date.DayOfWeek == schedule.DayOfWeek)
             {
                 var lessonDate = date.Add(schedule.StartTime);
                 
-                // Do not schedule classes in the past
-                if (lessonDate <= DateTime.UtcNow)
-                {
-                    continue;
-                }
-
                 // Check schedule validity range
                 if (lessonDate.Date < schedule.ValidFrom.Date || (schedule.ValidUntil.HasValue && lessonDate.Date > schedule.ValidUntil.Value.Date))
                 {
                     continue;
                 }
+
+                var exists = await _lessonRepo.Query().AnyAsync(l => l.StudentId == schedule.StudentId && l.ScheduledAt == lessonDate && !l.IsDeleted);
+                if (exists) continue;
 
                 var lesson = new Lesson
                 {
@@ -790,6 +917,8 @@ public class FinanceService : IFinanceService
 
         // Target month student payment statuses
         var students = await _studentRepo.Query()
+            .Include(s => s.Subject)
+            .Include(s => s.Level)
             .Include(s => s.MonthlyPayments.Where(p => !p.IsDeleted))
             .Where(s => s.ProfessorId == professorId)
             .ToListAsync();
@@ -797,6 +926,13 @@ public class FinanceService : IFinanceService
         var paymentStatuses = new List<StudentPaymentStatusDto>();
         foreach (var student in students)
         {
+            // Skip student if target month/year is before their first class date (or creation date)
+            var startDate = student.FirstClassDate ?? student.CreatedAt;
+            if (targetYear < startDate.Year || (targetYear == startDate.Year && targetMonth < startDate.Month))
+            {
+                continue;
+            }
+
             // If student is inactive, hide them from monthly status if target month is after their LastClassDate
             if (!student.IsActive && student.LastClassDate.HasValue)
             {
@@ -812,8 +948,11 @@ public class FinanceService : IFinanceService
 
             paymentStatuses.Add(new StudentPaymentStatusDto
             {
+                PaymentId = currentPayment?.Id,
                 StudentId = student.Id,
                 StudentName = student.Name,
+                SubjectName = student.Subject?.Name ?? string.Empty,
+                LevelName = student.Level?.Name ?? string.Empty,
                 MonthlyPrice = student.MonthlyPrice,
                 IsPaid = currentPayment != null,
                 AmountPaid = currentPayment?.Amount ?? 0

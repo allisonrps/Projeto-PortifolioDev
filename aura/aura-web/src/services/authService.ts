@@ -8,6 +8,7 @@ export const authService = {
     api.post<AuthResponse>('/auth/register', { name, email, password, confirmPassword }),
   getProfile: () => api.get<Professor>('/auth/profile'),
   updateProfile: (data: Partial<Professor>) => api.put<Professor>('/auth/profile', data),
+  changePassword: (data: any) => api.post('/auth/change-password', data),
   uploadPhoto: (file: File) => {
     const fd = new FormData();
     fd.append('file', file);

@@ -44,6 +44,7 @@ public static class DependencyInjection
         services.AddScoped<IScheduleService, ScheduleService>();
         services.AddScoped<IHolidayService, HolidayService>();
         services.AddScoped<IFinanceService, FinanceService>();
+        services.AddScoped<IActivityService, ActivityService>();
 
         // AutoMapper
         services.AddAutoMapper(cfg =>

@@ -5,6 +5,7 @@ using Aura.Application.DTOs.Students;
 using Aura.Application.DTOs.Subjects;
 using Aura.Application.DTOs.Dashboard;
 using Aura.Application.DTOs.Schedule;
+using Aura.Application.DTOs.Activity;
 
 namespace Aura.Application.Mappings;
 
@@ -52,7 +53,9 @@ public class MappingProfile : Profile
 
         // Lesson
         CreateMap<Lesson, LessonResponseDto>()
-            .ForMember(d => d.StudentName, o => o.MapFrom(s => s.Student != null ? s.Student.Name : null));
+            .ForMember(d => d.StudentName, o => o.MapFrom(s => s.Student != null ? s.Student.Name : null))
+            .ForMember(d => d.SubjectName, o => o.MapFrom(s => s.Student != null && s.Student.Subject != null ? s.Student.Subject.Name : null))
+            .ForMember(d => d.LevelName, o => o.MapFrom(s => s.Student != null && s.Student.Level != null ? s.Student.Level.Name : null));
         CreateMap<CreateLessonDto, Lesson>();
         CreateMap<UpdateLessonDto, Lesson>()
             .ForAllMembers(o => o.Condition((src, dest, srcMember) => srcMember != null));
@@ -91,5 +94,21 @@ public class MappingProfile : Profile
             .ForMember(d => d.SubjectId, o => o.MapFrom(s => s.Id))
             .ForMember(d => d.SubjectName, o => o.MapFrom(s => s.Name))
             .ForMember(d => d.StudentCount, o => o.MapFrom(s => s.Students != null ? s.Students.Count : 0));
+
+        // Interactive Activities
+        CreateMap<TemplateActivity, TemplateResponseDto>()
+            .ForMember(d => d.SubjectName, o => o.MapFrom(s => s.Subject != null ? s.Subject.Name : null))
+            .ForMember(d => d.LevelName, o => o.MapFrom(s => s.Level != null ? s.Level.Name : null))
+            .ForMember(d => d.Questions, o => o.MapFrom(s => s.Questions));
+
+        CreateMap<TemplateQuestion, QuestionResponseDto>();
+
+        CreateMap<StudentActivity, StudentActivityResponseDto>()
+            .ForMember(d => d.StudentName, o => o.MapFrom(s => s.Student != null ? s.Student.Name : null))
+            .ForMember(d => d.Title, o => o.MapFrom(s => s.TemplateActivity != null ? s.TemplateActivity.Title : null))
+            .ForMember(d => d.Type, o => o.MapFrom(s => s.TemplateActivity != null ? s.TemplateActivity.Type : null))
+            .ForMember(d => d.Answers, o => o.MapFrom(s => s.Answers));
+
+        CreateMap<StudentAnswer, StudentAnswerResponseDto>();
     }
 }

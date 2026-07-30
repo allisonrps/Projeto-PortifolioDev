@@ -3,6 +3,7 @@
   border-radius: var(--radius-lg); padding: var(--space-lg);
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   transition: all var(--transition-base);
+  width: 100%; max-width: 100%; box-sizing: border-box; overflow: hidden;
 }
 .card-elevated { box-shadow: var(--shadow-md); }
 .card-outlined { border-width: 1.5px; }
@@ -15,3 +16,9 @@
 .card-accent-warning { border-top: 3px solid var(--warning); }
 .card-hoverable.card-accent-primary:hover { box-shadow: var(--shadow-glow-primary); }
 .card-hoverable.card-accent-secondary:hover { box-shadow: var(--shadow-glow-secondary); }
+
+@media (max-width: 576px) {
+  .card {
+    padding: 14px !important;
+  }
+}

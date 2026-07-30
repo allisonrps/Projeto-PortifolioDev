@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { MdTrendingUp, MdAttachMoney, MdAccountBalanceWallet, MdChevronRight, MdCalendarToday } from 'react-icons/md';
+import { MdTrendingUp, MdAttachMoney, MdAccountBalanceWallet, MdCalendarToday, MdCheckCircle, MdSchedule } from 'react-icons/md';
 import { useNavigate } from 'react-router-dom';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import Avatar from '../../components/ui/Avatar';
-import { financeService } from '../../services/dataServices';
+import { financeService, paymentService } from '../../services/dataServices';
 import type { FinanceData } from '../../types';
+import toast from 'react-hot-toast';
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip,
   PieChart, Pie, Cell, Legend
@@ -54,6 +55,71 @@ export default function FinancePage() {
     loadData();
   }, [selectedMonth, selectedYear]);
 
+  const handleTogglePaymentStatus = async (item: FinanceData['studentPaymentStatuses'][0]) => {
+    if (!data) return;
+    const previousStatuses = [...data.studentPaymentStatuses];
+
+    // Optimistic UI Update
+    setData(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        studentPaymentStatuses: prev.studentPaymentStatuses.map(s => {
+          if (s.studentId === item.studentId) {
+            return {
+              ...s,
+              isPaid: !item.isPaid,
+              paymentId: item.isPaid ? null : `temp-${Date.now()}`
+            };
+          }
+          return s;
+        })
+      };
+    });
+
+    try {
+      if (item.isPaid && item.paymentId) {
+        await paymentService.delete(item.paymentId);
+      } else {
+        const res = await paymentService.create({
+          studentId: item.studentId,
+          month: selectedMonth,
+          year: selectedYear,
+          amount: item.monthlyPrice || 0,
+          isPaid: true,
+          paidAt: new Date().toISOString()
+        });
+
+        // Set the actual paymentId from response
+        setData(prev => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            studentPaymentStatuses: prev.studentPaymentStatuses.map(s => {
+              if (s.studentId === item.studentId) {
+                return { ...s, paymentId: res.data.id };
+              }
+              return s;
+            })
+          };
+        });
+      }
+      // Silently refresh summary stats in background
+      const freshData = await financeService.getData(selectedMonth, selectedYear);
+      setData(freshData.data);
+    } catch {
+      // Rollback on error
+      setData(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          studentPaymentStatuses: previousStatuses
+        };
+      });
+      toast.error('Erro ao atualizar status do pagamento.');
+    }
+  };
+
   if (loading || !data) return <div className="page-loading"><span className="loading-spinner" /></div>;
 
   const monthLabel = MONTHS_LIST.find(m => m.value === selectedMonth)?.label || '';
@@ -88,7 +154,7 @@ export default function FinancePage() {
         </div>
 
         {/* Period Selector Controls */}
-        <div className="period-selectors animate-fadeIn">
+        <div className="period-selectors">
           <div className="selector-wrap">
             <MdCalendarToday className="selector-icon" />
             <select
@@ -216,15 +282,12 @@ export default function FinancePage() {
               <tr>
                 <th>Aluno</th>
                 <th>Mensalidade</th>
-                <th>Status</th>
-                <th>Valor Pago</th>
-                <th>Ações</th>
               </tr>
             </thead>
             <tbody>
               {data?.studentPaymentStatuses.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="empty-table-row">
+                  <td colSpan={2} className="empty-table-row">
                     Nenhum aluno cadastrado para exibir pagamentos.
                   </td>
                 </tr>
@@ -232,32 +295,53 @@ export default function FinancePage() {
                 data?.studentPaymentStatuses.map(item => (
                   <tr key={item.studentId}>
                     <td>
-                      <div className="student-profile-cell">
-                        <Avatar name={item.studentName} size="sm" />
-                        <span className="profile-cell-name">{item.studentName}</span>
+                      <div
+                        className="student-profile-cell clickable"
+                        onClick={() => navigate(`/students/${item.studentId}`)}
+                        title="Ver perfil do aluno"
+                      >
+                        <Avatar name={item.studentName} size="sm" shape="square" />
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span className="profile-cell-name">{item.studentName}</span>
+                          {(item.subjectName || item.levelName) && (
+                            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                              {item.subjectName}{item.levelName ? ` - ${item.levelName}` : ''}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td>
-                      <span className="monthly-price-badge">R$ {item.monthlyPrice.toFixed(2)}</span>
-                    </td>
-                    <td>
-                      {item.isPaid ? (
-                        <Badge variant="success">PAGO</Badge>
-                      ) : (
-                        <Badge variant="danger">PENDENTE</Badge>
-                      )}
-                    </td>
-                    <td>
-                      <span className={`paid-value-cell ${item.isPaid ? 'is-paid-val' : 'is-pending-val'}`}>
-                        R$ {item.amountPaid.toFixed(2)}
-                      </span>
-                    </td>
-                    <td>
                       <button
-                        className="manage-payment-btn"
-                        onClick={() => navigate(`/students/${item.studentId}`, { state: { activeTab: 'payments' } })}
+                        className={`status-toggle-btn ${item.isPaid ? 'is-paid' : 'is-pending'}`}
+                        onClick={() => handleTogglePaymentStatus(item)}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '6px 12px',
+                          borderRadius: '8px',
+                          border: '1px solid var(--border-color)',
+                          background: item.isPaid ? 'var(--success-light)' : 'var(--danger-light)',
+                          color: item.isPaid ? 'var(--success)' : 'var(--danger)',
+                          cursor: 'pointer',
+                          fontWeight: 700,
+                          fontSize: '14px',
+                          transition: 'all var(--transition-fast)'
+                        }}
+                        title={item.isPaid ? "Clique para marcar como Pendente" : "Clique para marcar como Pago"}
                       >
-                        Gerenciar Mensalidade <MdChevronRight className="btn-chevron-icon" />
+                        {item.isPaid ? (
+                          <>
+                            <MdCheckCircle className="status-icon success-icon" style={{ fontSize: '18px' }} />
+                            <span>R$ {item.monthlyPrice.toFixed(2)}</span>
+                          </>
+                        ) : (
+                          <>
+                            <MdSchedule className="status-icon warning-icon" style={{ fontSize: '18px' }} />
+                            <span>R$ {item.monthlyPrice.toFixed(2)}</span>
+                          </>
+                        )}
                       </button>
                     </td>
                   </tr>

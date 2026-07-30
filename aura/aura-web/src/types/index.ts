@@ -18,9 +18,12 @@ export interface Student {
   name: string;
   birthDate?: string;
   phone?: string;
+  guardianName?: string;
+  guardianPhone?: string;
   observation?: string;
   monthlyPrice: number;
   isActive: boolean;
+  firstClassDate?: string | null;
   lastClassDate?: string | null;
   attendanceRate: number;
   photoUrl?: string;
@@ -60,6 +63,8 @@ export interface Lesson {
   status: 'scheduled' | 'completed' | 'cancelled' | 'holiday';
   notes?: string;
   studentName?: string;
+  subjectName?: string;
+  levelName?: string;
   createdAt: string;
 }
 
@@ -120,15 +125,31 @@ export interface Holiday {
   vacationEnd?: string;
 }
 
+export interface LessonStatusStat {
+  status: string;
+  label: string;
+  count: number;
+  hours: number;
+  percentage: number;
+}
+
 export interface DashboardData {
   totalStudents: number;
   activeStudentsCount: number;
   archivedStudentsCount: number;
+  monthlyLessonsCount: number;
+  yearlyLessonsCount: number;
+  monthlyWorkloadHours: number;
+  yearlyWorkloadHours: number;
   todayLessons: Lesson[];
   nextUpcomingLesson: Lesson | null;
   birthdayStudents: BirthdayStudent[];
   averageAttendanceRate: number;
   subjectStats: SubjectStat[];
+  monthlyLessonStatusStats: LessonStatusStat[];
+  yearlyLessonStatusStats: LessonStatusStat[];
+  monthlyEffectivenessRate: number;
+  yearlyEffectivenessRate: number;
 }
 
 export interface BirthdayStudent {
@@ -153,8 +174,11 @@ export interface FinanceData {
     amount: number;
   }[];
   studentPaymentStatuses: {
+    paymentId?: string | null;
     studentId: string;
     studentName: string;
+    subjectName?: string;
+    levelName?: string;
     monthlyPrice: number;
     isPaid: boolean;
     amountPaid: number;
@@ -170,4 +194,52 @@ export interface SubjectStat {
 export interface AuthResponse {
   token: string;
   professor: Professor;
+}
+
+export interface TemplateQuestion {
+  id: string;
+  questionText: string;
+  optionA: string;
+  optionB: string;
+  optionC: string;
+  optionD: string;
+  correctOption: string;
+}
+
+export interface TemplateActivity {
+  id: string;
+  title: string;
+  subjectId: string;
+  subjectName: string;
+  levelId: string;
+  levelName: string;
+  type: 'exam' | 'exercise';
+  createdAt: string;
+  questions: TemplateQuestion[];
+}
+
+export interface StudentAnswer {
+  id: string;
+  questionText: string;
+  optionA: string;
+  optionB: string;
+  optionC: string;
+  optionD: string;
+  correctOption: string;
+  selectedOption?: string | null;
+}
+
+export interface StudentActivity {
+  id: string;
+  studentId: string;
+  studentName: string;
+  templateActivityId: string;
+  title: string;
+  type: 'exam' | 'exercise';
+  scheduledAt: string;
+  completedAt?: string | null;
+  grade?: number | null;
+  maxGrade: number;
+  status: 'pending' | 'completed';
+  answers: StudentAnswer[];
 }

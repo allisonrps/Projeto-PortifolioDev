@@ -10,8 +10,11 @@ public class Student : BaseEntity
     public string? Phone { get; set; }
     public string? Observation { get; set; }
     public string? PhotoUrl { get; set; }
+    public string? GuardianName { get; set; }
+    public string? GuardianPhone { get; set; }
     public decimal MonthlyPrice { get; set; } = 0;
     public bool IsActive { get; set; } = true;
+    public DateTime? FirstClassDate { get; set; }
     public DateTime? LastClassDate { get; set; }
 
     public virtual Professor Professor { get; set; } = null!;

@@ -45,18 +45,39 @@ public class StudentService : IStudentService
 
     public async Task<StudentResponseDto> CreateAsync(Guid professorId, CreateStudentDto dto)
     {
-        // Validate subject exists
-        var subject = await _subjectRepo.GetByIdAsync(dto.SubjectId)
-            ?? throw new ArgumentException("Matéria não encontrada. Cadastre uma matéria primeiro.");
+        // Check if Subject exists or auto-assign/create default
+        var subject = dto.SubjectId != Guid.Empty ? await _subjectRepo.GetByIdAsync(dto.SubjectId) : null;
+        if (subject == null)
+        {
+            var professorSubjects = await _subjectRepo.GetByProfessorIdAsync(professorId);
+            subject = professorSubjects.FirstOrDefault();
+            if (subject == null)
+            {
+                subject = new Subject { ProfessorId = professorId, Name = "Geral" };
+                await _subjectRepo.AddAsync(subject);
+            }
+            dto.SubjectId = subject.Id;
+        }
 
-        // Validate level exists
-        var level = await _levelRepo.GetByIdAsync(dto.LevelId)
-            ?? throw new ArgumentException("Nível não encontrado. Cadastre um nível primeiro.");
+        // Check if Level exists or auto-assign/create default
+        var level = dto.LevelId != Guid.Empty ? await _levelRepo.GetByIdAsync(dto.LevelId) : null;
+        if (level == null)
+        {
+            var subjectLevels = await _levelRepo.GetBySubjectIdAsync(dto.SubjectId);
+            level = subjectLevels.FirstOrDefault();
+            if (level == null)
+            {
+                level = new Level { SubjectId = dto.SubjectId, Name = "Geral" };
+                await _levelRepo.AddAsync(level);
+            }
+            dto.LevelId = level.Id;
+        }
 
         var count = await _studentRepo.CountByProfessorIdAsync(professorId);
 
         var student = _mapper.Map<Student>(dto);
         student.ProfessorId = professorId;
+        student.FirstClassDate = dto.FirstClassDate;
         await _studentRepo.AddAsync(student);
 
         // Reload with includes
@@ -74,11 +95,14 @@ public class StudentService : IStudentService
         if (dto.Name != null) student.Name = dto.Name;
         if (dto.BirthDate.HasValue) student.BirthDate = dto.BirthDate;
         if (dto.Phone != null) student.Phone = dto.Phone;
+        if (dto.GuardianName != null) student.GuardianName = dto.GuardianName;
+        if (dto.GuardianPhone != null) student.GuardianPhone = dto.GuardianPhone;
         if (dto.SubjectId.HasValue) student.SubjectId = dto.SubjectId.Value;
         if (dto.LevelId.HasValue) student.LevelId = dto.LevelId.Value;
         if (dto.Observation != null) student.Observation = dto.Observation;
         if (dto.MonthlyPrice.HasValue) student.MonthlyPrice = dto.MonthlyPrice.Value;
         if (dto.IsActive.HasValue) student.IsActive = dto.IsActive.Value;
+        if (dto.FirstClassDate.HasValue) student.FirstClassDate = dto.FirstClassDate.Value;
         if (dto.IsActive.HasValue && dto.IsActive.Value)
         {
             student.LastClassDate = null;

@@ -14,12 +14,16 @@ namespace Aura.Infrastructure.Services;
 public class AuthService : IAuthService
 {
     private readonly IProfessorRepository _professorRepo;
+    private readonly ISubjectRepository _subjectRepo;
+    private readonly ILevelRepository _levelRepo;
     private readonly IConfiguration _config;
     private readonly IMapper _mapper;
 
-    public AuthService(IProfessorRepository professorRepo, IConfiguration config, IMapper mapper)
+    public AuthService(IProfessorRepository professorRepo, ISubjectRepository subjectRepo, ILevelRepository levelRepo, IConfiguration config, IMapper mapper)
     {
         _professorRepo = professorRepo;
+        _subjectRepo = subjectRepo;
+        _levelRepo = levelRepo;
         _config = config;
         _mapper = mapper;
     }
@@ -41,6 +45,21 @@ public class AuthService : IAuthService
         };
 
         await _professorRepo.AddAsync(professor);
+
+        // Create default Subject & Level for new Professor
+        var defaultSubject = new Subject
+        {
+            ProfessorId = professor.Id,
+            Name = "Geral"
+        };
+        await _subjectRepo.AddAsync(defaultSubject);
+
+        var defaultLevel = new Level
+        {
+            SubjectId = defaultSubject.Id,
+            Name = "Geral"
+        };
+        await _levelRepo.AddAsync(defaultLevel);
 
         return new AuthResponseDto
         {
@@ -84,6 +103,21 @@ public class AuthService : IAuthService
 
         await _professorRepo.UpdateAsync(professor);
         return _mapper.Map<ProfessorResponseDto>(professor);
+     }
+
+    public async Task ChangePasswordAsync(Guid professorId, ChangePasswordDto dto)
+    {
+        var professor = await _professorRepo.GetByIdAsync(professorId)
+            ?? throw new KeyNotFoundException("Professor não encontrado.");
+
+        if (!BCrypt.Net.BCrypt.Verify(dto.CurrentPassword, professor.PasswordHash))
+            throw new UnauthorizedAccessException("A senha atual fornecida está incorreta.");
+
+        if (dto.NewPassword != dto.ConfirmNewPassword)
+            throw new ArgumentException("A nova senha e a confirmação não coincidem.");
+
+        professor.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+        await _professorRepo.UpdateAsync(professor);
     }
 
     private string GenerateJwtToken(Professor professor)

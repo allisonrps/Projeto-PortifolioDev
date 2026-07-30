@@ -8,6 +8,7 @@ public interface IAuthService
     Task<AuthResponseDto> RegisterAsync(RegisterRequestDto dto);
     Task<ProfessorResponseDto> GetProfileAsync(Guid professorId);
     Task<ProfessorResponseDto> UpdateProfileAsync(Guid professorId, UpdateProfessorDto dto);
+    Task ChangePasswordAsync(Guid professorId, ChangePasswordDto dto);
 }
 
 public interface IFileStorageService

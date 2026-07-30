@@ -17,6 +17,7 @@ namespace Aura.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasDefaultSchema("aura")
                 .HasAnnotation("ProductVersion", "10.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
@@ -65,7 +66,7 @@ namespace Aura.Infrastructure.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("Exams");
+                    b.ToTable("Exams", "aura");
                 });
 
             modelBuilder.Entity("Aura.Domain.Entities.Exercise", b =>
@@ -111,7 +112,7 @@ namespace Aura.Infrastructure.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("Exercises");
+                    b.ToTable("Exercises", "aura");
                 });
 
             modelBuilder.Entity("Aura.Domain.Entities.Holiday", b =>
@@ -153,7 +154,7 @@ namespace Aura.Infrastructure.Migrations
 
                     b.HasIndex("ProfessorId");
 
-                    b.ToTable("Holidays");
+                    b.ToTable("Holidays", "aura");
                 });
 
             modelBuilder.Entity("Aura.Domain.Entities.Lesson", b =>
@@ -203,7 +204,7 @@ namespace Aura.Infrastructure.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("Lessons");
+                    b.ToTable("Lessons", "aura");
                 });
 
             modelBuilder.Entity("Aura.Domain.Entities.Level", b =>
@@ -233,7 +234,7 @@ namespace Aura.Infrastructure.Migrations
 
                     b.HasIndex("SubjectId");
 
-                    b.ToTable("Levels");
+                    b.ToTable("Levels", "aura");
                 });
 
             modelBuilder.Entity("Aura.Domain.Entities.MonthlyPayment", b =>
@@ -274,7 +275,7 @@ namespace Aura.Infrastructure.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("MonthlyPayments");
+                    b.ToTable("MonthlyPayments", "aura");
                 });
 
             modelBuilder.Entity("Aura.Domain.Entities.Professor", b =>
@@ -345,7 +346,7 @@ namespace Aura.Infrastructure.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
-                    b.ToTable("Professors");
+                    b.ToTable("Professors", "aura");
                 });
 
             modelBuilder.Entity("Aura.Domain.Entities.Schedule", b =>
@@ -393,7 +394,7 @@ namespace Aura.Infrastructure.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("Schedules");
+                    b.ToTable("Schedules", "aura");
                 });
 
             modelBuilder.Entity("Aura.Domain.Entities.Student", b =>
@@ -407,6 +408,15 @@ namespace Aura.Infrastructure.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime?>("FirstClassDate")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("GuardianName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("GuardianPhone")
+                        .HasColumnType("text");
 
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
@@ -461,7 +471,111 @@ namespace Aura.Infrastructure.Migrations
 
                     b.HasIndex("SubjectId");
 
-                    b.ToTable("Students");
+                    b.ToTable("Students", "aura");
+                });
+
+            modelBuilder.Entity("Aura.Domain.Entities.StudentActivity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<decimal?>("Grade")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal>("MaxGrade")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)")
+                        .HasDefaultValue(10m);
+
+                    b.Property<DateTime>("ScheduledAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("pending");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TemplateActivityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StudentId");
+
+                    b.HasIndex("TemplateActivityId");
+
+                    b.ToTable("StudentActivities", "aura");
+                });
+
+            modelBuilder.Entity("Aura.Domain.Entities.StudentAnswer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<char>("CorrectOption")
+                        .HasColumnType("character(1)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("OptionA")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("OptionB")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("OptionC")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("OptionD")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("QuestionText")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<char?>("SelectedOption")
+                        .HasColumnType("character(1)");
+
+                    b.Property<Guid>("StudentActivityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StudentActivityId");
+
+                    b.ToTable("StudentAnswers", "aura");
                 });
 
             modelBuilder.Entity("Aura.Domain.Entities.Subject", b =>
@@ -491,7 +605,7 @@ namespace Aura.Infrastructure.Migrations
 
                     b.HasIndex("ProfessorId");
 
-                    b.ToTable("Subjects");
+                    b.ToTable("Subjects", "aura");
                 });
 
             modelBuilder.Entity("Aura.Domain.Entities.Subscription", b =>
@@ -541,7 +655,102 @@ namespace Aura.Infrastructure.Migrations
 
                     b.HasIndex("ProfessorId");
 
-                    b.ToTable("Subscriptions");
+                    b.ToTable("Subscriptions", "aura");
+                });
+
+            modelBuilder.Entity("Aura.Domain.Entities.TemplateActivity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("LevelId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProfessorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SubjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("exercise");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LevelId");
+
+                    b.HasIndex("ProfessorId");
+
+                    b.HasIndex("SubjectId");
+
+                    b.ToTable("TemplateActivities", "aura");
+                });
+
+            modelBuilder.Entity("Aura.Domain.Entities.TemplateQuestion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<char>("CorrectOption")
+                        .HasColumnType("character(1)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("OptionA")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("OptionB")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("OptionC")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("OptionD")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("QuestionText")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("TemplateActivityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TemplateActivityId");
+
+                    b.ToTable("TemplateQuestions", "aura");
                 });
 
             modelBuilder.Entity("Aura.Domain.Entities.Exam", b =>
@@ -664,6 +873,36 @@ namespace Aura.Infrastructure.Migrations
                     b.Navigation("Subject");
                 });
 
+            modelBuilder.Entity("Aura.Domain.Entities.StudentActivity", b =>
+                {
+                    b.HasOne("Aura.Domain.Entities.Student", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Aura.Domain.Entities.TemplateActivity", "TemplateActivity")
+                        .WithMany()
+                        .HasForeignKey("TemplateActivityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Student");
+
+                    b.Navigation("TemplateActivity");
+                });
+
+            modelBuilder.Entity("Aura.Domain.Entities.StudentAnswer", b =>
+                {
+                    b.HasOne("Aura.Domain.Entities.StudentActivity", "StudentActivity")
+                        .WithMany("Answers")
+                        .HasForeignKey("StudentActivityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("StudentActivity");
+                });
+
             modelBuilder.Entity("Aura.Domain.Entities.Subject", b =>
                 {
                     b.HasOne("Aura.Domain.Entities.Professor", "Professor")
@@ -684,6 +923,44 @@ namespace Aura.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Professor");
+                });
+
+            modelBuilder.Entity("Aura.Domain.Entities.TemplateActivity", b =>
+                {
+                    b.HasOne("Aura.Domain.Entities.Level", "Level")
+                        .WithMany()
+                        .HasForeignKey("LevelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Aura.Domain.Entities.Professor", "Professor")
+                        .WithMany()
+                        .HasForeignKey("ProfessorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Aura.Domain.Entities.Subject", "Subject")
+                        .WithMany()
+                        .HasForeignKey("SubjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Level");
+
+                    b.Navigation("Professor");
+
+                    b.Navigation("Subject");
+                });
+
+            modelBuilder.Entity("Aura.Domain.Entities.TemplateQuestion", b =>
+                {
+                    b.HasOne("Aura.Domain.Entities.TemplateActivity", "TemplateActivity")
+                        .WithMany("Questions")
+                        .HasForeignKey("TemplateActivityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("TemplateActivity");
                 });
 
             modelBuilder.Entity("Aura.Domain.Entities.Level", b =>
@@ -717,11 +994,21 @@ namespace Aura.Infrastructure.Migrations
                     b.Navigation("MonthlyPayments");
                 });
 
+            modelBuilder.Entity("Aura.Domain.Entities.StudentActivity", b =>
+                {
+                    b.Navigation("Answers");
+                });
+
             modelBuilder.Entity("Aura.Domain.Entities.Subject", b =>
                 {
                     b.Navigation("Levels");
 
                     b.Navigation("Students");
+                });
+
+            modelBuilder.Entity("Aura.Domain.Entities.TemplateActivity", b =>
+                {
+                    b.Navigation("Questions");
                 });
 #pragma warning restore 612, 618
         }

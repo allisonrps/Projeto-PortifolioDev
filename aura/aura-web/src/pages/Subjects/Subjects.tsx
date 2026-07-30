@@ -27,22 +27,32 @@ export default function SubjectsPage() {
   useEffect(() => { load(); }, []);
 
   const handleSaveSubject = async (e: FormEvent) => {
-    e.preventDefault(); setSaving(true);
+    e.preventDefault();
+    if (!subjectName || !subjectName.trim()) {
+      toast.error('Por favor, preencha o Nome da Matéria para salvar.');
+      return;
+    }
+    setSaving(true);
     try {
       if (editSubject) { await subjectService.update(editSubject.id, { name: subjectName }); toast.success('Matéria atualizada!'); }
       else { await subjectService.create({ name: subjectName }); toast.success('Matéria criada!'); }
       setSubjectModal(false); load();
-    } catch (err: any) { toast.error(err.response?.data?.error || 'Erro'); }
+    } catch (err: any) { toast.error(err.response?.data?.message || err.response?.data?.error || 'Erro ao salvar matéria.'); }
     setSaving(false);
   };
 
   const handleSaveLevel = async (e: FormEvent) => {
-    e.preventDefault(); setSaving(true);
+    e.preventDefault();
+    if (!levelName || !levelName.trim()) {
+      toast.error('Por favor, preencha o Nome do Nível para salvar.');
+      return;
+    }
+    setSaving(true);
     try {
       if (editLevel) { await levelService.update(editLevel.id, { name: levelName }); toast.success('Nível atualizado!'); }
       else { await levelService.create({ subjectId: levelSubjectId, name: levelName }); toast.success('Nível criado!'); }
       setLevelModal(false); load();
-    } catch (err: any) { toast.error(err.response?.data?.error || 'Erro'); }
+    } catch (err: any) { toast.error(err.response?.data?.message || err.response?.data?.error || 'Erro ao salvar nível.'); }
     setSaving(false);
   };
 

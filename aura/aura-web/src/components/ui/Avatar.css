@@ -3,6 +3,7 @@
   background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
   flex-shrink: 0; border: 2px solid var(--border-color);
 }
+.avatar-square { border-radius: var(--radius-md, 14px); }
 .avatar-sm { width: 32px; height: 32px; font-size: 12px; }
 .avatar-md { width: 40px; height: 40px; font-size: 14px; }
 .avatar-lg { width: 56px; height: 56px; font-size: 18px; }

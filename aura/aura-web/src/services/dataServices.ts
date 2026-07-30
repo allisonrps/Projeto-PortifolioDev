@@ -17,7 +17,13 @@ export const levelService = {
 };
 
 export const dashboardService = {
-  get: () => api.get<DashboardData>('/dashboard'),
+  get: (month?: number, year?: number) => {
+    const params = new URLSearchParams();
+    if (month) params.append('month', String(month));
+    if (year) params.append('year', String(year));
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return api.get<DashboardData>(`/dashboard${query}`);
+  },
 };
 
 export const lessonService = {

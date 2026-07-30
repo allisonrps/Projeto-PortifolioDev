@@ -45,7 +45,7 @@ public interface ILessonService
 
 public interface IDashboardService
 {
-    Task<DashboardDto> GetDashboardAsync(Guid professorId);
+    Task<DashboardDto> GetDashboardAsync(Guid professorId, int? month = null, int? year = null);
 }
 
 public interface IFinanceService
