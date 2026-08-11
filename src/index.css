@@ -1,6 +1,6 @@
 /* ============================================
    DESIGN SYSTEM — Portfolio Allison Rodrigues
-   Graphite + Verde Marinho Pastel
+   Graphite + Azul Vibrante Neo-Futurista
    ============================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
@@ -26,14 +26,14 @@ button { font: inherit; cursor: pointer; border: none; background: none; }
   --bg-card-hover: #1f2337;
   --bg-elevated: #232738;
 
-  /* Brand – Verde Marinho Pastel */
-  --accent: #5eead4;
-  --accent-light: #99f6e4;
-  --accent-dark: #2dd4bf;
-  --accent-glow: rgba(94, 234, 212, 0.12);
-  --accent-glow-strong: rgba(94, 234, 212, 0.25);
-  --accent-gradient: linear-gradient(135deg, #5eead4, #2dd4bf);
-  --accent-gradient-hover: linear-gradient(135deg, #99f6e4, #5eead4);
+  /* Brand – Azul Vibrante */
+  --accent: #437bf2;
+  --accent-light: #7da6ff;
+  --accent-dark: #1e52c8;
+  --accent-glow: rgba(67, 123, 242, 0.12);
+  --accent-glow-strong: rgba(67, 123, 242, 0.25);
+  --accent-gradient: linear-gradient(135deg, #437bf2, #1e52c8);
+  --accent-gradient-hover: linear-gradient(135deg, #7da6ff, #437bf2);
 
   /* Neutrals */
   --white: #f1f5f9;

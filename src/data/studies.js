@@ -23,6 +23,15 @@ export const studies = [
 
 export const certificates = [
   {
+    id: 0,
+    name: 'TOEIC International — Inglês Intermediário (Score 665/990)',
+    issuer: 'ETS / TOEIC',
+    year: 2025,
+    status: 'concluido',
+    verifyUrl: null,
+    image: null,
+  },
+  {
     id: 1,
     name: 'Junior Cybersecurity Analyst Career Path',
     issuer: 'Cisco',

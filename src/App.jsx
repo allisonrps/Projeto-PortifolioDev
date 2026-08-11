@@ -1,7 +1,6 @@
 import './App.css'
 import Header from './components/Header/Header'
-import Hero from './components/Hero/Hero'
-import About from './components/About/About'
+import HeroAbout from './components/HeroAbout/HeroAbout'
 import Services from './components/Services/Services'
 import Projects from './components/Projects/Projects'
 import Studies from './components/Studies/Studies'
@@ -14,8 +13,7 @@ function App() {
       <TechBackground />
       <Header />
       <main style={{ position: 'relative', zIndex: 1 }}>
-        <Hero />
-        <About />
+        <HeroAbout />
         <Services />
         <Projects />
         <Studies />

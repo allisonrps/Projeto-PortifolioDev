@@ -4,7 +4,7 @@ import SectionTitle from '../common/SectionTitle';
 import Badge from '../common/Badge';
 import { projects } from '../../data/projects';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiChevronLeft, FiChevronRight, FiExternalLink } from 'react-icons/fi';
+import { FiX, FiExternalLink, FiChevronRight } from 'react-icons/fi';
 import { FaGithub } from 'react-icons/fa';
 import styles from './Projects.module.css';
 
@@ -14,40 +14,50 @@ const statusMap = {
   pausado: { text: 'Pausado', variant: 'info' },
 };
 
-const slideVariants = {
-  enter: (direction) => ({
-    x: direction > 0 ? 100 : -100,
-    opacity: 0,
-  }),
-  center: {
-    x: 0,
-    opacity: 1,
-    transition: {
-      x: { type: 'spring', stiffness: 300, damping: 30 },
-      opacity: { duration: 0.2 },
-    },
+// Custom detailed highlights for each project based on local files and curriculum
+const projectDetails = {
+  1: { // Autonomax
+    backend: 'Arquitetura desacoplada em .NET 9, utilizando DTOs para otimizar tráfego de dados e Entity Framework Core para persistência.',
+    security: 'Segurança multicamada seguindo padrões OWASP, com autenticação JWT, senhas criptografadas com BCrypt e Rate Limiting.',
+    frontend: 'Interface reativa em React 18+ com TypeScript, Axios Interceptors para consumo e design responsivo com Tailwind CSS.',
+    devops: 'Pipelines de CI/CD automatizadas via GitHub Actions enviando para Vercel (Frontend) e Railway (Backend/Database PostgreSQL).',
   },
-  exit: (direction) => ({
-    x: direction < 0 ? 100 : -100,
-    opacity: 0,
-    transition: {
-      x: { type: 'spring', stiffness: 300, damping: 30 },
-      opacity: { duration: 0.2 },
-    },
-  }),
+  2: { // Aura
+    backend: 'Backend modular robusto estruturado em .NET 10 e ASP.NET Web API utilizando Clean Architecture (DDD) e EF Core.',
+    security: 'Autenticação de usuários, isolamento de inquilinos (multi-tenant) e integridade referencial nas finanças escolares.',
+    frontend: 'Frontend SPA dinâmico desenvolvido com React, TypeScript, Axios e estilização componentizada com CSS Modules.',
+    devops: 'Provisionamento de recursos, orquestração local e automação de builds com foco em deploys ágeis em ambientes Azure.',
+  },
+  3: { // Setlist Band Manager
+    backend: 'Interface nativa multiplataforma utilizando React Native (Expo) integrada a serviços do dispositivo e banco local.',
+    security: 'Armazenamento interno seguro de arquivos de música e persistência local isolada de configurações e setlists.',
+    frontend: 'Layout 100% focado na usabilidade de palco, com suporte a gestos, roteiro de leitura rápida e controle de ensaios.',
+    devops: 'Ecosistema de armazenamento baseado em SQLite local (Expo SQLite), leitura em lote via File System e exportação de arquivos com Sharing.',
+  }
 };
 
 export default function Projects() {
-  const [[page, direction], setPage] = useState([0, 0]);
+  const [expandedProjectId, setExpandedProjectId] = useState(null);
 
-  const activeIndex = (page % projects.length + projects.length) % projects.length;
-
-  const paginate = (newDirection) => {
-    setPage([page + newDirection, newDirection]);
+  const handleCardClick = (id) => {
+    setExpandedProjectId(id);
+    // Scroll smoothly to section top to keep the expanded content fully visible
+    const el = document.getElementById('projects');
+    if (el) {
+      window.scrollTo({
+        top: el.offsetTop - 72,
+        behavior: 'smooth',
+      });
+    }
   };
 
-  const project = projects[activeIndex];
-  const badgeProps = statusMap[project.status] || statusMap.concluido;
+  const handleClose = () => {
+    setExpandedProjectId(null);
+  };
+
+  const activeProject = projects.find((p) => p.id === expandedProjectId);
+  const details = activeProject ? projectDetails[activeProject.id] : null;
+  const badgeProps = activeProject ? (statusMap[activeProject.status] || statusMap.concluido) : null;
 
   return (
     <AnimatedSection id="projects" className={styles.projects}>
@@ -55,8 +65,8 @@ export default function Projects() {
         <div className={styles.titleRow}>
           <SectionTitle
             label="Portfólio"
-            title="Projetos"
-            highlightText="Selecionados."
+            title="Principais Projetos"
+            highlightText="Locais."
           />
           <a
             href="https://github.com/allisonrps"
@@ -64,107 +74,158 @@ export default function Projects() {
             rel="noopener noreferrer"
             className={styles.viewAll}
           >
-            Ver Todos no GitHub →
+            GitHub Geral →
           </a>
         </div>
 
-        <div className={styles.carouselWrapper}>
-          <div className={styles.carouselContent}>
-            <AnimatePresence initial={false} custom={direction} mode="wait">
+        <div style={{ position: 'relative' }}>
+          <AnimatePresence mode="wait">
+            {!expandedProjectId ? (
+              /* ── Grid/Carousel List View (Simplificada) ── */
               <motion.div
-                key={page}
-                custom={direction}
-                variants={slideVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                className={styles.carouselCard}
+                key="list"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+                className={styles.projectsGrid}
               >
-                {/* Imagem (Esquerda) */}
-                <div className={styles.imageArea}>
-                  <img src={project.image} alt={project.title} loading="lazy" />
-                  <div className={styles.imageOverlay} />
-                </div>
-
-                {/* Info (Direita) */}
-                <div className={styles.infoArea}>
-                  <div className={styles.cardHeader}>
-                    <h3 className={styles.cardTitle}>{project.title}</h3>
-                    <span className={styles.cardType}>{project.type}</span>
-                  </div>
-
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    <Badge text={badgeProps.text} variant={badgeProps.variant} />
-                  </div>
-
-                  <div className={styles.stacks}>
-                    {project.stacks.map((tech) => (
-                      <span key={tech} className={styles.stackBadge}>
-                        {tech}
-                      </span>
-                    ))}
-                  </div>
-
-                  <p className={styles.summary}>{project.summary}</p>
-
-                  <div className={styles.links}>
-                    <a
-                      href={project.githubUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={styles.link}
+                {projects.map((p) => {
+                  const cardBadge = statusMap[p.status] || statusMap.concluido;
+                  return (
+                    <div
+                      key={p.id}
+                      className={styles.simpleCard}
+                      onClick={() => handleCardClick(p.id)}
                     >
-                      <FaGithub /> Código
-                    </a>
-                    {project.liveUrl && (
+                      <div className={styles.simpleImageWrapper}>
+                        <img src={p.image} alt={p.title} loading="lazy" />
+                        <div className={styles.simpleImageOverlay} />
+                      </div>
+
+                      <div className={styles.simpleCardBody}>
+                        <div className={styles.simpleHeader}>
+                          <h3 className={styles.simpleTitle}>{p.title}</h3>
+                          <span className={styles.simpleCardType}>{p.type}</span>
+                        </div>
+
+                        <div style={{ display: 'flex' }}>
+                          <Badge text={cardBadge.text} variant={cardBadge.variant} />
+                        </div>
+
+                        <p className={styles.simpleSummary}>{p.summary}</p>
+
+                        <div className={styles.simpleStacks}>
+                          {p.stacks.slice(0, 4).map((tech) => (
+                            <span key={tech} className={styles.simpleStackBadge}>
+                              {tech}
+                            </span>
+                          ))}
+                          {p.stacks.length > 4 && (
+                            <span className={styles.simpleStackBadge}>+{p.stacks.length - 4}</span>
+                          )}
+                        </div>
+
+                        <span className={styles.expandPrompt}>
+                          Detalhes do Caso <FiChevronRight />
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </motion.div>
+            ) : (
+              /* ── Expanded Detail Case-Study View (Detalhada) ── */
+              <motion.div
+                key="expanded"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.3, type: 'spring', damping: 25 }}
+                className={styles.expandedCard}
+              >
+                <div className={styles.expandedGrid}>
+                  {/* Left Col — Giant Image */}
+                  <div className={styles.expandedImageArea}>
+                    <img src={activeProject.image} alt={activeProject.title} />
+                    <div className={styles.expandedOverlay} />
+                  </div>
+
+                  {/* Right Col — Detailed Info */}
+                  <div className={styles.expandedInfoArea}>
+                    <button
+                      className={styles.closeExpandedBtn}
+                      onClick={handleClose}
+                      type="button"
+                      aria-label="Voltar para lista"
+                    >
+                      <FiX />
+                    </button>
+
+                    <div className={styles.expandedHeader}>
+                      <h3 className={styles.expandedTitle}>{activeProject.title}</h3>
+                      <span className={styles.expandedType}>{activeProject.type}</span>
+                    </div>
+
+                    <div className={styles.expandedBadgeRow}>
+                      <Badge text={badgeProps.text} variant={badgeProps.variant} />
+                    </div>
+
+                    <p className={styles.expandedSummary}>{activeProject.summary}</p>
+
+                    {/* Detailed Curriculum/README list of features */}
+                    {details && (
+                      <div className={styles.detailsList}>
+                        <h4>Especificações do Caso</h4>
+                        <ul>
+                          <li><strong>Arquitetura & Backend:</strong> {details.backend}</li>
+                          <li><strong>Segurança & Proteção:</strong> {details.security}</li>
+                          <li><strong>Frontend & UX:</strong> {details.frontend}</li>
+                          <li><strong>Infraestrutura & DevOps:</strong> {details.devops}</li>
+                        </ul>
+                      </div>
+                    )}
+
+                    <div className={styles.expandedStacks}>
+                      {activeProject.stacks.map((tech) => (
+                        <span key={tech} className={styles.expandedStackBadge}>
+                          {tech}
+                        </span>
+                      ))}
+                    </div>
+
+                    <div className={styles.expandedLinks}>
                       <a
-                        href={project.liveUrl}
+                        href={activeProject.githubUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={styles.link}
+                        className={styles.expandedLink}
                       >
-                        <FiExternalLink /> Demo
+                        <FaGithub /> Código Fonte
                       </a>
-                    )}
+                      {activeProject.liveUrl && (
+                        <a
+                          href={activeProject.liveUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.expandedLink}
+                        >
+                          <FiExternalLink /> Demo Online
+                        </a>
+                      )}
+                      <button
+                        onClick={handleClose}
+                        className={styles.expandedLink}
+                        style={{ marginLeft: 'auto', cursor: 'pointer', background: 'transparent' }}
+                      >
+                        ← Voltar
+                      </button>
+                    </div>
                   </div>
                 </div>
               </motion.div>
-            </AnimatePresence>
-          </div>
-
-          {/* Controls */}
-          <div className={styles.controls}>
-            <div className={styles.dots}>
-              {projects.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setPage([index, index > activeIndex ? 1 : -1])}
-                  className={`${styles.dot} ${index === activeIndex ? styles.dotActive : ''}`}
-                  type="button"
-                  aria-label={`Ir para o slide ${index + 1}`}
-                />
-              ))}
-            </div>
-
-            <div className={styles.arrows}>
-              <button
-                className={styles.arrowBtn}
-                onClick={() => paginate(-1)}
-                type="button"
-                aria-label="Projeto anterior"
-              >
-                <FiChevronLeft />
-              </button>
-              <button
-                className={styles.arrowBtn}
-                onClick={() => paginate(1)}
-                type="button"
-                aria-label="Próximo projeto"
-              >
-                <FiChevronRight />
-              </button>
-            </div>
-          </div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </AnimatedSection>
