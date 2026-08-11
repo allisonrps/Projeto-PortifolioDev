@@ -176,15 +176,15 @@
 
 .stacksGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 16px;
   width: 100%;
 }
 
 .stackItem {
   position: relative;
-  width: 64px;
-  height: 64px;
+  width: 100%;
+  aspect-ratio: 1 / 1;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-bottom: 3px solid var(--border);
@@ -197,11 +197,11 @@
 }
 
 .stackItem:hover {
-  border-color: var(--accent);
-  border-bottom-color: var(--accent);
+  border-color: var(--white);
+  border-bottom-color: var(--white);
   background: var(--bg-card-hover);
   transform: translateY(-4px) rotate(6deg);
-  box-shadow: 0 6px 15px rgba(67, 123, 242, 0.15);
+  box-shadow: 0 6px 15px rgba(255, 255, 255, 0.12);
 }
 
 .stackItem svg {
@@ -211,6 +211,7 @@
 }
 
 .stackItem:hover svg {
+  color: var(--white);
   transform: scale(1.1) rotate(-6deg);
 }
 
@@ -272,10 +273,12 @@
     text-align: center;
   }
   .stacksGrid {
-    grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
   }
   .stackItem {
-    width: 56px;
-    height: 56px;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    height: auto;
   }
 }
