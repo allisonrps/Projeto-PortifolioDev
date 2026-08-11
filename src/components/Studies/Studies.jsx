@@ -1,9 +1,10 @@
+import { useRef } from 'react';
 import AnimatedSection from '../common/AnimatedSection';
 import SectionTitle from '../common/SectionTitle';
 import Badge from '../common/Badge';
 import CertificateCard from './CertificateCard';
 import { studies, certificates } from '../../data/studies';
-import { motion } from 'framer-motion';
+import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import styles from './Studies.module.css';
 
 const statusMap = {
@@ -11,32 +12,36 @@ const statusMap = {
   'em-andamento': { text: 'Em andamento', variant: 'warning' },
 };
 
-const cardVariants = {
-  hidden: { opacity: 0, y: 24 },
-  visible: (i) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: i * 0.1, duration: 0.4, ease: 'easeOut' },
-  }),
-};
-
-/**
- * Studies & Certificates section.
- *
- * Renders a vertical timeline for academic history
- * and a responsive grid of certificate cards with
- * stagger-in animation.
- */
 export default function Studies() {
+  const scrollRef = useRef(null);
+
+  const scroll = (direction) => {
+    if (scrollRef.current) {
+      const { scrollLeft, clientWidth } = scrollRef.current;
+      // Scroll by 70% of the visible container width
+      const scrollAmount = clientWidth * 0.7;
+      const targetScroll =
+        direction === 'left'
+          ? scrollLeft - scrollAmount
+          : scrollLeft + scrollAmount;
+
+      scrollRef.current.scrollTo({
+        left: targetScroll,
+        behavior: 'smooth',
+      });
+    }
+  };
+
   return (
     <AnimatedSection id="studies" className={styles.studies}>
       <div className={styles.studiesInner}>
         <SectionTitle
-          title="Formação & Certificados"
-          subtitle="Minha jornada acadêmica e profissional"
+          label="Formação"
+          title="Jornada Acadêmica"
+          highlightText="& Estudos."
         />
 
-        {/* ── Timeline ──────────────────────────────── */}
+        {/* ── Timeline ── */}
         <div className={styles.timeline}>
           {studies.map((item) => {
             const isActive = item.status === 'em-andamento';
@@ -45,9 +50,7 @@ export default function Studies() {
             return (
               <div key={item.id} className={styles.timelineItem}>
                 <div
-                  className={`${styles.timelineDot} ${
-                    isActive ? styles.timelineDotActive : ''
-                  }`}
+                  className={`${styles.timelineDot} ${isActive ? styles.timelineDotActive : ''}`}
                 />
 
                 <div className={styles.timelineContent}>
@@ -68,22 +71,37 @@ export default function Studies() {
           })}
         </div>
 
-        {/* ── Certificates ─────────────────────────── */}
-        <h3 className={styles.sectionLabel}>Certificados</h3>
-
-        <div className={styles.certificatesGrid}>
-          {certificates.map((cert, i) => (
-            <motion.div
-              key={cert.id}
-              custom={i}
-              variants={cardVariants}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: '-60px' }}
+        {/* ── Certificates Carousel ── */}
+        <div className={styles.sectionHeader}>
+          <h3 className={styles.sectionLabel}>Certificados</h3>
+          <div className={styles.carouselControls}>
+            <button
+              onClick={() => scroll('left')}
+              className={styles.controlBtn}
+              type="button"
+              aria-label="Certificados anteriores"
             >
-              <CertificateCard certificate={cert} />
-            </motion.div>
-          ))}
+              <FiChevronLeft />
+            </button>
+            <button
+              onClick={() => scroll('right')}
+              className={styles.controlBtn}
+              type="button"
+              aria-label="Próximos certificados"
+            >
+              <FiChevronRight />
+            </button>
+          </div>
+        </div>
+
+        <div className={styles.carouselContainer}>
+          <div className={scrollRef ? styles.carouselTrack : ''} ref={scrollRef}>
+            {certificates.map((cert) => (
+              <div key={cert.id} className={styles.carouselCardWrapper}>
+                <CertificateCard certificate={cert} />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </AnimatedSection>

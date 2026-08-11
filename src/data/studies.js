@@ -29,6 +29,7 @@ export const certificates = [
     year: 2025,
     status: 'concluido',
     verifyUrl: null,
+    image: '/badge-cybersecurity-cisco.png',
   },
   {
     id: 2,
@@ -37,6 +38,7 @@ export const certificates = [
     year: 2025,
     status: 'concluido',
     verifyUrl: null,
+    image: '/badge-scrum-google.png',
   },
   {
     id: 3,
@@ -45,6 +47,7 @@ export const certificates = [
     year: 2025,
     status: 'concluido',
     verifyUrl: null,
+    image: null,
   },
   {
     id: 4,
@@ -53,6 +56,7 @@ export const certificates = [
     year: 2024,
     status: 'concluido',
     verifyUrl: null,
+    image: '/badge-cps-mobile.png',
   },
   {
     id: 5,
@@ -61,6 +65,7 @@ export const certificates = [
     year: 2024,
     status: 'concluido',
     verifyUrl: null,
+    image: '/badge-cps-backend.png',
   },
   {
     id: 6,
@@ -69,6 +74,7 @@ export const certificates = [
     year: 2024,
     status: 'concluido',
     verifyUrl: null,
+    image: '/badge-cps-designpatterns.png',
   },
   {
     id: 7,
@@ -77,6 +83,7 @@ export const certificates = [
     year: 2024,
     status: 'concluido',
     verifyUrl: null,
+    image: '/badge-cps-ux.png',
   },
   {
     id: 8,
@@ -85,6 +92,7 @@ export const certificates = [
     year: 2024,
     status: 'concluido',
     verifyUrl: null,
+    image: '/badge-cps-frontend.png',
   },
   {
     id: 9,
@@ -93,6 +101,7 @@ export const certificates = [
     year: 2024,
     status: 'concluido',
     verifyUrl: null,
+    image: '/badge-cps-IA.png',
   },
   {
     id: 10,
@@ -101,6 +110,7 @@ export const certificates = [
     year: 2024,
     status: 'concluido',
     verifyUrl: null,
+    image: '/badge-cps-nuvem.png',
   },
   {
     id: 11,
@@ -109,6 +119,7 @@ export const certificates = [
     year: 2024,
     status: 'concluido',
     verifyUrl: null,
+    image: '/badge-cps-devops.png',
   },
   {
     id: 12,
@@ -117,5 +128,6 @@ export const certificates = [
     year: 2023,
     status: 'concluido',
     verifyUrl: null,
+    image: null,
   },
 ];
