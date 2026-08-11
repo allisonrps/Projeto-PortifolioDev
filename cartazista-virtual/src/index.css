@@ -1,0 +1,208 @@
+/* ============================================
+   DESIGN SYSTEM — Cartazista Virtual
+   Tema Escuro, Quadrado (Geométrico) e Responsivo
+   ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
+
+/* --- Reset --- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+ul, ol { list-style: none; }
+a { text-decoration: none; color: inherit; }
+img, svg { display: block; max-width: 100%; }
+button, input, select, textarea { font: inherit; color: inherit; border: none; background: none; }
+button { cursor: pointer; }
+
+:root {
+  /* Cores de Fundo */
+  --bg-darkest: #09090b;
+  --bg-dark: #121216;
+  --bg-card: #181820;
+  --bg-elevated: #242430;
+
+  /* Cores de Destaque (Varejo/Oferta) */
+  --accent-yellow: #ffe600;
+  --accent-red: #ff3344;
+  --accent-orange: #ff6600;
+  --accent-green: #00e676;
+  --accent-blue: #00d2ff;
+  
+  /* Textos */
+  --text-primary: #f4f4f5;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+  --text-on-accent: #000000;
+
+  /* Bordas (Estilo Quadrado/Neo-Brutalista) */
+  --border-width: 2px;
+  --border-color: #272730;
+  --border-color-active: #ffe600;
+  --border: var(--border-width) solid var(--border-color);
+  
+  /* Tipografia */
+  --font-main: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Transições (Rápidas e Diretas) */
+  --transition-fast: 0.1s ease;
+  --transition-normal: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* --- Estilo Base --- */
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  background-color: var(--bg-darkest);
+  color: var(--text-primary);
+  font-family: var(--font-main);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden; /* Controlado pelo layout da aplicação */
+}
+
+/* --- Scrollbar Quadrada --- */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-darkest);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-yellow);
+}
+
+/* --- Layout Principal --- */
+.app-container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  background-color: var(--bg-darkest);
+  position: relative;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  background-color: var(--bg-dark);
+  border-left: var(--border);
+}
+
+/* --- Utilitários de Design Quadrado --- */
+.square-card {
+  background-color: var(--bg-card);
+  border: var(--border);
+  padding: 1.5rem;
+  position: relative;
+}
+
+.square-card:hover {
+  border-color: var(--border-color-active);
+}
+
+.square-btn {
+  background-color: var(--bg-elevated);
+  border: var(--border);
+  padding: 0.75rem 1.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.square-btn:hover {
+  background-color: var(--accent-yellow);
+  color: var(--text-on-accent);
+  border-color: var(--accent-yellow);
+}
+
+.square-btn.btn-danger:hover {
+  background-color: var(--accent-red);
+  color: var(--text-primary);
+  border-color: var(--accent-red);
+}
+
+.square-btn.btn-active {
+  background-color: var(--accent-yellow);
+  color: var(--text-on-accent);
+  border-color: var(--accent-yellow);
+}
+
+.square-input, .square-select {
+  background-color: var(--bg-darkest);
+  border: var(--border);
+  padding: 0.75rem 1rem;
+  width: 100%;
+  transition: var(--transition-fast);
+  font-family: var(--font-mono);
+}
+
+.square-input:focus, .square-select:focus {
+  outline: none;
+  border-color: var(--accent-yellow);
+}
+
+/* --- Elementos de Oferta --- */
+.badge-promo {
+  background-color: var(--accent-red);
+  color: var(--text-primary);
+  padding: 0.25rem 0.5rem;
+  font-weight: 900;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  display: inline-block;
+}
+
+/* --- ESTILOS DE IMPRESSÃO (CRÍTICO) --- */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    overflow: visible !important;
+  }
+  
+  .app-container,
+  .main-content,
+  .sidebar-container,
+  .controls-panel,
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-area {
+    display: block !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+
+  /* Forçar que o cartaz ocupe a folha inteira no preview de impressão */
+  .printable-poster {
+    width: 100vw !important;
+    height: 100vh !important;
+    border: none !important;
+    box-shadow: none !important;
+    page-break-after: always;
+  }
+}

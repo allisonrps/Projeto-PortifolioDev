@@ -28,7 +28,7 @@
   align-items: center;
   background: var(--bg-card);
   padding: 4px;
-  border-radius: 12px;
+  border-radius: 0;
   border: 1px solid var(--border);
 }
 
@@ -38,7 +38,7 @@
   font-weight: 500;
   cursor: pointer;
   padding: 8px 16px;
-  border-radius: 8px;
+  border-radius: 0;
   transition: all var(--transition-fast);
   position: relative;
   background: none;
@@ -64,17 +64,19 @@
   background: var(--accent-gradient);
   color: var(--bg-primary);
   padding: 10px 20px;
-  border-radius: 10px;
+  border-radius: 0;
   font-size: 14px;
   font-weight: 600;
   border: none;
+  border-bottom: 3px solid var(--accent-dark);
   cursor: pointer;
   transition: all var(--transition-normal);
 }
 
 .ctaButton:hover {
-  box-shadow: var(--shadow-glow);
+  box-shadow: 0 4px 15px rgba(94, 234, 212, 0.25);
   transform: translateY(-1px);
+  border-bottom-width: 4px;
 }
 
 /* ── Mobile Toggle ── */
@@ -140,7 +142,7 @@
   font-size: 16px;
   font-weight: 500;
   padding: 12px 16px;
-  border-radius: 8px;
+  border-radius: 0;
   transition: all var(--transition-fast);
   background: none;
   border: none;

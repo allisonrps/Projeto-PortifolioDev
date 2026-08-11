@@ -24,10 +24,17 @@
 .aboutPhoto {
   width: 300px;
   height: 300px;
-  border-radius: 50%;
+  border-radius: 0;
   overflow: hidden;
   border: 2px solid var(--accent);
-  box-shadow: 0 0 40px rgba(94, 234, 212, 0.1);
+  border-bottom: 6px solid var(--accent);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-normal);
+}
+
+.aboutPhoto:hover {
+  transform: translate(-4px, -4px);
+  box-shadow: 6px 6px 0px var(--accent-glow-strong);
 }
 
 .aboutPhoto img {
@@ -65,7 +72,8 @@
 .skillCard {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-bottom: 3px solid var(--border);
+  border-radius: 0;
   padding: 14px 10px;
   text-align: center;
   transition: all var(--transition-normal);
@@ -76,10 +84,11 @@
 }
 
 .skillCard:hover {
-  border-color: var(--border-hover);
+  border-color: var(--accent);
+  border-bottom-color: var(--accent);
   background: var(--bg-card-hover);
   transform: translateY(-2px);
-  box-shadow: var(--shadow-glow);
+  box-shadow: 0 4px 15px rgba(94, 234, 212, 0.15);
 }
 
 .skillCard svg {
@@ -104,8 +113,9 @@
   font-size: 14px;
   background: var(--accent-glow);
   padding: 10px 20px;
-  border-radius: 8px;
+  border-radius: 0;
   border: 1px solid var(--border);
+  border-bottom: 3px solid var(--border);
   cursor: pointer;
   transition: all var(--transition-normal);
   width: fit-content;
@@ -114,6 +124,7 @@
 
 .moreBtn:hover {
   border-color: var(--accent);
+  border-bottom-color: var(--accent);
   transform: translateY(-1px);
 }
 

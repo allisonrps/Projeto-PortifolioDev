@@ -18,7 +18,8 @@
 .card {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-bottom: 4px solid var(--border);
+  border-radius: 0;
   padding: 32px 24px;
   transition: all var(--transition-normal);
   display: flex;
@@ -27,16 +28,18 @@
 }
 
 .card:hover {
-  border-color: var(--border-hover);
+  border-color: var(--accent);
+  border-bottom-color: var(--accent);
   transform: translateY(-4px);
-  box-shadow: var(--shadow-glow);
+  box-shadow: 0 8px 24px rgba(94, 234, 212, 0.15);
 }
 
 .iconBox {
   width: 48px;
   height: 48px;
-  border-radius: 12px;
+  border-radius: 0;
   background: var(--accent-glow);
+  border: 1px solid rgba(94, 234, 212, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;

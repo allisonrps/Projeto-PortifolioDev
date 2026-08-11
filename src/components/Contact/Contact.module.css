@@ -1,13 +1,74 @@
 .contact {
-  padding: 100px 0;
+  padding: var(--section-padding, 100px) 0;
 }
 
 .contactInner {
-  max-width: 1200px;
+  max-width: var(--max-width, 1200px);
   margin: 0 auto;
   padding: 0 24px;
 }
 
+/* ── CTA Banner ── */
+.ctaBanner {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-bottom: 5px solid var(--accent);
+  border-radius: 0;
+  padding: 48px;
+  text-align: center;
+  margin-bottom: 60px;
+  position: relative;
+  overflow: hidden;
+}
+
+.ctaBanner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(94, 234, 212, 0.06), transparent 70%);
+  pointer-events: none;
+}
+
+.ctaBannerTitle {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 8px;
+  position: relative;
+}
+
+.ctaBannerSub {
+  font-size: 16px;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+  position: relative;
+}
+
+.ctaBannerBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--accent-gradient);
+  color: var(--bg-primary);
+  padding: 14px 32px;
+  border-radius: 0;
+  border: none;
+  border-bottom: 3px solid var(--accent-dark);
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  position: relative;
+  text-decoration: none;
+}
+
+.ctaBannerBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(94, 234, 212, 0.25);
+  border-bottom-width: 4px;
+}
+
+/* ── Content Grid ── */
 .content {
   display: grid;
   grid-template-columns: 1fr 1.2fr;
@@ -18,12 +79,12 @@
 .leftCol {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
 }
 
 .infoText {
   font-size: 16px;
-  color: var(--white-muted);
+  color: var(--text-secondary);
   line-height: 1.7;
 }
 
@@ -36,18 +97,20 @@
 .socialLink {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 18px;
+  gap: 14px;
+  padding: 16px 20px;
   background: var(--bg-card);
   border: 1px solid var(--border);
+  border-bottom: 3px solid var(--border);
   border-radius: 0;
-  color: var(--white-muted);
+  color: var(--text-secondary);
   transition: all var(--transition-normal);
   text-decoration: none;
 }
 
 .socialLink:hover {
-  border-color: var(--purple-primary);
+  border-color: var(--accent);
+  border-bottom-color: var(--accent);
   background: var(--bg-card-hover);
   color: var(--white);
   transform: translateX(4px);
@@ -55,7 +118,7 @@
 
 .socialLink svg {
   font-size: 20px;
-  color: var(--purple-primary);
+  color: var(--accent);
 }
 
 .socialLink span {
@@ -63,6 +126,7 @@
   font-weight: 500;
 }
 
+/* ── Form ── */
 .form {
   display: flex;
   flex-direction: column;
@@ -77,7 +141,7 @@
 
 .formGroup label {
   font-size: 13px;
-  color: var(--white-muted);
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
@@ -97,12 +161,13 @@
 
 .formGroup input:focus,
 .formGroup textarea:focus {
-  border-color: var(--purple-primary);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
 .formGroup input::placeholder,
 .formGroup textarea::placeholder {
-  color: rgba(161, 161, 170, 0.5);
+  color: var(--text-muted);
 }
 
 .formGroup textarea {
@@ -110,13 +175,14 @@
 }
 
 .submitBtn {
-  background: var(--purple-gradient);
-  color: white;
+  background: var(--accent-gradient);
+  color: var(--bg-primary);
   padding: 14px 32px;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 15px;
   border-radius: 0;
   border: none;
+  border-bottom: 4px solid var(--accent-dark);
   cursor: pointer;
   transition: all var(--transition-normal);
   width: 100%;
@@ -124,7 +190,8 @@
 
 .submitBtn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 4px 20px rgba(94, 234, 212, 0.25);
+  border-bottom-width: 5px;
 }
 
 .submitBtn:disabled {
@@ -140,6 +207,7 @@
   padding: 12px;
   background: rgba(74, 222, 128, 0.1);
   border: 1px solid rgba(74, 222, 128, 0.2);
+  border-radius: 0;
 }
 
 .errorMsg {
@@ -149,33 +217,119 @@
   padding: 12px;
   background: rgba(248, 113, 113, 0.1);
   border: 1px solid rgba(248, 113, 113, 0.2);
+  border-radius: 0;
 }
 
+/* ── Footer ── */
 .footer {
-  text-align: center;
-  padding: 40px 24px;
-  border-top: 1px solid var(--border);
   margin-top: 80px;
-  color: var(--white-muted);
-  font-size: 13px;
+  border-top: 1px solid var(--border);
+  padding: 40px 24px 24px;
 }
 
-.footer span {
-  color: var(--purple-light);
+.footerInner {
+  max-width: var(--max-width, 1200px);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 1fr;
+  gap: 40px;
+}
+
+.footerBrand h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 12px;
+}
+
+.footerBrand h3 span {
+  color: var(--accent);
+}
+
+.footerBrand p {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  max-width: 280px;
+}
+
+.footerSocials {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.footerSocialIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-bottom: 3px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+  text-decoration: none;
+}
+
+.footerSocialIcon:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  border-bottom-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.footerCol h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--white);
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.footerCol a {
+  display: block;
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: 4px 0;
+  transition: color var(--transition-fast);
+  text-decoration: none;
+}
+
+.footerCol a:hover {
+  color: var(--accent);
+}
+
+.footerBottom {
+  text-align: center;
+  padding: 24px 24px 0;
+  margin-top: 32px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.footerBottom span {
+  color: var(--accent);
 }
 
 @media (max-width: 768px) {
-  .contact {
-    padding: 60px 0;
-  }
-
   .content {
     grid-template-columns: 1fr;
-    gap: 32px;
   }
+  .footerInner {
+    grid-template-columns: 1fr 1fr;
+  }
+  .ctaBanner {
+    padding: 32px 20px;
+  }
+}
 
-  .footer {
-    margin-top: 48px;
-    padding: 32px 16px;
+@media (max-width: 480px) {
+  .footerInner {
+    grid-template-columns: 1fr;
   }
 }
