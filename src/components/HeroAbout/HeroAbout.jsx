@@ -11,9 +11,9 @@ const skills = [
   { name: 'TypeScript', icon: SiTypescript },
   { name: 'Azure', icon: VscAzure },
   { name: 'Docker', icon: FaDocker },
-  { name: 'PostgreSQL', stroke: true, icon: SiPostgresql },
+  { name: 'PostgreSQL', icon: SiPostgresql },
   { name: 'MongoDB', icon: SiMongodb },
-  { name: 'Tailwind', icon: SiTailwindcss },
+  { name: 'Tailwind CSS', icon: SiTailwindcss },
   { name: 'Git', icon: FaGitAlt },
 ];
 
@@ -85,14 +85,13 @@ export default function HeroAbout() {
           </div>
         </div>
 
-        {/* Stacks Row (Stack Aqui) */}
+        {/* Stacks Row (Stack Aqui - Icon only with Tooltip) */}
         <motion.div className={styles.stacksWrapper} variants={itemVariants}>
           <h3 className={styles.stacksTitle}>Stack Tecnológica</h3>
           <div className={styles.stacksGrid}>
             {skills.map(({ name, icon: Icon }) => (
-              <div key={name} className={styles.stackItem}>
+              <div key={name} className={styles.stackItem} data-tooltip={name}>
                 <Icon />
-                <span>{name}</span>
               </div>
             ))}
           </div>

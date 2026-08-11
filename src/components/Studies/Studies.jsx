@@ -4,7 +4,7 @@ import SectionTitle from '../common/SectionTitle';
 import Badge from '../common/Badge';
 import CertificateCard from './CertificateCard';
 import { studies, certificates } from '../../data/studies';
-import { FiChevronLeft, FiChevronRight, FiX, FiExternalLink } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiX, FiExternalLink, FiZoomIn } from 'react-icons/fi';
 import { FaLaptopCode, FaCloud, FaShieldAlt } from 'react-icons/fa';
 import { SiMongodb } from 'react-icons/si';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -15,10 +15,9 @@ const statusMap = {
   'em-andamento': { text: 'Em andamento', variant: 'warning' },
 };
 
-// Map education ID to specific icons
 const educationIcons = {
-  1: FaCloud,      // Cloud Azure (Postgrad)
-  2: FaLaptopCode, // Fullstack / mobile (Graduation)
+  1: FaCloud,
+  2: FaLaptopCode,
 };
 
 export default function Studies() {
@@ -42,7 +41,6 @@ export default function Studies() {
   };
 
   const openModal = (cert) => {
-    // Add custom description dynamically to certificates for modal details if empty
     let description = '';
     if (cert.id === 0) {
       description =
@@ -69,7 +67,7 @@ export default function Studies() {
           highlightText="& Estudos."
         />
 
-        {/* ── Education Grid (Figma: 2 cards side-by-side) ── */}
+        {/* ── Education Grid ── */}
         <div className={styles.educationGrid}>
           {studies.map((item) => {
             const isActive = item.status === 'em-andamento';
@@ -78,7 +76,6 @@ export default function Studies() {
 
             return (
               <div key={item.id} className={styles.educationCard}>
-                {/* overlapping top-left icon box */}
                 <div className={styles.cardIconWrapper}>
                   <Icon />
                 </div>
@@ -140,7 +137,7 @@ export default function Studies() {
         </div>
       </div>
 
-      {/* ── Modal overlay and content ── */}
+      {/* ── Modal overlay and content (Large readable certificates) ── */}
       <AnimatePresence>
         {selectedCert && (
           <motion.div
@@ -167,9 +164,17 @@ export default function Studies() {
                 <FiX />
               </button>
 
+              {/* Large Image Showcase (Click to zoom/open) */}
               <div className={styles.modalBadgeWrapper}>
                 {selectedCert.image ? (
-                  <img src={selectedCert.image} alt={selectedCert.name} />
+                  <a
+                    href={selectedCert.image}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Clique para abrir em tamanho real"
+                  >
+                    <img src={selectedCert.image} alt={selectedCert.name} />
+                  </a>
                 ) : (
                   <div className={styles.modalBadgePlaceholder}>
                     {selectedCert.issuer.includes('MongoDB') ? <SiMongodb /> : <FaShieldAlt />}
@@ -177,30 +182,49 @@ export default function Studies() {
                 )}
               </div>
 
-              <h3 className={styles.modalTitle}>{selectedCert.name}</h3>
-              <p className={styles.modalIssuer}>{selectedCert.issuer}</p>
-              <span className={styles.modalYear}>Ano de emissão: {selectedCert.year}</span>
+              <div className={styles.modalMeta}>
+                <h3 className={styles.modalTitle}>{selectedCert.name}</h3>
+                <div className={styles.modalSubRow}>
+                  <p className={styles.modalIssuer}>{selectedCert.issuer}</p>
+                  <span className={styles.modalYear}>Ano de emissão: {selectedCert.year}</span>
+                </div>
+              </div>
 
               <p className={styles.modalDescription}>{selectedCert.description}</p>
 
-              {selectedCert.verifyUrl ? (
-                <a
-                  href={selectedCert.verifyUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={styles.modalBtn}
-                >
-                  <FiExternalLink /> Validar Credencial
-                </a>
-              ) : (
+              {/* Action Buttons */}
+              <div className={styles.modalActions}>
+                {selectedCert.verifyUrl && (
+                  <a
+                    href={selectedCert.verifyUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.modalBtn}
+                  >
+                    <FiExternalLink /> Validar Credencial Online
+                  </a>
+                )}
+                
+                {selectedCert.image && (
+                  <a
+                    href={selectedCert.image}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.modalBtnSec}
+                  >
+                    <FiZoomIn /> Ver em Tela Cheia
+                  </a>
+                )}
+                
                 <button
-                  className={styles.modalBtn}
+                  className={selectedCert.verifyUrl || selectedCert.image ? styles.modalBtnSec : styles.modalBtn}
                   onClick={() => setSelectedCert(null)}
                   type="button"
+                  style={{ flex: selectedCert.verifyUrl && selectedCert.image ? '0.5' : '1' }}
                 >
                   Fechar
                 </button>
-              )}
+              </div>
             </motion.div>
           </motion.div>
         )}

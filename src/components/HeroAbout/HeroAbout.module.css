@@ -19,12 +19,12 @@
   z-index: 1;
 }
 
-/* ── Upper Grid (Photo left, Bio right) ── */
+/* ── Upper Grid (Symmetrical Top Alignment) ── */
 .upperGrid {
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 60px;
-  align-items: center;
+  grid-template-columns: 340px 1fr;
+  gap: 48px;
+  align-items: flex-start; /* Symmetrical top alignment */
 }
 
 .photoCol {
@@ -32,8 +32,8 @@
 }
 
 .photoWrapper {
-  width: 320px;
-  height: 320px;
+  width: 340px;
+  height: 340px; /* Perfect square */
   background: var(--bg-card);
   border: 2px solid var(--accent);
   border-bottom: 8px solid var(--accent);
@@ -59,6 +59,7 @@
   flex-direction: column;
   gap: 20px;
   align-items: flex-start;
+  height: 100%;
 }
 
 /* ── Name Title Box ── */
@@ -71,7 +72,7 @@
 }
 
 .name {
-  font-size: clamp(32px, 5vw, 48px);
+  font-size: clamp(32px, 5vw, 44px);
   font-weight: 800;
   color: var(--white);
   line-height: 1;
@@ -157,7 +158,7 @@
   transform: translateY(-2px);
 }
 
-/* ── Stacks Row (Stack Aqui) ── */
+/* ── Stacks Row (Stack Aqui - Responsive Icon Grid) ── */
 .stacksWrapper {
   margin-top: 16px;
   border-top: 1px solid var(--border);
@@ -174,45 +175,70 @@
 }
 
 .stacksGrid {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
   gap: 12px;
+  width: 100%;
 }
 
 .stackItem {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  position: relative;
+  width: 64px;
+  height: 64px;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-bottom: 3px solid var(--border);
-  padding: 12px 18px;
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: all var(--transition-normal);
+  cursor: pointer;
 }
 
 .stackItem:hover {
   border-color: var(--accent);
   border-bottom-color: var(--accent);
   background: var(--bg-card-hover);
-  transform: translateY(-4px) rotate(3deg);
-  box-shadow: 0 6px 15px rgba(67, 123, 242, 0.12);
+  transform: translateY(-4px) rotate(6deg);
+  box-shadow: 0 6px 15px rgba(67, 123, 242, 0.15);
 }
 
 .stackItem svg {
-  font-size: 24px;
+  font-size: 26px;
   color: var(--accent);
   transition: transform var(--transition-normal);
 }
 
 .stackItem:hover svg {
-  transform: scale(1.15) rotate(-3deg);
+  transform: scale(1.1) rotate(-6deg);
 }
 
-.stackItem span {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary);
+/* ── Tooltip Balloon (Neo-futurista) ── */
+.stackItem::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  background: var(--bg-secondary);
+  border: 1px solid var(--accent);
+  color: var(--white);
+  padding: 6px 12px;
+  font-size: 11px;
   font-family: var(--font-mono);
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: all var(--transition-fast);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  z-index: 10;
+}
+
+.stackItem:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
 @media (max-width: 960px) {
@@ -220,6 +246,7 @@
     grid-template-columns: 1fr;
     text-align: center;
     justify-items: center;
+    gap: 32px;
   }
   .photoCol {
     display: flex;
@@ -245,6 +272,10 @@
     text-align: center;
   }
   .stacksGrid {
-    justify-content: center;
+    grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+  }
+  .stackItem {
+    width: 56px;
+    height: 56px;
   }
 }
