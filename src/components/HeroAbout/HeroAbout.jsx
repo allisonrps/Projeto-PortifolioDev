@@ -38,10 +38,36 @@ export default function HeroAbout() {
       >
         {/* Upper Grid (Photo left, Bio right) */}
         <div className={styles.upperGrid}>
-          {/* Photo */}
+          {/* Photo with advanced Tech HUD effects */}
           <motion.div className={styles.photoCol} variants={itemVariants}>
+            {/* Rotating Tech Ring Background */}
+            <div className={styles.techRing}>
+              <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" style={{ width: '100%', height: '100%' }}>
+                <circle cx="50" cy="50" r="46" strokeWidth="0.5" strokeDasharray="3, 3" opacity="0.3" />
+                <circle cx="50" cy="50" r="42" strokeWidth="1" strokeDasharray="30, 15, 5, 10" opacity="0.5" />
+                <circle cx="50" cy="50" r="38" strokeWidth="0.5" strokeDasharray="1, 6" opacity="0.4" />
+              </svg>
+            </div>
+
+            {/* Corner Brackets */}
+            <div className={`${styles.hudCorner} ${styles.topLeft}`} />
+            <div className={`${styles.hudCorner} ${styles.topRight}`} />
+            <div className={`${styles.hudCorner} ${styles.bottomLeft}`} />
+            <div className={`${styles.hudCorner} ${styles.bottomRight}`} />
+
+            {/* Main Photo Wrapper */}
             <div className={styles.photoWrapper}>
               <img src="/profile-photo.jpg" alt="Allison Rodrigues" />
+              
+              {/* Scan Overlays */}
+              <div className={styles.hudOverlayGrid} />
+              <div className={styles.scannerLine} />
+            </div>
+
+            {/* Symmetrical Floating Coords */}
+            <div className={styles.hudCoords}>
+              <span>SYS.LOC // 20.26</span>
+              <span>STATUS.ACTIVE // 100%</span>
             </div>
           </motion.div>
 
