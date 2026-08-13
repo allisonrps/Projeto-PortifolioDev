@@ -3,10 +3,15 @@ export const projects = [
     id: 1,
     title: 'Autonomax',
     status: 'em-producao',
-    type: 'Web App',
+    type: {
+      pt: 'Web App',
+      en: 'Web App',
+    },
     stacks: ['.NET 9', 'C#', 'EF Core 9', 'PostgreSQL', 'React', 'TypeScript', 'Tailwind CSS'],
-    summary:
-      'Plataforma para gestão financeira estratégica e controle de fluxo de caixa de profissionais autônomos. Desenvolvida com arquitetura desacoplada utilizando DTOs, autenticação JWT, BCrypt, Rate Limiting e testes automatizados com xUnit.',
+    summary: {
+      pt: 'Plataforma para gestão financeira estratégica e controle de fluxo de caixa de profissionais autônomos. Desenvolvida com arquitetura desacoplada utilizando DTOs, autenticação JWT, BCrypt, Rate Limiting e testes automatizados com xUnit.',
+      en: 'Platform for strategic financial management and cash flow control for freelance professionals. Developed with decoupled architecture using DTOs, JWT authentication, BCrypt, Rate Limiting, and automated tests with xUnit.',
+    },
     githubUrl: 'https://github.com/allisonrps/Autonomax',
     liveUrl: 'https://autonomax.vercel.app',
     image: '/project-autonomax.png',
@@ -15,13 +20,18 @@ export const projects = [
   {
     id: 2,
     title: 'Aura',
-    status: 'em-producao', // Menciona que está em produção
-    type: 'Web App & API',
+    status: 'em-producao',
+    type: {
+      pt: 'Web App & API',
+      en: 'Web App & API',
+    },
     stacks: ['.NET 10', 'C#', 'Clean Architecture', 'EF Core', 'React', 'TypeScript', 'CSS Modules'],
-    summary:
-      'Sistema de gestão escolar e financeira voltado para professores particulares e escolas. Organiza agendas de aulas, cadastro e progresso de estudantes, disciplinas de ensino e o fluxo de mensalidades, utilizando arquitetura baseada em DDD.',
-    githubUrl: null, // Sem o link do github no aura, somente em produção
-    liveUrl: 'https://aura-teacher.vercel.app', // Link em produção
+    summary: {
+      pt: 'Sistema de gestão escolar e financeira voltado para professores particulares e escolas. Organiza agendas de aulas, cadastro e progresso de estudantes, disciplinas de ensino e o fluxo de mensalidades, utilizando arquitetura baseada em DDD.',
+      en: 'School and financial management system aimed at private teachers and schools. Organizes class schedules, student registration and progress, teaching subjects, and tuition flow, using DDD-based architecture.',
+    },
+    githubUrl: null,
+    liveUrl: 'https://aura-teacher.vercel.app',
     image: '/project-aura-login.png',
     images: [
       '/project-aura-login.png',
@@ -46,11 +56,16 @@ export const projects = [
   {
     id: 3,
     title: 'Setlist Band Manager',
-    status: 'em-producao', // 3 projetos em produção
-    type: 'Mobile App',
+    status: 'em-producao',
+    type: {
+      pt: 'Mobile App',
+      en: 'Mobile App',
+    },
     stacks: ['React Native', 'Expo', 'TypeScript', 'SQLite', 'File System', 'Expo Sharing'],
-    summary:
-      'Aplicativo móvel para organização de bandas e apresentações. Permite o gerenciamento de repertórios de músicas, criação de setlists, roteiros de palco para musicians, controle de ensaios e exportação/compartilhamento de arquivos.',
+    summary: {
+      pt: 'Aplicativo móvel para organização de bandas e apresentações. Permite o gerenciamento de repertórios de músicas, criação de setlists, roteiros de palco para músicos, controle de ensaios e exportação/compartilhamento de arquivos.',
+      en: 'Mobile application for organizing bands and gig setups. Allows managing song repertoires, creating setlists, stage charts for musicians, rehearsal tracking, and file sharing/exporting.',
+    },
     githubUrl: 'https://github.com/allisonrps/setlist-app',
     liveUrl: null,
     image: '/project-setlist.jpg',

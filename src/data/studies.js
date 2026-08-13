@@ -2,22 +2,38 @@ export const studies = [
   {
     id: 1,
     institution: 'Faculdade Anhanguera',
-    course: 'Pós-graduação em Arquitetura Avançada em Cloud Azure',
-    period: 'Abril de 2026 - Abril de 2027',
+    course: {
+      pt: 'Pós-graduação em Arquitetura Avançada em Cloud Azure',
+      en: 'Postgraduate in Advanced Azure Cloud Architecture',
+    },
+    period: {
+      pt: 'Abril de 2026 - Abril de 2027',
+      en: 'April 2026 - April 2027',
+    },
     status: 'em-andamento',
     type: 'postgrad',
-    description:
-      'Especialização focada no ecossistema Azure. Aborda o desenho de arquiteturas robustas, migração de cargas de trabalho, serviços serverless, segurança de dados e identidade, governança e implementação de estratégias de DevOps na nuvem.',
+    description: {
+      pt: 'Especialização focada no ecossistema Azure. Aborda o desenho de arquiteturas robustas, migração de cargas de trabalho, serviços serverless, segurança de dados e identidade, governança e implementação de estratégias de DevOps na nuvem.',
+      en: 'Specialization focused on the Azure ecosystem. Covers designing robust architectures, workload migration, serverless services, data and identity security, governance, and cloud DevOps strategy implementation.',
+    },
   },
   {
     id: 2,
     institution: 'FATEC Franca',
-    course: 'Graduação em Desenvolvimento de Software Multiplataforma',
-    period: 'Fevereiro de 2023 - Dezembro de 2025',
+    course: {
+      pt: 'Graduação em Desenvolvimento de Software Multiplataforma',
+      en: 'Bachelor in Multiplatform Software Development',
+    },
+    period: {
+      pt: 'Fevereiro de 2023 - Dezembro de 2025',
+      en: 'February 2023 - December 2025',
+    },
     status: 'concluido',
     type: 'graduation',
-    description:
-      'Tecnólogo voltado à formação de desenvolvedores de software com competências em sistemas web, mobile e computação em nuvem. Abordou engenharia de software, POO, banco de dados relacional e não-relacional, segurança da informação e metodologias ágeis.',
+    description: {
+      pt: 'Tecnólogo voltado à formação de desenvolvedores de software com competências em sistemas web, mobile e computação em nuvem. Abordou engenharia de software, POO, banco de dados relacional e não-relacional, segurança da informação e metodologias ágeis.',
+      en: 'Technologist focused on training software developers with skills in web, mobile, and cloud systems. Addressed software engineering, OOP, relational and non-relational databases, information security, and agile methodologies.',
+    },
   },
 ];
 

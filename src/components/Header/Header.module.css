@@ -156,6 +156,41 @@
   background: var(--accent-glow);
 }
 
+.langToggleWrapper {
+  display: flex;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-bottom: 3px solid var(--border);
+  padding: 2px;
+  border-radius: 0;
+}
+
+.langBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border-radius: 0;
+  font-family: var(--font-mono);
+}
+
+.langBtnActive {
+  background: var(--accent-gradient);
+  color: var(--bg-primary);
+  border-bottom: 2px solid var(--accent-dark);
+}
+
+.langLabel {
+  font-size: 10px;
+}
+
 @media (max-width: 768px) {
   .nav,
   .ctaButton {
@@ -163,5 +198,8 @@
   }
   .mobileToggle {
     display: flex;
+  }
+  .langLabel {
+    display: none; /* Hide text label on mobile to save space */
   }
 }

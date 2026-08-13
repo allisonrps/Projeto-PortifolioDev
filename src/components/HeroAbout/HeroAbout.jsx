@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { FaReact, FaNodeJs, FaDocker, FaGitAlt } from 'react-icons/fa';
 import { SiTypescript, SiDotnet, SiMongodb, SiPostgresql, SiTailwindcss } from 'react-icons/si';
 import { VscAzure } from 'react-icons/vsc';
+import { translations } from '../../data/translations';
 import styles from './HeroAbout.module.css';
 
 const skills = [
@@ -27,7 +28,9 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
 };
 
-export default function HeroAbout() {
+export default function HeroAbout({ lang }) {
+  const t = translations[lang] || translations.pt;
+
   return (
     <section className={styles.heroAbout} id="hero">
       <motion.div
@@ -83,37 +86,62 @@ export default function HeroAbout() {
               {/* Stats Square */}
               <motion.div className={styles.statsSquare} variants={itemVariants}>
                 <span className={styles.statsNumber}>3</span>
-                <span className={styles.statsLabel}>Projetos Em Produção</span>
+                <span className={styles.statsLabel}>{t.heroStatsLabel}</span>
               </motion.div>
             </div>
 
             <motion.p className={styles.role} variants={itemVariants}>
-              Software Developer & Cloud Architect
+              {t.heroRole}
             </motion.p>
 
             <motion.p className={styles.bioText} variants={itemVariants}>
-              Sou desenvolvedor de software graduado pela{' '}
-              <span className={styles.highlight}>FATEC Franca</span> e pós-graduando em{' '}
-              <span className={styles.highlight}>Arquitetura Avançada em Nuvem Azure</span> na Faculdade Anhanguera. 
-              Especializado na construção de aplicações robustas e seguras usando{' '}
-              <span className={styles.highlight}>C# .NET Core</span> e{' '}
-              <span className={styles.highlight}>Node.js (Express)</span> no ecossistema de APIs, 
-              e interfaces de alta performance com <span className={styles.highlight}>React</span> e{' '}
-              <span className={styles.highlight}>TypeScript</span>.
+              {lang === 'pt' ? (
+                <>
+                  Sou desenvolvedor de software graduado pela{' '}
+                  <span className={styles.highlight}>FATEC Franca</span> e pós-graduando em{' '}
+                  <span className={styles.highlight}>Arquitetura Avançada em Nuvem Azure</span> na Faculdade Anhanguera. 
+                  Especializado na construção de aplicações robustas e seguras usando{' '}
+                  <span className={styles.highlight}>C# .NET Core</span> e{' '}
+                  <span className={styles.highlight}>Node.js (Express)</span> no ecossistema de APIs, 
+                  e interfaces de alta performance com <span className={styles.highlight}>React</span> e{' '}
+                  <span className={styles.highlight}>TypeScript</span>.
+                </>
+              ) : (
+                <>
+                  I am a software developer graduated from{' '}
+                  <span className={styles.highlight}>FATEC Franca</span> and postgraduate in{' '}
+                  <span className={styles.highlight}>Advanced Azure Cloud Architecture</span> at Faculdade Anhanguera.
+                  Specialized in building robust and secure applications using{' '}
+                  <span className={styles.highlight}>C# .NET Core</span> and{' '}
+                  <span className={styles.highlight}>Node.js (Express)</span> in the API ecosystem,
+                  and high-performance interfaces with <span className={styles.highlight}>React</span> and{' '}
+                  <span className={styles.highlight}>TypeScript</span>.
+                </>
+              )}
             </motion.p>
 
             <motion.p className={styles.bioText} variants={itemVariants}>
-              Minha paixão está em criar arquiteturas de dados escaláveis, 
-              garantir segurança de dados integrada (padrões OWASP, criptografia, conformidade com a LGPD) 
-              e implantar soluções cloud-native orquestradas com Docker e esteiras CI/CD automatizadas.
+              {lang === 'pt' ? (
+                <>
+                  Minha paixão está em criar arquiteturas de dados escaláveis, 
+                  garantir segurança de dados integrada (padrões OWASP, criptografia, conformidade com a LGPD) 
+                  e implantar soluções cloud-native orquestradas com Docker e esteiras CI/CD automatizadas.
+                </>
+              ) : (
+                <>
+                  My passion lies in creating scalable data architectures,
+                  ensuring integrated data security (OWASP standards, encryption, compliance with LGPD/GDPR)
+                  and deploying cloud-native solutions orchestrated with Docker and automated CI/CD pipelines.
+                </>
+              )}
             </motion.p>
 
             <motion.div className={styles.ctaRow} variants={itemVariants}>
               <a href="#projects" className={styles.ctaBtnPrimary}>
-                Ver Projetos →
+                {t.heroCtaProjects}
               </a>
               <a href="#contact" className={styles.ctaBtnSecondary}>
-                Fale Comigo
+                {t.heroCtaContact}
               </a>
             </motion.div>
           </div>
@@ -121,7 +149,7 @@ export default function HeroAbout() {
 
         {/* Stacks Row (Stack Aqui - Icon only with Tooltip) */}
         <motion.div className={styles.stacksWrapper} variants={itemVariants}>
-          <h3 className={styles.stacksTitle}>Stack Tecnológica</h3>
+          <h3 className={styles.stacksTitle}>{t.heroStacksTitle}</h3>
           <div className={styles.stacksGrid}>
             {skills.map(({ name, icon: Icon }) => (
               <div key={name} className={styles.stackItem} data-tooltip={name}>

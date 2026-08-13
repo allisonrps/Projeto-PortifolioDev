@@ -3,6 +3,7 @@ import AnimatedSection from '../common/AnimatedSection';
 import SectionTitle from '../common/SectionTitle';
 import { FaGithub, FaLinkedinIn, FaEnvelope, FaWhatsapp } from 'react-icons/fa';
 import { socialLinks } from '../../data/socialLinks';
+import { translations } from '../../data/translations';
 import styles from './Contact.module.css';
 
 const iconMap = {
@@ -12,7 +13,9 @@ const iconMap = {
   FaWhatsapp,
 };
 
-export default function Contact() {
+export default function Contact({ lang }) {
+  const t = translations[lang] || translations.pt;
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -47,29 +50,28 @@ export default function Contact() {
             {/* CTA Banner */}
             <div className={styles.ctaBanner}>
               <h2 className={styles.ctaBannerTitle}>
-                Tem um projeto em mente?
+                {t.contactCtaTitle}
               </h2>
               <p className={styles.ctaBannerSub}>
-                Vamos trabalhar juntos e construir algo incrível!
+                {t.contactCtaSub}
               </p>
               <a href="mailto:allison_rps@hotmail.com" className={styles.ctaBannerBtn}>
-                Fale Comigo →
+                {t.contactCtaBtn}
               </a>
             </div>
 
             <SectionTitle
-              label="Contato"
-              title="Entre em"
-              highlightText="Contato."
-              subtitle="Estou sempre aberto a novas oportunidades e conversas sobre tecnologia."
+              label={t.contactLabel}
+              title={t.contactTitle}
+              highlightText={t.contactHighlight}
+              subtitle={t.contactSub}
             />
 
             <div className={styles.content}>
               {/* Left Column */}
               <div className={styles.leftCol}>
                 <p className={styles.infoText}>
-                  Se você tem um projeto, proposta ou simplesmente quer trocar uma
-                  ideia sobre tecnologia, ficarei feliz em ouvir!
+                  {t.contactText}
                 </p>
 
                 <div className={styles.socialLinks}>
@@ -94,53 +96,53 @@ export default function Contact() {
               {/* Right Column — Form */}
               <form className={styles.form} onSubmit={handleSubmit}>
                 <div className={styles.formGroup}>
-                  <label htmlFor="name">Nome</label>
+                  <label htmlFor="name">{t.contactName}</label>
                   <input
                     type="text"
                     id="name"
                     name="name"
-                    placeholder="Seu nome"
+                    placeholder={t.contactNamePlaceholder}
                     value={formData.name}
                     onChange={handleChange}
                   />
                 </div>
 
                 <div className={styles.formGroup}>
-                  <label htmlFor="email">Email</label>
+                  <label htmlFor="email">{t.contactEmail}</label>
                   <input
                     type="email"
                     id="email"
                     name="email"
-                    placeholder="seu@email.com"
+                    placeholder={t.contactEmailPlaceholder}
                     value={formData.email}
                     onChange={handleChange}
                   />
                 </div>
 
                 <div className={styles.formGroup}>
-                  <label htmlFor="message">Mensagem</label>
+                  <label htmlFor="message">{t.contactMsg}</label>
                   <textarea
                     id="message"
                     name="message"
-                    placeholder="Sua mensagem..."
+                    placeholder={t.contactMsgPlaceholder}
                     value={formData.message}
                     onChange={handleChange}
                   />
                 </div>
 
                 <button type="submit" className={styles.submitBtn}>
-                  Enviar Mensagem
+                  {t.contactSubmit}
                 </button>
 
                 {status === 'success' && (
                   <p className={styles.successMsg}>
-                    Mensagem enviada com sucesso! Entrarei em contato em breve.
+                    {t.contactSuccess}
                   </p>
                 )}
 
                 {status === 'error' && (
                   <p className={styles.errorMsg}>
-                    Por favor, preencha todos os campos.
+                    {t.contactError}
                   </p>
                 )}
               </form>
@@ -157,7 +159,7 @@ export default function Contact() {
               Allison<span>.</span>
             </h3>
             <p>
-              Desenvolvedor de software criando soluções modernas e escaláveis que geram impacto real.
+              {t.footerBrandDesc}
             </p>
             <div className={styles.footerSocials}>
               {socialLinks.map((link) => {
@@ -177,21 +179,21 @@ export default function Contact() {
             </div>
           </div>
           <div className={styles.footerCol}>
-            <h4>Links</h4>
-            <a href="#hero">Home</a>
-            <a href="#about">Sobre</a>
-            <a href="#services">Serviços</a>
-            <a href="#projects">Projetos</a>
+            <h4>{t.footerColLinks}</h4>
+            <a href="#hero">{t.navHome}</a>
+            <a href="#hero">{t.navAbout}</a>
+            <a href="#services">{t.navServices}</a>
+            <a href="#projects">{t.navProjects}</a>
           </div>
           <div className={styles.footerCol}>
-            <h4>Serviços</h4>
-            <a href="#services">Web Development</a>
-            <a href="#services">Cloud Architecture</a>
-            <a href="#services">Backend & APIs</a>
-            <a href="#services">Mobile Apps</a>
+            <h4>{t.footerColServices}</h4>
+            <a href="#services">{t.serviceWebTitle}</a>
+            <a href="#services">{t.serviceCloudTitle}</a>
+            <a href="#services">{t.serviceApiTitle}</a>
+            <a href="#services">{t.serviceMobileTitle}</a>
           </div>
           <div className={styles.footerCol}>
-            <h4>Contato</h4>
+            <h4>{t.footerColContact}</h4>
             <a href="mailto:allison_rps@hotmail.com">Email</a>
             <a
               href="https://github.com/allisonrps"
@@ -210,8 +212,7 @@ export default function Contact() {
           </div>
         </div>
         <div className={styles.footerBottom}>
-          © 2026 Allison Rodrigues. Todos os direitos reservados. Feito com{' '}
-          <span>💚</span> e React.
+          © 2026 Allison Rodrigues. {t.footerRights}
         </div>
       </footer>
     </>

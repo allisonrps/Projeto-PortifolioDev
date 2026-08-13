@@ -2,30 +2,8 @@ import AnimatedSection from '../common/AnimatedSection';
 import SectionTitle from '../common/SectionTitle';
 import { motion } from 'framer-motion';
 import { FaCode, FaCloud, FaMobileAlt, FaDatabase } from 'react-icons/fa';
+import { translations } from '../../data/translations';
 import styles from './Services.module.css';
-
-const services = [
-  {
-    icon: FaCode,
-    title: 'Desenvolvimento Web',
-    description: 'Aplicações web modernas e responsivas com React, TypeScript e as melhores práticas do mercado.',
-  },
-  {
-    icon: FaCloud,
-    title: 'Arquitetura Cloud',
-    description: 'Soluções escaláveis na nuvem Azure com infraestrutura como código e pipelines CI/CD.',
-  },
-  {
-    icon: FaDatabase,
-    title: 'Backend & APIs',
-    description: 'APIs RESTful robustas com C# .NET Core e Node.js, autenticação JWT, segurança OWASP e integração com bancos de dados.',
-  },
-  {
-    icon: FaMobileAlt,
-    title: 'Aplicações Mobile',
-    description: 'Apps multiplataforma com React Native, integrando serviços cloud e experiências nativas.',
-  },
-];
 
 const cardVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -36,14 +14,40 @@ const cardVariants = {
   }),
 };
 
-export default function Services() {
+export default function Services({ lang }) {
+  const t = translations[lang] || translations.pt;
+
+  const services = [
+    {
+      icon: FaCode,
+      title: t.serviceWebTitle,
+      description: t.serviceWebDesc,
+    },
+    {
+      icon: FaCloud,
+      title: t.serviceCloudTitle,
+      description: t.serviceCloudDesc,
+    },
+    {
+      icon: FaDatabase,
+      title: t.serviceApiTitle,
+      description: t.serviceApiDesc,
+    },
+    {
+      icon: FaMobileAlt,
+      title: t.serviceMobileTitle,
+      description: t.serviceMobileDesc,
+    },
+  ];
+
   return (
     <AnimatedSection id="services" className={styles.services}>
       <div className={styles.servicesInner}>
         <SectionTitle
-          label="Serviços"
-          title="O Que Eu Faço de"
-          highlightText="Melhor."
+          label={t.servicesLabel}
+          title={t.servicesTitle}
+          highlightText={t.servicesHighlight}
+          subtitle={t.servicesSub}
         />
 
         <div className={styles.grid}>
@@ -59,11 +63,13 @@ export default function Services() {
                 whileInView="visible"
                 viewport={{ once: true, margin: '-50px' }}
               >
-                <div className={styles.iconBox}>
-                  <Icon />
+                <div className={styles.cardHeader}>
+                  <div className={styles.iconWrapper}>
+                    <Icon />
+                  </div>
+                  <h3 className={styles.cardTitle}>{s.title}</h3>
                 </div>
-                <h3>{s.title}</h3>
-                <p>{s.description}</p>
+                <p className={styles.cardDescription}>{s.description}</p>
               </motion.div>
             );
           })}

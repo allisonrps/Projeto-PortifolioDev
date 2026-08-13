@@ -1,0 +1,172 @@
+export const translations = {
+  pt: {
+    // Header & Navigation
+    navHome: 'Home',
+    navAbout: 'Sobre',
+    navServices: 'Serviços',
+    navProjects: 'Projetos',
+    navContact: 'Contato',
+    navCta: 'Contato',
+
+    // HeroAbout Section
+    heroRole: 'Software Developer & Cloud Architect',
+    heroBio1: 'Sou desenvolvedor de software graduado pela FATEC Franca e pós-graduando em Arquitetura Avançada em Nuvem Azure na Faculdade Anhanguera. Especializado na construção de aplicações robustas e seguras usando C# .NET Core e Node.js (Express) no ecossistema de APIs, e interfaces de alta performance com React e TypeScript.',
+    heroBio2: 'Minha paixão está em criar arquiteturas de dados escaláveis, garantir segurança de dados integrada (padrões OWASP, criptografia, conformidade com a LGPD) e implantar soluções cloud-native orquestradas com Docker e esteiras CI/CD automatizadas.',
+    heroCtaProjects: 'Ver Projetos →',
+    heroCtaContact: 'Fale Comigo',
+    heroStacksTitle: 'Stack Tecnológica',
+    heroStatsLabel: 'Projetos Em Produção',
+
+    // Services Section
+    servicesLabel: 'O Que Eu Faço',
+    servicesTitle: 'Especialidades',
+    servicesHighlight: 'Técnicas.',
+    servicesSub: 'Soluções de ponta a ponta desenvolvidas com foco em segurança, escalabilidade e desempenho.',
+    serviceWebTitle: 'Desenvolvimento Web',
+    serviceWebDesc: 'Aplicações Single Page (SPAs) modernas e interativas construídas com React, TypeScript e Tailwind CSS com total responsividade.',
+    serviceCloudTitle: 'Arquitetura de Nuvem',
+    serviceCloudDesc: 'Modelagem e governança de infraestruturas no ecossistema Microsoft Azure. Migração de cargas de trabalho e serviços serverless.',
+    serviceApiTitle: 'APIs & Back-End',
+    serviceApiDesc: 'Desenvolvimento de APIs robustas utilizando C# .NET Core e Node.js, com segurança integrada e persistência SQL/NoSQL.',
+    serviceMobileTitle: 'Aplicações Mobile',
+    serviceMobileDesc: 'Criação de aplicativos nativos multiplataforma (iOS e Android) com React Native, Expo e armazenamento SQLite embarcado.',
+
+    // Projects Section
+    projectsLabel: 'Portfólio',
+    projectsTitle: 'Principais Projetos',
+    projectsHighlight: 'Locais.',
+    projectsBtnGitHub: 'GitHub Geral →',
+    projectCaseDetails: 'Ver Caso Completo →',
+    projectBackToList: '← Voltar',
+    projectBtnCode: 'Código Fonte',
+    projectBtnDemo: 'Demo Online',
+    projectCaseHeader: 'Especificações do Caso',
+    projectArch: 'Arquitetura & Backend',
+    projectSecurity: 'Segurança & Proteção',
+    projectFront: 'Frontend & UX',
+    projectDevOps: 'Infraestrutura & DevOps',
+
+    // Studies Section
+    studiesLabel: 'Formação',
+    studiesTitle: 'Jornada Acadêmica',
+    studiesHighlight: '& Estudos.',
+    studiesCertificates: '< Certificados >',
+    studiesBtnVerify: 'Validar Credencial Online',
+    studiesBtnFull: 'Ver em Tela Cheia',
+    studiesBtnClose: 'Fechar',
+    studiesStatusConcluido: 'Concluído',
+    studiesStatusAndamento: 'Em andamento',
+    studiesCertIssued: 'Ano de emissão:',
+
+    // Contact Section
+    contactCtaTitle: 'Tem um projeto em mente?',
+    contactCtaSub: 'Vamos trabalhar juntos e construir algo incrível!',
+    contactCtaBtn: 'Fale Comigo →',
+    contactLabel: 'Contato',
+    contactTitle: 'Entre em',
+    contactHighlight: 'Contato.',
+    contactSub: 'Estou sempre aberto a novas oportunidades e conversas sobre tecnologia.',
+    contactText: 'Se você tem um projeto, proposta ou simplesmente quer trocar uma ideia sobre tecnologia, ficarei feliz em ouvir!',
+    contactName: 'Nome',
+    contactNamePlaceholder: 'Seu nome',
+    contactEmail: 'Email',
+    contactEmailPlaceholder: 'seu@email.com',
+    contactMsg: 'Mensagem',
+    contactMsgPlaceholder: 'Sua mensagem...',
+    contactSubmit: 'Enviar Mensagem',
+    contactSuccess: 'Mensagem enviada com sucesso! Entrarei em contato em breve.',
+    contactError: 'Por favor, preencha todos os campos.',
+
+    // Footer
+    footerBrandDesc: 'Desenvolvedor de software criando soluções modernas e escaláveis que geram impacto real.',
+    footerColLinks: 'Links',
+    footerColServices: 'Serviços',
+    footerColContact: 'Contato',
+    footerRights: 'Todos os direitos reservados. Feito com 💚 e React.'
+  },
+  en: {
+    // Header & Navigation
+    navHome: 'Home',
+    navAbout: 'About',
+    navServices: 'Services',
+    navProjects: 'Projects',
+    navContact: 'Contact',
+    navCta: 'Contact',
+
+    // HeroAbout Section
+    heroRole: 'Software Developer & Cloud Architect',
+    heroBio1: 'I am a software developer graduated from FATEC Franca and postgraduate in Advanced Azure Cloud Architecture at Faculdade Anhanguera. Specialized in building robust and secure applications using C# .NET Core and Node.js (Express) in the API ecosystem, and high-performance interfaces with React and TypeScript.',
+    heroBio2: 'My passion lies in creating scalable data architectures, ensuring integrated data security (OWASP patterns, cryptography, compliance with LGPD/GDPR) and deploying cloud-native solutions orchestrated with Docker and automated CI/CD pipelines.',
+    heroCtaProjects: 'View Projects →',
+    heroCtaContact: 'Get In Touch',
+    heroStacksTitle: 'Tech Stack',
+    heroStatsLabel: 'Projects in Production',
+
+    // Services Section
+    servicesLabel: 'What I Do',
+    servicesTitle: 'Technical',
+    servicesHighlight: 'Specialties.',
+    servicesSub: 'End-to-end solutions developed with a focus on security, scalability, and performance.',
+    serviceWebTitle: 'Web Development',
+    serviceWebDesc: 'Modern and interactive Single Page Applications (SPAs) built with React, TypeScript, and Tailwind CSS with full responsiveness.',
+    serviceCloudTitle: 'Cloud Architecture',
+    serviceCloudDesc: 'Modeling and governance of infrastructures in the Microsoft Azure ecosystem. Migration of workloads and serverless services.',
+    serviceApiTitle: 'APIs & Back-End',
+    serviceApiDesc: 'Development of robust APIs using C# .NET Core and Node.js, with integrated security and SQL/NoSQL persistence.',
+    serviceMobileTitle: 'Mobile Applications',
+    serviceMobileDesc: 'Creation of native cross-platform mobile apps (iOS and Android) with React Native, Expo, and embedded SQLite storage.',
+
+    // Projects Section
+    projectsLabel: 'Portfolio',
+    projectsTitle: 'Featured',
+    projectsHighlight: 'Projects.',
+    projectsBtnGitHub: 'General GitHub →',
+    projectCaseDetails: 'View Case Study →',
+    projectBackToList: '← Go Back',
+    projectBtnCode: 'Source Code',
+    projectBtnDemo: 'Live Demo',
+    projectCaseHeader: 'Case Specifications',
+    projectArch: 'Architecture & Backend',
+    projectSecurity: 'Security & Protection',
+    projectFront: 'Frontend & UX',
+    projectDevOps: 'Infrastructure & DevOps',
+
+    // Studies Section
+    studiesLabel: 'Education',
+    studiesTitle: 'Academic Journey',
+    studiesHighlight: '& Studies.',
+    studiesCertificates: '< Certificates >',
+    studiesBtnVerify: 'Verify Credential Online',
+    studiesBtnFull: 'View Full Screen',
+    studiesBtnClose: 'Close',
+    studiesStatusConcluido: 'Completed',
+    studiesStatusAndamento: 'In progress',
+    studiesCertIssued: 'Issued in:',
+
+    // Contact Section
+    contactCtaTitle: 'Have a project in mind?',
+    contactCtaSub: "Let's work together and build something amazing!",
+    contactCtaBtn: 'Talk to Me →',
+    contactLabel: 'Contact',
+    contactTitle: 'Get in',
+    contactHighlight: 'Touch.',
+    contactSub: 'I am always open to new opportunities and conversations about technology.',
+    contactText: 'If you have a project, proposal, or simply want to share ideas about tech, I will be happy to hear!',
+    contactName: 'Name',
+    contactNamePlaceholder: 'Your name',
+    contactEmail: 'Email',
+    contactEmailPlaceholder: 'your@email.com',
+    contactMsg: 'Message',
+    contactMsgPlaceholder: 'Your message...',
+    contactSubmit: 'Send Message',
+    contactSuccess: 'Message sent successfully! I will get back to you soon.',
+    contactError: 'Please fill in all fields.',
+
+    // Footer
+    footerBrandDesc: 'Software developer creating modern and scalable solutions that generate real impact.',
+    footerColLinks: 'Links',
+    footerColServices: 'Services',
+    footerColContact: 'Contact',
+    footerRights: 'All rights reserved. Made with 💚 and React.'
+  }
+};

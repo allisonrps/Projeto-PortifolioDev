@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import './App.css'
 import Header from './components/Header/Header'
 import HeroAbout from './components/HeroAbout/HeroAbout'
@@ -8,16 +9,18 @@ import Contact from './components/Contact/Contact'
 import TechBackground from './components/common/TechBackground'
 
 function App() {
+  const [lang, setLang] = useState('pt') // 'pt' | 'en'
+
   return (
     <div className="app">
       <TechBackground />
-      <Header />
+      <Header lang={lang} setLang={setLang} />
       <main style={{ position: 'relative', zIndex: 1 }}>
-        <HeroAbout />
-        <Services />
-        <Projects />
-        <Studies />
-        <Contact />
+        <HeroAbout lang={lang} />
+        <Services lang={lang} />
+        <Projects lang={lang} />
+        <Studies lang={lang} />
+        <Contact lang={lang} />
       </main>
     </div>
   )

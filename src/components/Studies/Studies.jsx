@@ -4,23 +4,35 @@ import SectionTitle from '../common/SectionTitle';
 import Badge from '../common/Badge';
 import CertificateCard from './CertificateCard';
 import { studies, certificates } from '../../data/studies';
+import { translations } from '../../data/translations';
 import { FiChevronLeft, FiChevronRight, FiX, FiExternalLink, FiZoomIn } from 'react-icons/fi';
 import { FaLaptopCode, FaCloud, FaShieldAlt } from 'react-icons/fa';
 import { SiMongodb } from 'react-icons/si';
 import { AnimatePresence, motion } from 'framer-motion';
 import styles from './Studies.module.css';
 
-const statusMap = {
-  concluido: { text: 'Concluído', variant: 'success' },
-  'em-andamento': { text: 'Em andamento', variant: 'warning' },
-};
-
 const educationIcons = {
   1: FaCloud,
   2: FaLaptopCode,
 };
 
-export default function Studies() {
+const certDescriptions = {
+  0: {
+    pt: 'Certificação de proficiência em língua inglesa TOEIC (Test of English for International Communication) com pontuação obtida de 665/990, comprovando habilidades de audição e leitura para o mercado internacional.',
+    en: 'TOEIC (Test of English for International Communication) proficiency certification in English with a score of 665/990, demonstrating listening and reading skills for the global market.'
+  },
+  1: {
+    pt: 'Formação oficial da Cisco Networking Academy abordando fundamentos de segurança cibernética, proteção de dados, segurança de redes e resposta a incidentes.',
+    en: 'Official training from Cisco Networking Academy covering cybersecurity basics, data protection, network security, and incident response.'
+  },
+  2: {
+    pt: 'Conceitos e fundamentos de gestão ágil ministrados pelo Google no Coursera. Cobre frameworks Scrum, Kanban, gerenciamento de backlog, reuniões diárias e planejamento de sprint.',
+    en: 'Concepts and fundamentals of agile management taught by Google on Coursera. Covers Scrum, Kanban, backlog management, daily standups, and sprint planning.'
+  }
+};
+
+export default function Studies({ lang }) {
+  const t = translations[lang] || translations.pt;
   const scrollRef = useRef(null);
   const [selectedCert, setSelectedCert] = useState(null);
 
@@ -42,17 +54,12 @@ export default function Studies() {
 
   const openModal = (cert) => {
     let description = '';
-    if (cert.id === 0) {
-      description =
-        'Certificação de proficiência em língua inglesa TOEIC (Test of English for International Communication) com pontuação obtida de 665/990, comprovando habilidades de audição e leitura para o mercado internacional.';
-    } else if (cert.id === 1) {
-      description =
-        'Formação oficial da Cisco Networking Academy abordando fundamentos de segurança cibernética, proteção de dados, segurança de redes e resposta a incidentes.';
-    } else if (cert.id === 2) {
-      description =
-        'Conceitos e fundamentos de gestão ágil ministrados pelo Google no Coursera. Cobre frameworks Scrum, Kanban, gerenciamento de backlog, reuniões diárias e planejamento de sprint.';
+    if (certDescriptions[cert.id]) {
+      description = certDescriptions[cert.id][lang] || certDescriptions[cert.id].pt;
     } else {
-      description = `Certificado de capacitação profissional em ${cert.name} emitido por ${cert.issuer}, atestando a conclusão da carga horária e aproveitamento técnico.`;
+      description = lang === 'pt'
+        ? `Certificado de capacitação profissional em ${cert.name} emitido por ${cert.issuer}, atestando a conclusão da carga horária e aproveitamento técnico.`
+        : `Professional training certificate in ${cert.name} issued by ${cert.issuer}, validating course load completion and technical expertise.`;
     }
 
     setSelectedCert({ ...cert, description });
@@ -62,17 +69,20 @@ export default function Studies() {
     <AnimatedSection id="studies" className={styles.studies}>
       <div className={styles.studiesInner}>
         <SectionTitle
-          label="Formação"
-          title="Jornada Acadêmica"
-          highlightText="& Estudos."
+          label={t.studiesLabel}
+          title={t.studiesTitle}
+          highlightText={t.studiesHighlight}
         />
 
         {/* ── Education Grid ── */}
         <div className={styles.educationGrid}>
           {studies.map((item) => {
-            const isActive = item.status === 'em-andamento';
-            const badge = statusMap[item.status] || statusMap.concluido;
+            const badgeText = item.status === 'em-andamento' ? t.studiesStatusAndamento : t.studiesStatusConcluido;
+            const badgeVariant = item.status === 'em-andamento' ? 'warning' : 'success';
             const Icon = educationIcons[item.id] || FaLaptopCode;
+            const courseName = item.course[lang] || item.course.pt;
+            const periodText = item.period[lang] || item.period.pt;
+            const descText = item.description[lang] || item.description.pt;
 
             return (
               <div key={item.id} className={styles.educationCard}>
@@ -82,16 +92,16 @@ export default function Studies() {
 
                 <div>
                   <h3 className={styles.institution}>{item.institution}</h3>
-                  <p className={styles.course}>{item.course}</p>
-                  <span className={styles.period}>{item.period}</span>
+                  <p className={styles.course}>{courseName}</p>
+                  <span className={styles.period}>{periodText}</span>
                 </div>
 
                 <div>
                   <div style={{ marginTop: 12, marginBottom: 12 }}>
-                    <Badge text={badge.text} variant={badge.variant} />
+                    <Badge text={badgeText} variant={badgeVariant} />
                   </div>
-                  {item.description && (
-                    <p className={styles.description}>{item.description}</p>
+                  {descText && (
+                    <p className={styles.description}>{descText}</p>
                   )}
                 </div>
               </div>
@@ -101,7 +111,7 @@ export default function Studies() {
 
         {/* ── Certificates Carousel ── */}
         <div className={styles.sectionHeader}>
-          <h3 className={styles.sectionLabel}>&lt; Certificados &gt;</h3>
+          <h3 className={styles.sectionLabel}>{t.studiesCertificates}</h3>
           <div className={styles.carouselControls}>
             <button
               onClick={() => scroll('left')}
@@ -186,7 +196,7 @@ export default function Studies() {
                 <h3 className={styles.modalTitle}>{selectedCert.name}</h3>
                 <div className={styles.modalSubRow}>
                   <p className={styles.modalIssuer}>{selectedCert.issuer}</p>
-                  <span className={styles.modalYear}>Ano de emissão: {selectedCert.year}</span>
+                  <span className={styles.modalYear}>{t.studiesCertIssued} {selectedCert.year}</span>
                 </div>
               </div>
 
@@ -201,7 +211,7 @@ export default function Studies() {
                     rel="noopener noreferrer"
                     className={styles.modalBtn}
                   >
-                    <FiExternalLink /> Validar Credencial Online
+                    <FiExternalLink /> {t.studiesBtnVerify}
                   </a>
                 )}
                 
@@ -212,7 +222,7 @@ export default function Studies() {
                     rel="noopener noreferrer"
                     className={styles.modalBtnSec}
                   >
-                    <FiZoomIn /> Ver em Tela Cheia
+                    <FiZoomIn /> {t.studiesBtnFull}
                   </a>
                 )}
                 
@@ -222,7 +232,7 @@ export default function Studies() {
                   type="button"
                   style={{ flex: selectedCert.verifyUrl && selectedCert.image ? '0.5' : '1' }}
                 >
-                  Fechar
+                  {t.studiesBtnClose}
                 </button>
               </div>
             </motion.div>

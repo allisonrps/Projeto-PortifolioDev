@@ -3,15 +3,24 @@ import Logo from './Logo';
 import styles from './Header.module.css';
 
 const NAV_ITEMS = [
-  { label: 'Home', sectionId: 'hero' },
-  { label: 'Sobre', sectionId: 'about' },
-  { label: 'Serviços', sectionId: 'services' },
-  { label: 'Projetos', sectionId: 'projects' },
-  { label: 'Estudos', sectionId: 'studies' },
-  { label: 'Contato', sectionId: 'contact' },
+  { sectionId: 'hero' },
+  { sectionId: 'services' },
+  { sectionId: 'projects' },
+  { sectionId: 'studies' },
+  { sectionId: 'contact' },
 ];
 
-export default function Header() {
+const navLabels = {
+  pt: { hero: 'Home', services: 'Serviços', projects: 'Projetos', studies: 'Estudos', contact: 'Contato' },
+  en: { hero: 'Home', services: 'Services', projects: 'Projects', studies: 'Studies', contact: 'Contact' }
+};
+
+const ctaLabels = {
+  pt: 'Fale Comigo',
+  en: 'Contact Me'
+};
+
+export default function Header({ lang, setLang }) {
   const [activeSection, setActiveSection] = useState('hero');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -69,14 +78,36 @@ export default function Header() {
               onClick={() => scrollToSection(item.sectionId)}
               type="button"
             >
-              {item.label}
+              {navLabels[lang][item.sectionId]}
             </button>
           ))}
         </nav>
 
-        <button className={styles.ctaButton} onClick={() => scrollToSection('contact')} type="button">
-          Fale Comigo
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          {/* Language Selector Toggle */}
+          <div className={styles.langToggleWrapper}>
+            <button
+              className={`${styles.langBtn} ${lang === 'pt' ? styles.langBtnActive : ''}`}
+              onClick={() => setLang('pt')}
+              title="Português"
+              type="button"
+            >
+              🇧🇷 <span className={styles.langLabel}>PT</span>
+            </button>
+            <button
+              className={`${styles.langBtn} ${lang === 'en' ? styles.langBtnActive : ''}`}
+              onClick={() => setLang('en')}
+              title="English"
+              type="button"
+            >
+              🇺🇸 <span className={styles.langLabel}>EN</span>
+            </button>
+          </div>
+
+          <button className={styles.ctaButton} onClick={() => scrollToSection('contact')} type="button">
+            {ctaLabels[lang]}
+          </button>
+        </div>
 
         <button
           className={`${styles.mobileToggle} ${mobileMenuOpen ? styles.mobileToggleOpen : ''}`}
@@ -96,7 +127,7 @@ export default function Header() {
             onClick={() => scrollToSection(item.sectionId)}
             type="button"
           >
-            {item.label}
+            {navLabels[lang][item.sectionId]}
           </button>
         ))}
       </nav>
