@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { FaReact, FaNodeJs, FaDocker, FaGitAlt } from 'react-icons/fa';
+import { FaReact, FaNodeJs, FaDocker, FaGitAlt, FaGithub, FaLinkedinIn } from 'react-icons/fa';
 import { SiTypescript, SiDotnet, SiMongodb, SiPostgresql, SiTailwindcss } from 'react-icons/si';
 import { VscAzure } from 'react-icons/vsc';
 import { translations } from '../../data/translations';
@@ -83,10 +83,26 @@ export default function HeroAbout({ lang }) {
                 </h1>
               </motion.div>
 
-              {/* Stats Square */}
-              <motion.div className={styles.statsSquare} variants={itemVariants}>
-                <span className={styles.statsNumber}>3</span>
-                <span className={styles.statsLabel}>{t.heroStatsLabel}</span>
+              {/* Social Quick Links */}
+              <motion.div className={styles.socialQuickLinks} variants={itemVariants}>
+                <a
+                  href="https://github.com/allisonrps"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.socialQuickLink}
+                  aria-label="GitHub"
+                >
+                  <FaGithub />
+                </a>
+                <a
+                  href="https://linkedin.com/in/allisonrps"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.socialQuickLink}
+                  aria-label="LinkedIn"
+                >
+                  <FaLinkedinIn />
+                </a>
               </motion.div>
             </div>
 
