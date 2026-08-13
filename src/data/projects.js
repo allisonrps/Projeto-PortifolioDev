@@ -2,7 +2,7 @@ export const projects = [
   {
     id: 1,
     title: 'Autonomax',
-    status: 'em-desenvolvimento',
+    status: 'em-producao',
     type: 'Web App',
     stacks: ['.NET 9', 'C#', 'EF Core 9', 'PostgreSQL', 'React', 'TypeScript', 'Tailwind CSS'],
     summary:
@@ -15,16 +15,16 @@ export const projects = [
   {
     id: 2,
     title: 'Aura',
-    status: 'em-desenvolvimento',
+    status: 'em-producao', // Menciona que está em produção
     type: 'Web App & API',
     stacks: ['.NET 10', 'C#', 'Clean Architecture', 'EF Core', 'React', 'TypeScript', 'CSS Modules'],
     summary:
       'Sistema de gestão escolar e financeira voltado para professores particulares e escolas. Organiza agendas de aulas, cadastro e progresso de estudantes, disciplinas de ensino e o fluxo de mensalidades, utilizando arquitetura baseada em DDD.',
-    githubUrl: 'https://github.com/allisonrps/Projeto-Aura',
-    liveUrl: null,
-    image: '/project-aura-login.png', // Usar a tela de login como capa de apresentação inicial
+    githubUrl: null, // Sem o link do github no aura, somente em produção
+    liveUrl: 'https://aura-teacher.vercel.app', // Link em produção
+    image: '/project-aura-login.png',
     images: [
-      '/project-aura-login.png', // Primeira imagem (capa)
+      '/project-aura-login.png',
       '/project-aura-dashboard.png',
       '/project-aura-alunos.png',
       '/project-aura-agenda.png',
@@ -46,11 +46,11 @@ export const projects = [
   {
     id: 3,
     title: 'Setlist Band Manager',
-    status: 'concluido',
+    status: 'em-producao', // 3 projetos em produção
     type: 'Mobile App',
     stacks: ['React Native', 'Expo', 'TypeScript', 'SQLite', 'File System', 'Expo Sharing'],
     summary:
-      'Aplicativo móvel para organização de bandas e apresentações. Permite o gerenciamento de repertórios de músicas, criação de setlists, roteiros de palco para músicos, controle de ensaios e exportação/compartilhamento de arquivos.',
+      'Aplicativo móvel para organização de bandas e apresentações. Permite o gerenciamento de repertórios de músicas, criação de setlists, roteiros de palco para musicians, controle de ensaios e exportação/compartilhamento de arquivos.',
     githubUrl: 'https://github.com/allisonrps/setlist-app',
     liveUrl: null,
     image: '/project-setlist.jpg',

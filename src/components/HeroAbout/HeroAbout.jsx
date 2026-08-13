@@ -73,11 +73,19 @@ export default function HeroAbout() {
 
           {/* Bio Info */}
           <div className={styles.infoCol}>
-            <motion.div className={styles.nameBox} variants={itemVariants}>
-              <h1 className={styles.name}>
-                Allison Rodrigues<span>.</span>
-              </h1>
-            </motion.div>
+            <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap', width: '100%' }}>
+              <motion.div className={styles.nameBox} variants={itemVariants}>
+                <h1 className={styles.name}>
+                  Allison Rodrigues<span>.</span>
+                </h1>
+              </motion.div>
+
+              {/* Stats Square */}
+              <motion.div className={styles.statsSquare} variants={itemVariants}>
+                <span className={styles.statsNumber}>3</span>
+                <span className={styles.statsLabel}>Projetos Em Produção</span>
+              </motion.div>
+            </div>
 
             <motion.p className={styles.role} variants={itemVariants}>
               Software Developer & Cloud Architect

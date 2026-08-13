@@ -9,6 +9,7 @@ import { FaGithub } from 'react-icons/fa';
 import styles from './Projects.module.css';
 
 const statusMap = {
+  'em-producao': { text: 'Em Produção', variant: 'success' },
   concluido: { text: 'Concluído', variant: 'success' },
   'em-desenvolvimento': { text: 'Em desenvolvimento', variant: 'warning' },
   pausado: { text: 'Pausado', variant: 'info' },
@@ -249,14 +250,16 @@ export default function Projects() {
                     </div>
 
                     <div className={styles.expandedLinks}>
-                      <a
-                        href={activeProject.githubUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={styles.expandedLink}
-                      >
-                        <FaGithub /> Código Fonte
-                      </a>
+                      {activeProject.githubUrl && (
+                        <a
+                          href={activeProject.githubUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.expandedLink}
+                        >
+                          <FaGithub /> Código Fonte
+                        </a>
+                      )}
                       {activeProject.liveUrl && (
                         <a
                           href={activeProject.liveUrl}
