@@ -76,7 +76,7 @@ export default function HeroAbout({ lang }) {
 
           {/* Bio Info */}
           <div className={styles.infoCol}>
-            <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap', width: '100%' }}>
+            <div className={styles.nameAndSocialRow}>
               <motion.div className={styles.nameBox} variants={itemVariants}>
                 <h1 className={styles.name}>
                   Allison Rodrigues<span>.</span>

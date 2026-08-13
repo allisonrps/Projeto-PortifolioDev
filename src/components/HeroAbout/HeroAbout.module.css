@@ -207,6 +207,15 @@
   height: 100%;
 }
 
+/* ── Name and Social Row Wrapper ── */
+.nameAndSocialRow {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
 /* ── Name Title Box ── */
 .nameBox {
   background: var(--bg-card);
@@ -435,9 +444,28 @@
   }
   .infoCol {
     align-items: center;
+    width: 100%;
+  }
+  .nameAndSocialRow {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    gap: 12px;
   }
   .nameBox {
+    width: 100%;
+    text-align: center;
     margin: 0 auto;
+  }
+  .socialQuickLinks {
+    width: 100%;
+    height: auto;
+    display: flex;
+    gap: 12px;
+  }
+  .socialQuickLink {
+    flex: 1;
+    height: 64px;
   }
   .bioText {
     max-width: 100%;
