@@ -22,8 +22,9 @@ export const projects = [
       'Sistema de gestão escolar e financeira voltado para professores particulares e escolas. Organiza agendas de aulas, cadastro e progresso de estudantes, disciplinas de ensino e o fluxo de mensalidades, utilizando arquitetura baseada em DDD.',
     githubUrl: 'https://github.com/allisonrps/Projeto-Aura',
     liveUrl: null,
-    image: '/project-aura-dashboard.png', // Usar o dashboard principal como capa
+    image: '/project-aura-login.png', // Usar a tela de login como capa de apresentação inicial
     images: [
+      '/project-aura-login.png', // Primeira imagem (capa)
       '/project-aura-dashboard.png',
       '/project-aura-alunos.png',
       '/project-aura-agenda.png',
@@ -40,7 +41,6 @@ export const projects = [
       '/project-aura-materias-fichas.png',
       '/project-aura-tema-minimalmanga.png',
       '/project-aura-tema-vibrantsquare.png',
-      '/project-aura-login.png',
     ],
   },
   {
