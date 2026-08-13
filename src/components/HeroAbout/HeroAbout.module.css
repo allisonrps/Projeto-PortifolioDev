@@ -133,6 +133,7 @@
   object-fit: cover;
   transition: transform var(--transition-normal), filter var(--transition-normal);
   filter: grayscale(10%) contrast(105%);
+  animation: cyberGlitch 10s steps(1) infinite;
 }
 
 .photoCol:hover .photoWrapper img {
@@ -424,5 +425,51 @@
     width: 100%;
     aspect-ratio: 1 / 1;
     height: auto;
+  }
+}
+
+/* ── Cyber Glitch Animation (Varied monitor failure) ── */
+@keyframes cyberGlitch {
+  0%, 79%, 83%, 87%, 91%, 95%, 100% {
+    clip-path: inset(0 0 0 0);
+    transform: translate(0, 0) scale(1);
+    filter: grayscale(10%) contrast(105%);
+  }
+  80% {
+    clip-path: inset(30% 0 45% 0);
+    transform: translate(-6px, 3px) scale(1.02);
+    filter: grayscale(0%) contrast(150%) hue-rotate(90deg);
+  }
+  81% {
+    clip-path: inset(15% 0 80% 0);
+    transform: translate(4px, -2px) scale(0.98);
+    filter: grayscale(0%) contrast(120%) hue-rotate(180deg);
+  }
+  82% {
+    clip-path: inset(65% 0 10% 0);
+    transform: translate(-3px, -3px) scale(1.01);
+  }
+  84% {
+    clip-path: inset(45% 0 15% 0);
+    transform: translate(8px, 4px) scale(1.03);
+    filter: invert(10%) saturate(2);
+  }
+  85% {
+    clip-path: inset(0 0 0 0);
+    transform: translate(0, 0);
+  }
+  92% {
+    clip-path: inset(70% 0 5% 0);
+    transform: translate(-10px, -5px) scale(1.04);
+    filter: grayscale(0%) hue-rotate(270deg) contrast(140%);
+  }
+  93% {
+    clip-path: inset(10% 0 60% 0);
+    transform: translate(8px, 6px) scale(0.96);
+    filter: invert(30%);
+  }
+  94% {
+    clip-path: inset(40% 0 20% 0);
+    transform: translate(-4px, 2px);
   }
 }

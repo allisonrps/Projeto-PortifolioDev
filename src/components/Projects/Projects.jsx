@@ -4,7 +4,7 @@ import SectionTitle from '../common/SectionTitle';
 import Badge from '../common/Badge';
 import { projects } from '../../data/projects';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiX, FiExternalLink, FiChevronRight, FiChevronLeft } from 'react-icons/fi';
+import { FiX, FiExternalLink, FiChevronRight, FiChevronLeft, FiZoomIn } from 'react-icons/fi';
 import { FaGithub } from 'react-icons/fa';
 import styles from './Projects.module.css';
 
@@ -39,6 +39,7 @@ const projectDetails = {
 export default function Projects() {
   const [expandedProjectId, setExpandedProjectId] = useState(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [lightboxImage, setLightboxImage] = useState(null);
 
   const handleCardClick = (id) => {
     setExpandedProjectId(id);
@@ -84,7 +85,7 @@ export default function Projects() {
         <div style={{ position: 'relative' }}>
           <AnimatePresence mode="wait">
             {!expandedProjectId ? (
-              /* ── Grid/Carousel List View (Simplificada) ── */
+              /* ── Grid/Carousel List View (Cards Compactos) ── */
               <motion.div
                 key="list"
                 initial={{ opacity: 0, y: 20 }}
@@ -116,8 +117,7 @@ export default function Projects() {
                           <Badge text={cardBadge.text} variant={cardBadge.variant} />
                         </div>
 
-                        <p className={styles.simpleSummary}>{p.summary}</p>
-
+                        {/* Stacks do projeto */}
                         <div className={styles.simpleStacks}>
                           {p.stacks.slice(0, 4).map((tech) => (
                             <span key={tech} className={styles.simpleStackBadge}>
@@ -130,7 +130,7 @@ export default function Projects() {
                         </div>
 
                         <span className={styles.expandPrompt}>
-                          Detalhes do Caso <FiChevronRight />
+                          Ver Caso Completo <FiChevronRight />
                         </span>
                       </div>
                     </div>
@@ -148,8 +148,12 @@ export default function Projects() {
                 className={styles.expandedCard}
               >
                 <div className={styles.expandedGrid}>
-                  {/* Left Col — Giant Image / Mini Screenshot Carousel */}
-                  <div className={styles.expandedImageArea}>
+                  {/* Left Col — Giant Image / Click to open Lightbox */}
+                  <div
+                    className={styles.expandedImageArea}
+                    onClick={() => setLightboxImage(activeProject.images ? activeProject.images[activeImageIndex] : activeProject.image)}
+                    title="Clique para abrir imagem em tela cheia"
+                  >
                     <img 
                       src={activeProject.images ? activeProject.images[activeImageIndex] : activeProject.image} 
                       alt={`${activeProject.title} screenshot ${activeImageIndex + 1}`} 
@@ -278,6 +282,37 @@ export default function Projects() {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* ── Fullscreen Lightbox Overlay for Screenshots ── */}
+      <AnimatePresence>
+        {lightboxImage && (
+          <motion.div
+            className={styles.lightboxOverlay}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setLightboxImage(null)}
+          >
+            <button
+              className={styles.lightboxCloseBtn}
+              onClick={() => setLightboxImage(null)}
+              type="button"
+              aria-label="Fechar tela cheia"
+            >
+              <FiX />
+            </button>
+            <motion.img
+              src={lightboxImage}
+              alt="Screenshot ampliado"
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </AnimatedSection>
   );
 }
