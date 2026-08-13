@@ -208,6 +208,66 @@
   background: linear-gradient(to right, rgba(15, 17, 23, 0.5) 0%, transparent 60%);
 }
 
+.imgArrowLeft,
+.imgArrowRight {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  background: rgba(15, 17, 23, 0.75);
+  border: 1px solid var(--border);
+  border-bottom: 3px solid var(--border);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+  transition: all var(--transition-fast);
+}
+
+.imgArrowLeft {
+  left: 16px;
+}
+
+.imgArrowRight {
+  right: 16px;
+}
+
+.imgArrowLeft:hover,
+.imgArrowRight:hover {
+  background: var(--accent-gradient);
+  border-color: var(--accent);
+  border-bottom-color: var(--accent-dark);
+  color: var(--bg-primary);
+  transform: translateY(-50%) scale(1.05);
+}
+
+.imgDots {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 5;
+}
+
+.imgDot {
+  width: 20px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.3);
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
+.imgDotActive {
+  background: var(--accent);
+  width: 32px;
+}
+
 .expandedInfoArea {
   padding: 48px;
   display: flex;

@@ -4,7 +4,7 @@ import SectionTitle from '../common/SectionTitle';
 import Badge from '../common/Badge';
 import { projects } from '../../data/projects';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiX, FiExternalLink, FiChevronRight } from 'react-icons/fi';
+import { FiX, FiExternalLink, FiChevronRight, FiChevronLeft } from 'react-icons/fi';
 import { FaGithub } from 'react-icons/fa';
 import styles from './Projects.module.css';
 
@@ -38,9 +38,11 @@ const projectDetails = {
 
 export default function Projects() {
   const [expandedProjectId, setExpandedProjectId] = useState(null);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   const handleCardClick = (id) => {
     setExpandedProjectId(id);
+    setActiveImageIndex(0);
     // Scroll smoothly to section top to keep the expanded content fully visible
     const el = document.getElementById('projects');
     if (el) {
@@ -53,6 +55,7 @@ export default function Projects() {
 
   const handleClose = () => {
     setExpandedProjectId(null);
+    setActiveImageIndex(0);
   };
 
   const activeProject = projects.find((p) => p.id === expandedProjectId);
@@ -145,10 +148,57 @@ export default function Projects() {
                 className={styles.expandedCard}
               >
                 <div className={styles.expandedGrid}>
-                  {/* Left Col — Giant Image */}
+                  {/* Left Col — Giant Image / Mini Screenshot Carousel */}
                   <div className={styles.expandedImageArea}>
-                    <img src={activeProject.image} alt={activeProject.title} />
+                    <img 
+                      src={activeProject.images ? activeProject.images[activeImageIndex] : activeProject.image} 
+                      alt={`${activeProject.title} screenshot ${activeImageIndex + 1}`} 
+                    />
                     <div className={styles.expandedOverlay} />
+
+                    {activeProject.images && activeProject.images.length > 1 && (
+                      <>
+                        {/* Img Carousel Navigation Arrows */}
+                        <button
+                          className={styles.imgArrowLeft}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveImageIndex(prev => prev === 0 ? activeProject.images.length - 1 : prev - 1);
+                          }}
+                          type="button"
+                          aria-label="Imagem anterior"
+                        >
+                          <FiChevronLeft />
+                        </button>
+                        <button
+                          className={styles.imgArrowRight}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveImageIndex(prev => prev === activeProject.images.length - 1 ? 0 : prev + 1);
+                          }}
+                          type="button"
+                          aria-label="Próxima imagem"
+                        >
+                          <FiChevronRight />
+                        </button>
+
+                        {/* Img Indicator Dots */}
+                        <div className={styles.imgDots}>
+                          {activeProject.images.map((_, idx) => (
+                            <button
+                              key={idx}
+                              className={`${styles.imgDot} ${idx === activeImageIndex ? styles.imgDotActive : ''}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveImageIndex(idx);
+                              }}
+                              type="button"
+                              aria-label={`Visualizar imagem ${idx + 1}`}
+                            />
+                          ))}
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {/* Right Col — Detailed Info */}

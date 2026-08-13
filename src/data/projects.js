@@ -10,6 +10,7 @@ export const projects = [
     githubUrl: 'https://github.com/allisonrps/Autonomax',
     liveUrl: 'https://autonomax.vercel.app',
     image: '/project-autonomax.png',
+    images: ['/project-autonomax.png'],
   },
   {
     id: 2,
@@ -21,7 +22,14 @@ export const projects = [
       'Sistema de gestão escolar e financeira voltado para professores particulares e escolas. Organiza agendas de aulas, cadastro e progresso de estudantes, disciplinas de ensino e o fluxo de mensalidades, utilizando arquitetura baseada em DDD.',
     githubUrl: 'https://github.com/allisonrps/Projeto-Aura',
     liveUrl: null,
-    image: '/project-aura.png',
+    image: '/project-aura-alunos-provas.png', // Usar a tela de alunos como capa chamativa
+    images: [
+      '/project-aura-alunos-provas.png',
+      '/project-aura-agenda.png',
+      '/project-aura-alunos-horarios.png',
+      '/project-aura-alunos-mensalidades.png',
+      '/project-aura-alunos-aulas.png',
+    ],
   },
   {
     id: 3,
@@ -34,5 +42,6 @@ export const projects = [
     githubUrl: 'https://github.com/allisonrps/setlist-app',
     liveUrl: null,
     image: '/project-setlist.jpg',
+    images: ['/project-setlist.jpg'],
   },
 ];
