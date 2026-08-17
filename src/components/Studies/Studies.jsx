@@ -6,7 +6,7 @@ import CertificateCard from './CertificateCard';
 import { studies, certificates } from '../../data/studies';
 import { translations } from '../../data/translations';
 import { FiChevronLeft, FiChevronRight, FiX, FiExternalLink, FiZoomIn } from 'react-icons/fi';
-import { FaLaptopCode, FaCloud, FaShieldAlt } from 'react-icons/fa';
+import { FaLaptopCode, FaCloud, FaShieldAlt, FaLanguage, FaMicrosoft } from 'react-icons/fa';
 import { SiMongodb } from 'react-icons/si';
 import { AnimatePresence, motion } from 'framer-motion';
 import styles from './Studies.module.css';
@@ -18,25 +18,46 @@ const educationIcons = {
 
 const certDescriptions = {
   0: {
+    pt: 'Certificação oficial da Microsoft validando conhecimentos fundamentais sobre conceitos de nuvem, serviços do Azure, segurança, privacidade, conformidade e governança.',
+    en: 'Official Microsoft certification validating foundational knowledge of cloud concepts, Azure services, security, privacy, compliance, and governance.'
+  },
+  1: {
     pt: 'Certificação de proficiência em língua inglesa TOEIC (Test of English for International Communication) com pontuação obtida de 665/990, comprovando habilidades de audição e leitura para o mercado internacional.',
     en: 'TOEIC (Test of English for International Communication) proficiency certification in English with a score of 665/990, demonstrating listening and reading skills for the global market.'
   },
-  1: {
+  2: {
     pt: 'Formação oficial da Cisco Networking Academy abordando fundamentos de segurança cibernética, proteção de dados, segurança de redes e resposta a incidentes.',
     en: 'Official training from Cisco Networking Academy covering cybersecurity basics, data protection, network security, and incident response.'
   },
-  2: {
+  3: {
     pt: 'Conceitos e fundamentos de gestão ágil ministrados pelo Google no Coursera. Cobre frameworks Scrum, Kanban, gerenciamento de backlog, reuniões diárias e planejamento de sprint.',
     en: 'Concepts and fundamentals of agile management taught by Google on Coursera. Covers Scrum, Kanban, backlog management, daily standups, and sprint planning.'
   }
 };
 
+const categoryLabels = {
+  main: {
+    pt: '< Certificações de Indústria >',
+    en: '< Industry Certifications >',
+  },
+  academic: {
+    pt: '< Certificações FATEC / CPS >',
+    en: '< FATEC / CPS Certifications >',
+  }
+};
+
 export default function Studies({ lang }) {
   const t = translations[lang] || translations.pt;
-  const scrollRef = useRef(null);
+  
+  const mainScrollRef = useRef(null);
+  const academicScrollRef = useRef(null);
+  
   const [selectedCert, setSelectedCert] = useState(null);
 
-  const scroll = (direction) => {
+  const mainCertificates = certificates.filter(c => c.category === 'main');
+  const academicCertificates = certificates.filter(c => c.category === 'academic');
+
+  const scroll = (scrollRef, direction) => {
     if (scrollRef.current) {
       const { scrollLeft, clientWidth } = scrollRef.current;
       const scrollAmount = clientWidth * 0.7;
@@ -109,12 +130,12 @@ export default function Studies({ lang }) {
           })}
         </div>
 
-        {/* ── Certificates Carousel ── */}
+        {/* ── 1. Principais Certificações Carousel ── */}
         <div className={styles.sectionHeader}>
-          <h3 className={styles.sectionLabel}>{t.studiesCertificates}</h3>
+          <h3 className={styles.sectionLabel}>{categoryLabels.main[lang] || categoryLabels.main.pt}</h3>
           <div className={styles.carouselControls}>
             <button
-              onClick={() => scroll('left')}
+              onClick={() => scroll(mainScrollRef, 'left')}
               className={styles.controlBtn}
               type="button"
               aria-label="Certificados anteriores"
@@ -122,7 +143,7 @@ export default function Studies({ lang }) {
               <FiChevronLeft />
             </button>
             <button
-              onClick={() => scroll('right')}
+              onClick={() => scroll(mainScrollRef, 'right')}
               className={styles.controlBtn}
               type="button"
               aria-label="Próximos certificados"
@@ -133,8 +154,45 @@ export default function Studies({ lang }) {
         </div>
 
         <div className={styles.carouselContainer}>
-          <div className={styles.carouselTrack} ref={scrollRef}>
-            {certificates.map((cert) => (
+          <div className={styles.carouselTrack} ref={mainScrollRef}>
+            {mainCertificates.map((cert) => (
+              <div
+                key={cert.id}
+                className={styles.carouselCardWrapper}
+                onClick={() => openModal(cert)}
+              >
+                <CertificateCard certificate={cert} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── 2. Certificações Acadêmicas Carousel ── */}
+        <div className={styles.sectionHeader} style={{ marginTop: '48px' }}>
+          <h3 className={styles.sectionLabel}>{categoryLabels.academic[lang] || categoryLabels.academic.pt}</h3>
+          <div className={styles.carouselControls}>
+            <button
+              onClick={() => scroll(academicScrollRef, 'left')}
+              className={styles.controlBtn}
+              type="button"
+              aria-label="Certificados anteriores"
+            >
+              <FiChevronLeft />
+            </button>
+            <button
+              onClick={() => scroll(academicScrollRef, 'right')}
+              className={styles.controlBtn}
+              type="button"
+              aria-label="Próximos certificados"
+            >
+              <FiChevronRight />
+            </button>
+          </div>
+        </div>
+
+        <div className={styles.carouselContainer}>
+          <div className={styles.carouselTrack} ref={academicScrollRef}>
+            {academicCertificates.map((cert) => (
               <div
                 key={cert.id}
                 className={styles.carouselCardWrapper}
@@ -187,7 +245,7 @@ export default function Studies({ lang }) {
                   </a>
                 ) : (
                   <div className={styles.modalBadgePlaceholder}>
-                    {selectedCert.issuer.includes('MongoDB') ? <SiMongodb /> : <FaShieldAlt />}
+                    {selectedCert.issuer.includes('MongoDB') ? <SiMongodb /> : selectedCert.issuer.includes('Microsoft') ? <FaMicrosoft /> : selectedCert.issuer.includes('TOEIC') ? <FaLanguage /> : <FaShieldAlt />}
                   </div>
                 )}
               </div>
