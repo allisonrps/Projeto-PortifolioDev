@@ -14,12 +14,6 @@ export default function CertificateCard({ certificate }) {
 
   return (
     <div className={styles.badgeSelector} data-tooltip={`${issuer} // ${name}`}>
-      {/* Target crop brackets on hover */}
-      <div className={`${styles.badgeCorner} ${styles.badgeTL}`} />
-      <div className={`${styles.badgeCorner} ${styles.badgeTR}`} />
-      <div className={`${styles.badgeCorner} ${styles.badgeBL}`} />
-      <div className={`${styles.badgeCorner} ${styles.badgeBR}`} />
-
       <div className={styles.badgeImageWrapper}>
         {image ? (
           <img src={image} alt={name} className={styles.badgeImg} loading="lazy" />

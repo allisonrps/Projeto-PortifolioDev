@@ -53,6 +53,7 @@ export default function Studies({ lang }) {
   const academicScrollRef = useRef(null);
   
   const [selectedCert, setSelectedCert] = useState(null);
+  const [lightboxImage, setLightboxImage] = useState(null);
 
   const mainCertificates = certificates.filter(c => c.category === 'main');
   const academicCertificates = certificates.filter(c => c.category === 'academic');
@@ -235,14 +236,14 @@ export default function Studies({ lang }) {
               {/* Large Image Showcase (Click to zoom/open) */}
               <div className={styles.modalBadgeWrapper}>
                 {selectedCert.image ? (
-                  <a
-                    href={selectedCert.image}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title="Clique para abrir em tamanho real"
+                  <div
+                    className={styles.modalBadgeImgClickable}
+                    onClick={() => setLightboxImage(selectedCert.image)}
+                    title="Clique para abrir em tela cheia"
+                    style={{ cursor: 'zoom-in' }}
                   >
                     <img src={selectedCert.image} alt={selectedCert.name} />
-                  </a>
+                  </div>
                 ) : (
                   <div className={styles.modalBadgePlaceholder}>
                     {selectedCert.issuer.includes('MongoDB') ? <SiMongodb /> : selectedCert.issuer.includes('Microsoft') ? <FaMicrosoft /> : selectedCert.issuer.includes('TOEIC') ? <FaLanguage /> : <FaShieldAlt />}
@@ -274,14 +275,13 @@ export default function Studies({ lang }) {
                 )}
                 
                 {selectedCert.image && (
-                  <a
-                    href={selectedCert.image}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    onClick={() => setLightboxImage(selectedCert.image)}
                     className={styles.modalBtnSec}
+                    type="button"
                   >
                     <FiZoomIn /> {t.studiesBtnFull}
-                  </a>
+                  </button>
                 )}
                 
                 <button
@@ -294,6 +294,37 @@ export default function Studies({ lang }) {
                 </button>
               </div>
             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Fullscreen Lightbox Overlay for Badges ── */}
+      <AnimatePresence>
+        {lightboxImage && (
+          <motion.div
+            className={styles.lightboxOverlay}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setLightboxImage(null)}
+          >
+            <button
+              className={styles.lightboxCloseBtn}
+              onClick={() => setLightboxImage(null)}
+              type="button"
+              aria-label="Fechar tela cheia"
+            >
+              <FiX />
+            </button>
+            <motion.img
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+              src={lightboxImage}
+              alt="Certificado em tela cheia"
+              onClick={(e) => e.stopPropagation()}
+            />
           </motion.div>
         )}
       </AnimatePresence>
