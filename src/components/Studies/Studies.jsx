@@ -239,11 +239,21 @@ export default function Studies({ lang }) {
                 {selectedCert.image ? (
                   <div
                     className={styles.modalBadgeImgClickable}
-                    onClick={() => setLightboxImage(selectedCert.certificateImage || selectedCert.image)}
-                    title="Clique para abrir em tela cheia"
-                    style={{ cursor: 'zoom-in' }}
+                    onClick={() => {
+                      const certUrl = selectedCert.certificateImage || selectedCert.image;
+                      if (certUrl.endsWith('.pdf')) {
+                        window.open(certUrl, '_blank');
+                      } else {
+                        setLightboxImage(certUrl);
+                      }
+                    }}
+                    title={(selectedCert.certificateImage || selectedCert.image).endsWith('.pdf') ? "Clique para abrir o certificado PDF" : "Clique para abrir em tela cheia"}
+                    style={{ cursor: (selectedCert.certificateImage || selectedCert.image).endsWith('.pdf') ? 'pointer' : 'zoom-in' }}
                   >
-                    <img src={selectedCert.certificateImage || selectedCert.image} alt={selectedCert.name} />
+                    <img 
+                      src={(selectedCert.certificateImage || selectedCert.image).endsWith('.pdf') ? selectedCert.image : (selectedCert.certificateImage || selectedCert.image)} 
+                      alt={selectedCert.name} 
+                    />
                   </div>
                 ) : (
                   <div className={styles.modalBadgePlaceholder}>
@@ -277,11 +287,18 @@ export default function Studies({ lang }) {
                 
                 {selectedCert.image && (
                   <button
-                    onClick={() => setLightboxImage(selectedCert.certificateImage || selectedCert.image)}
+                    onClick={() => {
+                      const certUrl = selectedCert.certificateImage || selectedCert.image;
+                      if (certUrl.endsWith('.pdf')) {
+                        window.open(certUrl, '_blank');
+                      } else {
+                        setLightboxImage(certUrl);
+                      }
+                    }}
                     className={styles.modalBtnSec}
                     type="button"
                   >
-                    <FiZoomIn /> {t.studiesBtnFull}
+                    <FiZoomIn /> {(selectedCert.certificateImage || selectedCert.image).endsWith('.pdf') ? 'Abrir PDF' : t.studiesBtnFull}
                   </button>
                 )}
                 

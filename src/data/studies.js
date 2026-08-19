@@ -46,6 +46,7 @@ export const certificates = [
     status: 'concluido',
     verifyUrl: 'https://learn.microsoft.com/pt-br/users/allisonrodrigues-0529/credentials/499f3d74f3dec7e8',
     image: '/badge-az900.png',
+    certificateImage: null,
     category: 'main',
   },
   {
@@ -67,6 +68,7 @@ export const certificates = [
     status: 'concluido',
     verifyUrl: null,
     image: '/badge-cybersecurity-cisco.png',
+    certificateImage: '/cert-cybersecurity-cisco.pdf',
     category: 'main',
   },
   {
@@ -77,6 +79,7 @@ export const certificates = [
     status: 'concluido',
     verifyUrl: null,
     image: '/badge-scrum-google.png',
+    certificateImage: '/cert-scrum-google.png',
     category: 'main',
   },
   {
@@ -86,7 +89,8 @@ export const certificates = [
     year: 2025,
     status: 'concluido',
     verifyUrl: null,
-    image: null,
+    image: '/badge-mongodb.png',
+    certificateImage: null,
     category: 'main',
   },
   {
@@ -96,7 +100,8 @@ export const certificates = [
     year: 2023,
     status: 'concluido',
     verifyUrl: null,
-    image: null,
+    image: '/badge-lgpd.png',
+    certificateImage: null,
     category: 'main',
   },
   {
@@ -107,6 +112,7 @@ export const certificates = [
     status: 'concluido',
     verifyUrl: null,
     image: '/badge-cps-backend.png',
+    certificateImage: '/cert-cps-dsm.jpg',
     category: 'academic',
   },
   {
@@ -117,6 +123,7 @@ export const certificates = [
     status: 'concluido',
     verifyUrl: null,
     image: '/badge-cps-mobile.png',
+    certificateImage: '/cert-cps-dsm.jpg',
     category: 'academic',
   },
   {
@@ -127,6 +134,7 @@ export const certificates = [
     status: 'concluido',
     verifyUrl: null,
     image: '/badge-cps-devops.png',
+    certificateImage: '/cert-cps-dsm.jpg',
     category: 'academic',
   },
   {
@@ -137,6 +145,7 @@ export const certificates = [
     status: 'concluido',
     verifyUrl: null,
     image: '/badge-cps-frontend.png',
+    certificateImage: '/cert-cps-dsm.jpg',
     category: 'academic',
   },
   {
@@ -147,6 +156,7 @@ export const certificates = [
     status: 'concluido',
     verifyUrl: null,
     image: '/badge-cps-IA.png',
+    certificateImage: '/cert-cps-dsm.jpg',
     category: 'academic',
   },
   {
@@ -157,6 +167,7 @@ export const certificates = [
     status: 'concluido',
     verifyUrl: null,
     image: '/badge-cps-nuvem.png',
+    certificateImage: '/cert-cps-dsm.jpg',
     category: 'academic',
   },
   {
@@ -167,6 +178,7 @@ export const certificates = [
     status: 'concluido',
     verifyUrl: null,
     image: '/badge-cps-ux.png',
+    certificateImage: '/cert-cps-dsm.jpg',
     category: 'academic',
   },
   {
@@ -177,6 +189,7 @@ export const certificates = [
     status: 'concluido',
     verifyUrl: null,
     image: '/badge-cps-designpatterns.png',
+    certificateImage: '/cert-cps-dsm.jpg',
     category: 'academic',
   },
 ];
