@@ -54,6 +54,7 @@ export default function Studies({ lang }) {
   
   const [selectedCert, setSelectedCert] = useState(null);
   const [lightboxImage, setLightboxImage] = useState(null);
+  const [isZoomed, setIsZoomed] = useState(false);
 
   const mainCertificates = certificates.filter(c => c.category === 'main');
   const academicCertificates = certificates.filter(c => c.category === 'academic');
@@ -306,11 +307,17 @@ export default function Studies({ lang }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setLightboxImage(null)}
+            onClick={() => {
+              setLightboxImage(null);
+              setIsZoomed(false);
+            }}
           >
             <button
               className={styles.lightboxCloseBtn}
-              onClick={() => setLightboxImage(null)}
+              onClick={() => {
+                setLightboxImage(null);
+                setIsZoomed(false);
+              }}
               type="button"
               aria-label="Fechar tela cheia"
             >
@@ -318,12 +325,16 @@ export default function Studies({ lang }) {
             </button>
             <motion.img
               initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
+              animate={{ scale: isZoomed ? 1.4 : 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 350 }}
               src={lightboxImage}
               alt="Certificado em tela cheia"
-              onClick={(e) => e.stopPropagation()}
+              className={isZoomed ? styles.lightboxImgZoomed : styles.lightboxImg}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsZoomed(!isZoomed);
+              }}
             />
           </motion.div>
         )}
