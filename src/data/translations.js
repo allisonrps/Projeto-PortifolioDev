@@ -82,7 +82,7 @@ export const translations = {
     footerColLinks: 'Links',
     footerColServices: 'Serviços',
     footerColContact: 'Contato',
-    footerRights: 'Todos os direitos reservados. Feito com 💚 e React.'
+    footerRights: 'Todos os direitos reservados.'
   },
   en: {
     // Header & Navigation
@@ -167,6 +167,6 @@ export const translations = {
     footerColLinks: 'Links',
     footerColServices: 'Services',
     footerColContact: 'Contact',
-    footerRights: 'All rights reserved. Made with 💚 and React.'
+    footerRights: 'All rights reserved.'
   }
 };
