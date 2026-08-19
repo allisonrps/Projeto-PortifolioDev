@@ -37,8 +37,8 @@ const certDescriptions = {
 
 const categoryLabels = {
   main: {
-    pt: '< Certificações de Indústria >',
-    en: '< Industry Certifications >',
+    pt: '< Principais Certificações >',
+    en: '< Main Certifications >',
   },
   academic: {
     pt: '< Certificações FATEC / CPS >',
@@ -239,11 +239,11 @@ export default function Studies({ lang }) {
                 {selectedCert.image ? (
                   <div
                     className={styles.modalBadgeImgClickable}
-                    onClick={() => setLightboxImage(selectedCert.image)}
+                    onClick={() => setLightboxImage(selectedCert.certificateImage || selectedCert.image)}
                     title="Clique para abrir em tela cheia"
                     style={{ cursor: 'zoom-in' }}
                   >
-                    <img src={selectedCert.image} alt={selectedCert.name} />
+                    <img src={selectedCert.certificateImage || selectedCert.image} alt={selectedCert.name} />
                   </div>
                 ) : (
                   <div className={styles.modalBadgePlaceholder}>
@@ -277,7 +277,7 @@ export default function Studies({ lang }) {
                 
                 {selectedCert.image && (
                   <button
-                    onClick={() => setLightboxImage(selectedCert.image)}
+                    onClick={() => setLightboxImage(selectedCert.certificateImage || selectedCert.image)}
                     className={styles.modalBtnSec}
                     type="button"
                   >

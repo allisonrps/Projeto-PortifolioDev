@@ -55,7 +55,8 @@ export const certificates = [
     year: 2025,
     status: 'concluido',
     verifyUrl: null,
-    image: null,
+    image: '/badge-toeic.png',
+    certificateImage: '/cert-toeic.jpg',
     category: 'main',
   },
   {

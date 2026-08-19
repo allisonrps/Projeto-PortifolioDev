@@ -220,12 +220,12 @@
   max-width: 95%;
   max-height: 95%;
   object-fit: contain;
-  filter: grayscale(8%) contrast(98%);
+  filter: grayscale(8%) contrast(98%) drop-shadow(3px 0 0 #000) drop-shadow(-3px 0 0 #000) drop-shadow(0 3px 0 #000) drop-shadow(0 -3px 0 #000);
   transition: all var(--transition-fast);
 }
 
 .badgeSelector:hover .badgeImg {
-  filter: grayscale(0%) contrast(110%) drop-shadow(0 8px 20px rgba(67, 123, 242, 0.45));
+  filter: grayscale(0%) contrast(110%) drop-shadow(3px 0 0 #000) drop-shadow(-3px 0 0 #000) drop-shadow(0 3px 0 #000) drop-shadow(0 -3px 0 #000) drop-shadow(0 0 15px rgba(67, 123, 242, 0.7));
 }
 
 .badgePlaceholder {
