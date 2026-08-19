@@ -68,7 +68,7 @@ export const certificates = [
     status: 'concluido',
     verifyUrl: null,
     image: '/badge-cybersecurity-cisco.png',
-    certificateImage: '/cert-cybersecurity-cisco.pdf',
+    certificateImage: '/cert-cybersecurity-cisco.png',
     category: 'main',
   },
   {
@@ -112,7 +112,7 @@ export const certificates = [
     status: 'concluido',
     verifyUrl: null,
     image: '/badge-cps-backend.png',
-    certificateImage: '/cert-cps-dsm.jpg',
+    certificateImage: '/cert-cps-backend.png',
     category: 'academic',
   },
   {
@@ -123,7 +123,7 @@ export const certificates = [
     status: 'concluido',
     verifyUrl: null,
     image: '/badge-cps-mobile.png',
-    certificateImage: '/cert-cps-dsm.jpg',
+    certificateImage: '/cert-cps-mobile.png',
     category: 'academic',
   },
   {
@@ -134,7 +134,7 @@ export const certificates = [
     status: 'concluido',
     verifyUrl: null,
     image: '/badge-cps-devops.png',
-    certificateImage: '/cert-cps-dsm.jpg',
+    certificateImage: '/cert-cps-devops.png',
     category: 'academic',
   },
   {
@@ -145,7 +145,7 @@ export const certificates = [
     status: 'concluido',
     verifyUrl: null,
     image: '/badge-cps-frontend.png',
-    certificateImage: '/cert-cps-dsm.jpg',
+    certificateImage: '/cert-cps-frontend.png',
     category: 'academic',
   },
   {
@@ -156,7 +156,7 @@ export const certificates = [
     status: 'concluido',
     verifyUrl: null,
     image: '/badge-cps-IA.png',
-    certificateImage: '/cert-cps-dsm.jpg',
+    certificateImage: '/cert-cps-IA.png',
     category: 'academic',
   },
   {
@@ -167,7 +167,7 @@ export const certificates = [
     status: 'concluido',
     verifyUrl: null,
     image: '/badge-cps-nuvem.png',
-    certificateImage: '/cert-cps-dsm.jpg',
+    certificateImage: '/cert-cps-nuvem.png',
     category: 'academic',
   },
   {
@@ -178,7 +178,7 @@ export const certificates = [
     status: 'concluido',
     verifyUrl: null,
     image: '/badge-cps-ux.png',
-    certificateImage: '/cert-cps-dsm.jpg',
+    certificateImage: '/cert-cps-ux.png',
     category: 'academic',
   },
   {
@@ -189,7 +189,7 @@ export const certificates = [
     status: 'concluido',
     verifyUrl: null,
     image: '/badge-cps-designpatterns.png',
-    certificateImage: '/cert-cps-dsm.jpg',
+    certificateImage: '/cert-cps-designpatterns.png',
     category: 'academic',
   },
 ];
