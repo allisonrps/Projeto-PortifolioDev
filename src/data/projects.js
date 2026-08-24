@@ -14,8 +14,15 @@ export const projects = [
     },
     githubUrl: 'https://github.com/allisonrps/Autonomax',
     liveUrl: 'https://autonomax.vercel.app',
-    image: '/project-autonomax.png',
-    images: ['/project-autonomax.png'],
+    image: '/projects/autonomax/analitico.png',
+    images: [
+      '/projects/autonomax/analitico.png',
+      '/projects/autonomax/login.png',
+      '/projects/autonomax/fluxo.png',
+      '/projects/autonomax/clientes.png',
+      '/projects/autonomax/cliente_detalhe.png',
+      '/projects/autonomax/parceiros.png'
+    ],
   },
   {
     id: 2,
