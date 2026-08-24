@@ -47,140 +47,106 @@
   transform: translateY(-1px);
 }
 
-/* ── Grid/Carousel list view of simple cards ── */
-.projectsGrid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
+/* ── Accordion List View ── */
+.accordionContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
 }
 
-.simpleCard {
+.accordionItem {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-bottom: 4px solid var(--border);
+  border-bottom: 3px solid var(--border);
   border-radius: 0;
-  overflow: hidden;
   transition: all var(--transition-normal);
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
+  overflow: hidden;
 }
 
-.simpleCard:hover {
+.accordionItem:hover,
+.accordionItemOpen {
   border-color: var(--accent);
   border-bottom-color: var(--accent);
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(67, 123, 242, 0.15);
+  box-shadow: 0 0 25px rgba(67, 123, 242, 0.1);
 }
 
-.simpleImageWrapper {
-  width: 100%;
-  aspect-ratio: 21 / 9; /* Panoramic compact ratio */
-  overflow: hidden;
-  position: relative;
-  background: #090a0f;
-}
-
-.simpleImageWrapper img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  transition: transform 0.5s ease;
-}
-
-.simpleCard:hover .simpleImageWrapper img {
-  transform: scale(1.03);
-}
-
-.simpleImageOverlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, var(--bg-card) 0%, transparent 60%);
-  pointer-events: none;
-}
-
-.simpleCardBody {
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  gap: 8px;
-}
-
-.simpleHeader {
+.accordionHeader {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 8px;
+  align-items: center;
+  padding: 24px 32px;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  user-select: none;
 }
 
-.simpleTitle {
-  font-size: 18px;
+.accordionHeader:hover {
+  background: rgba(67, 123, 242, 0.04);
+}
+
+.headerLeft {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+}
+
+.projectTitle {
+  font-size: 20px;
   font-weight: 700;
   color: var(--white);
-  line-height: 1.3;
+  transition: color var(--transition-fast);
 }
 
-.simpleCardType {
-  font-size: 10px;
+.accordionHeader:hover .projectTitle {
   color: var(--accent-light);
-  font-family: var(--font-mono);
-  background: var(--accent-glow);
-  padding: 2px 8px;
-  border-radius: 0;
-  border: 1px solid rgba(67, 123, 242, 0.2);
 }
 
-.simpleSummary {
-  font-size: 13px;
-  color: var(--text-secondary);
-  line-height: 1.6;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.simpleStacks {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: auto;
-}
-
-.simpleStackBadge {
-  font-size: 10px;
-  color: var(--text-secondary);
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  padding: 2px 6px;
-  font-family: var(--font-mono);
-}
-
-.expandPrompt {
+.projectType {
   font-size: 11px;
-  font-weight: 700;
-  color: var(--accent-light);
+  color: var(--text-muted);
   font-family: var(--font-mono);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-top: 8px;
+}
+
+.headerRight {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 20px;
+}
+
+.iconPlus {
+  font-size: 22px;
+  color: var(--accent);
+  font-weight: 600;
+  transition: transform var(--transition-normal);
+  display: inline-block;
+  line-height: 1;
+}
+
+.rotated {
+  transform: rotate(180deg);
+  color: var(--accent-light);
+}
+
+.separatorLine {
+  height: 1px;
+  background: linear-gradient(90deg, rgba(67, 123, 242, 0.2) 0%, rgba(255, 255, 255, 0.01) 100%);
+  margin: 0 32px;
+}
+
+.accordionContent {
+  padding: 32px;
+  background: rgba(8, 9, 12, 0.35);
 }
 
 /* ── Expanded Detail Card ── */
-.expandedCard {
-  background: var(--bg-card);
-  border: 2px solid var(--accent);
-  border-bottom: 8px solid var(--accent);
-  border-radius: 0;
-  overflow: hidden;
-  position: relative;
-  box-shadow: var(--shadow-lg);
-  min-height: 500px;
+.expandedGrid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  min-height: 460px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
 }
 
 .expandedGrid {
@@ -418,9 +384,6 @@
 }
 
 @media (max-width: 960px) {
-  .projectsGrid {
-    grid-template-columns: 1fr;
-  }
   .expandedGrid {
     grid-template-columns: 1fr;
   }
@@ -430,6 +393,29 @@
   }
   .expandedInfoArea {
     padding: 32px 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .accordionHeader {
+    padding: 16px 20px;
+  }
+  .headerLeft {
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-start;
+  }
+  .projectTitle {
+    font-size: 17px;
+  }
+  .headerRight {
+    gap: 12px;
+  }
+  .separatorLine {
+    margin: 0 20px;
+  }
+  .accordionContent {
+    padding: 16px;
   }
 }
 

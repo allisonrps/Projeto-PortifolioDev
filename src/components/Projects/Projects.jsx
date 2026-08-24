@@ -80,27 +80,10 @@ export default function Projects({ lang }) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [lightboxImage, setLightboxImage] = useState(null);
 
-  const handleCardClick = (id) => {
-    setExpandedProjectId(id);
-    setActiveImageIndex(0);
-    // Scroll smoothly to section top to keep the expanded content fully visible
-    const el = document.getElementById('projects');
-    if (el) {
-      window.scrollTo({
-        top: el.offsetTop - 72,
-        behavior: 'smooth',
-      });
-    }
-  };
-
-  const handleClose = () => {
-    setExpandedProjectId(null);
+  const handleHeaderClick = (id) => {
+    setExpandedProjectId((prev) => (prev === id ? null : id));
     setActiveImageIndex(0);
   };
-
-  const activeProject = projects.find((p) => p.id === expandedProjectId);
-  const details = activeProject ? projectDetails[activeProject.id][lang] : null;
-  const badgeProps = activeProject ? (statusMap[activeProject.status][lang] || statusMap.concluido[lang]) : null;
 
   return (
     <AnimatedSection id="projects" className={styles.projects}>
@@ -121,209 +104,167 @@ export default function Projects({ lang }) {
           </a>
         </div>
 
-        <div style={{ position: 'relative' }}>
-          <AnimatePresence mode="wait">
-            {!expandedProjectId ? (
-              /* ── Grid/Carousel List View (Cards Compactos) ── */
-              <motion.div
-                key="list"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
-                className={styles.projectsGrid}
-              >
-                {projects.map((p) => {
-                  const cardBadge = statusMap[p.status][lang] || statusMap.concluido[lang];
-                  const typeText = p.type[lang] || p.type.pt;
-                  const summaryText = p.summary[lang] || p.summary.pt;
+        <div className={styles.accordionContainer}>
+          {projects.map((p) => {
+            const isOpen = expandedProjectId === p.id;
+            const cardBadge = statusMap[p.status][lang] || statusMap.concluido[lang];
+            const typeText = p.type[lang] || p.type.pt;
+            const details = projectDetails[p.id][lang];
 
-                  return (
-                    <div
-                      key={p.id}
-                      className={styles.simpleCard}
-                      onClick={() => handleCardClick(p.id)}
-                    >
-                      <div className={styles.simpleImageWrapper}>
-                        <img src={p.image} alt={p.title} loading="lazy" />
-                        <div className={styles.simpleImageOverlay} />
-                      </div>
-
-                      <div className={styles.simpleCardBody}>
-                        <div className={styles.simpleHeader}>
-                          <h3 className={styles.simpleTitle}>{p.title}</h3>
-                          <span className={styles.simpleCardType}>{typeText}</span>
-                        </div>
-
-                        <div style={{ display: 'flex' }}>
-                          <Badge text={cardBadge.text} variant={cardBadge.variant} />
-                        </div>
-
-                        {/* Stacks do projeto */}
-                        <div className={styles.simpleStacks}>
-                          {p.stacks.slice(0, 4).map((tech) => (
-                            <span key={tech} className={styles.simpleStackBadge}>
-                              {tech}
-                            </span>
-                          ))}
-                          {p.stacks.length > 4 && (
-                            <span className={styles.simpleStackBadge}>+{p.stacks.length - 4}</span>
-                          )}
-                        </div>
-
-                        <span className={styles.expandPrompt}>
-                          {t.projectCaseDetails} <FiChevronRight />
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </motion.div>
-            ) : (
-              /* ── Expanded Detail Case-Study View (Detalhada) ── */
-              <motion.div
-                key="expanded"
-                initial={{ opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.98 }}
-                transition={{ duration: 0.3, type: 'spring', damping: 25 }}
-                className={styles.expandedCard}
-              >
-                <div className={styles.expandedGrid}>
-                  {/* Left Col — Giant Image / Click to open Lightbox */}
-                  <div
-                    className={styles.expandedImageArea}
-                    onClick={() => setLightboxImage(activeProject.images ? activeProject.images[activeImageIndex] : activeProject.image)}
-                    title="Clique para abrir imagem em tela cheia"
-                  >
-                    <img 
-                      src={activeProject.images ? activeProject.images[activeImageIndex] : activeProject.image} 
-                      alt={`${activeProject.title} screenshot ${activeImageIndex + 1}`} 
-                    />
-                    <div className={styles.expandedOverlay} />
-
-                    {activeProject.images && activeProject.images.length > 1 && (
-                      <>
-                        {/* Img Carousel Navigation Arrows */}
-                        <button
-                          className={styles.imgArrowLeft}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActiveImageIndex(prev => prev === 0 ? activeProject.images.length - 1 : prev - 1);
-                          }}
-                          type="button"
-                          aria-label="Imagem anterior"
-                        >
-                          <FiChevronLeft />
-                        </button>
-                        <button
-                          className={styles.imgArrowRight}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActiveImageIndex(prev => prev === activeProject.images.length - 1 ? 0 : prev + 1);
-                          }}
-                          type="button"
-                          aria-label="Próxima imagem"
-                        >
-                          <FiChevronRight />
-                        </button>
-
-                        {/* Img Indicator Dots */}
-                        <div className={styles.imgDots}>
-                          {activeProject.images.map((_, idx) => (
-                            <button
-                              key={idx}
-                              className={`${styles.imgDot} ${idx === activeImageIndex ? styles.imgDotActive : ''}`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setActiveImageIndex(idx);
-                              }}
-                              type="button"
-                              aria-label={`Visualizar imagem ${idx + 1}`}
-                            />
-                          ))}
-                        </div>
-                      </>
-                    )}
+            return (
+              <div key={p.id} className={`${styles.accordionItem} ${isOpen ? styles.accordionItemOpen : ''}`}>
+                {/* Header Row */}
+                <div
+                  className={styles.accordionHeader}
+                  onClick={() => handleHeaderClick(p.id)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      handleHeaderClick(p.id);
+                    }
+                  }}
+                >
+                  <div className={styles.headerLeft}>
+                    <h3 className={styles.projectTitle}>{p.title}</h3>
+                    <span className={styles.projectType}>{typeText}</span>
                   </div>
-
-                  {/* Right Col — Detailed Info */}
-                  <div className={styles.expandedInfoArea}>
-                    <button
-                      className={styles.closeExpandedBtn}
-                      onClick={handleClose}
-                      type="button"
-                      aria-label="Voltar para lista"
-                    >
-                      <FiX />
-                    </button>
-
-                    <div className={styles.expandedHeader}>
-                      <h3 className={styles.expandedTitle}>{activeProject.title}</h3>
-                      <span className={styles.expandedType}>{activeProject.type[lang] || activeProject.type.pt}</span>
-                    </div>
-
-                    <div className={styles.expandedBadgeRow}>
-                      <Badge text={badgeProps.text} variant={badgeProps.variant} />
-                    </div>
-
-                    <p className={styles.expandedSummary}>{activeProject.summary[lang] || activeProject.summary.pt}</p>
-
-                    {/* Detailed Curriculum/README list of features */}
-                    {details && (
-                      <div className={styles.detailsList}>
-                        <h4>{t.projectCaseHeader}</h4>
-                        <ul>
-                          <li><strong>{t.projectArch}:</strong> {details.backend}</li>
-                          <li><strong>{t.projectSecurity}:</strong> {details.security}</li>
-                          <li><strong>{t.projectFront}:</strong> {details.frontend}</li>
-                          <li><strong>{t.projectDevOps}:</strong> {details.devops}</li>
-                        </ul>
-                      </div>
-                    )}
-
-                    <div className={styles.expandedStacks}>
-                      {activeProject.stacks.map((tech) => (
-                        <span key={tech} className={styles.expandedStackBadge}>
-                          {tech}
-                        </span>
-                      ))}
-                    </div>
-
-                    <div className={styles.expandedLinks}>
-                      {activeProject.githubUrl && (
-                        <a
-                          href={activeProject.githubUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={styles.expandedLink}
-                        >
-                          <FaGithub /> {t.projectBtnCode}
-                        </a>
-                      )}
-                      {activeProject.liveUrl && (
-                        <a
-                          href={activeProject.liveUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={styles.expandedLink}
-                        >
-                          <FiExternalLink /> {t.projectBtnDemo}
-                        </a>
-                      )}
-                      <button
-                        onClick={handleClose}
-                        className={styles.expandedLink}
-                        style={{ marginLeft: 'auto', cursor: 'pointer', background: 'transparent' }}
-                      >
-                        {t.projectBackToList}
-                      </button>
-                    </div>
+                  <div className={styles.headerRight}>
+                    <Badge text={cardBadge.text} variant={cardBadge.variant} />
+                    <span className={`${styles.iconPlus} ${isOpen ? styles.rotated : ''}`}>
+                      {isOpen ? '−' : '+'}
+                    </span>
                   </div>
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+
+                {/* Separator line */}
+                <div className={styles.separatorLine} />
+
+                {/* Collapsible Content */}
+                <AnimatePresence initial={false}>
+                  {isOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.35, ease: [0.04, 0.62, 0.23, 0.98] }}
+                      style={{ overflow: 'hidden' }}
+                    >
+                      <div className={styles.accordionContent}>
+                        <div className={styles.expandedGrid}>
+                          {/* Left Col — Giant Image / Click to open Lightbox */}
+                          <div
+                            className={styles.expandedImageArea}
+                            onClick={() => setLightboxImage(p.images ? p.images[activeImageIndex] : p.image)}
+                            title="Clique para abrir imagem em tela cheia"
+                          >
+                            <img
+                              src={p.images ? p.images[activeImageIndex] : p.image}
+                              alt={`${p.title} screenshot ${activeImageIndex + 1}`}
+                            />
+                            <div className={styles.expandedOverlay} />
+
+                            {p.images && p.images.length > 1 && (
+                              <>
+                                {/* Img Carousel Navigation Arrows */}
+                                <button
+                                  className={styles.imgArrowLeft}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveImageIndex((prev) => (prev === 0 ? p.images.length - 1 : prev - 1));
+                                  }}
+                                  type="button"
+                                  aria-label="Imagem anterior"
+                                >
+                                  <FiChevronLeft />
+                                </button>
+                                <button
+                                  className={styles.imgArrowRight}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveImageIndex((prev) => (prev === p.images.length - 1 ? 0 : prev + 1));
+                                  }}
+                                  type="button"
+                                  aria-label="Próxima imagem"
+                                >
+                                  <FiChevronRight />
+                                </button>
+
+                                {/* Img Indicator Dots */}
+                                <div className={styles.imgDots}>
+                                  {p.images.map((_, idx) => (
+                                    <button
+                                      key={idx}
+                                      className={`${styles.imgDot} ${idx === activeImageIndex ? styles.imgDotActive : ''}`}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setActiveImageIndex(idx);
+                                      }}
+                                      type="button"
+                                      aria-label={`Visualizar imagem ${idx + 1}`}
+                                    />
+                                  ))}
+                                </div>
+                              </>
+                            )}
+                          </div>
+
+                          {/* Right Col — Detailed Info */}
+                          <div className={styles.expandedInfoArea}>
+                            <p className={styles.expandedSummary}>{p.summary[lang] || p.summary.pt}</p>
+
+                            {/* Detailed Curriculum/README list of features */}
+                            {details && (
+                              <div className={styles.detailsList}>
+                                <h4>{t.projectCaseHeader}</h4>
+                                <ul>
+                                  <li><strong>{t.projectArch}:</strong> {details.backend}</li>
+                                  <li><strong>{t.projectSecurity}:</strong> {details.security}</li>
+                                  <li><strong>{t.projectFront}:</strong> {details.frontend}</li>
+                                  <li><strong>{t.projectDevOps}:</strong> {details.devops}</li>
+                                </ul>
+                              </div>
+                            )}
+
+                            <div className={styles.expandedStacks}>
+                              {p.stacks.map((tech) => (
+                                <span key={tech} className={styles.expandedStackBadge}>
+                                  {tech}
+                                </span>
+                              ))}
+                            </div>
+
+                            <div className={styles.expandedLinks}>
+                              {p.githubUrl && (
+                                <a
+                                  href={p.githubUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={styles.expandedLink}
+                                >
+                                  <FaGithub /> {t.projectBtnCode}
+                                </a>
+                              )}
+                              {p.liveUrl && (
+                                <a
+                                  href={p.liveUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={styles.expandedLink}
+                                >
+                                  <FiExternalLink /> {t.projectBtnDemo}
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          })}
         </div>
       </div>
 

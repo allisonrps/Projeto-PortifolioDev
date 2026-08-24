@@ -1,0 +1,150 @@
+.preloaderContainer {
+  position: fixed;
+  inset: 0;
+  background: #08090c;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.preloaderInner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  max-width: 400px;
+  width: 90%;
+}
+
+/* ── HUD Tech Spinners ── */
+.spinnerWrapper {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hudRingOuter {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 2px solid transparent;
+  border-top-color: var(--accent, #437bf2);
+  border-bottom-color: var(--accent, #437bf2);
+  border-radius: 50%;
+  animation: spinClockwise 2s linear infinite;
+  box-shadow: 0 0 15px rgba(67, 123, 242, 0.2);
+}
+
+.hudRingInner {
+  position: absolute;
+  width: 70%;
+  height: 70%;
+  border: 1px dashed rgba(67, 123, 242, 0.4);
+  border-left-color: var(--accent, #437bf2);
+  border-radius: 50%;
+  animation: spinCounterClockwise 1.5s linear infinite;
+}
+
+.hudDot {
+  width: 8px;
+  height: 8px;
+  background: var(--accent, #437bf2);
+  border-radius: 50%;
+  box-shadow: 0 0 12px var(--accent, #437bf2);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+/* ── Brand Logo ── */
+.brandContainer {
+  text-align: center;
+}
+
+.brandName {
+  font-family: var(--font-primary, sans-serif);
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--white, #ffffff);
+  margin-bottom: 8px;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
+}
+
+.brandSub {
+  font-family: monospace;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: var(--accent, #437bf2);
+  text-shadow: 0 0 8px rgba(67, 123, 242, 0.3);
+}
+
+/* ── Progress Indicators ── */
+.progressArea {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.progressBarWrapper {
+  width: 100%;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+  border-radius: 1px;
+}
+
+.progressBar {
+  height: 100%;
+  background: linear-gradient(90deg, #1c4bb0, var(--accent, #437bf2));
+  box-shadow: 0 0 8px var(--accent, #437bf2);
+  transition: width 0.1s ease-out;
+}
+
+.progressText {
+  display: flex;
+  justify-content: space-between;
+  font-family: monospace;
+  font-size: 11px;
+  color: var(--text-muted, #8f9cae);
+}
+
+.percentage {
+  color: var(--white, #ffffff);
+  font-weight: bold;
+}
+
+/* ── Keyframes ── */
+@keyframes spinClockwise {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spinCounterClockwise {
+  0% {
+    transform: rotate(360deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(0.95);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+    box-shadow: 0 0 16px var(--accent, #437bf2);
+  }
+}
