@@ -33,8 +33,8 @@ export const translations = {
 
     // Projects Section
     projectsLabel: 'Portfólio',
-    projectsTitle: 'Principais Projetos',
-    projectsHighlight: 'Locais.',
+    projectsTitle: 'Projetos em',
+    projectsHighlight: 'Produção.',
     projectsBtnGitHub: 'GitHub Geral →',
     projectCaseDetails: 'Ver Caso Completo →',
     projectBackToList: '← Voltar',
@@ -118,8 +118,8 @@ export const translations = {
 
     // Projects Section
     projectsLabel: 'Portfolio',
-    projectsTitle: 'Featured',
-    projectsHighlight: 'Projects.',
+    projectsTitle: 'Projects in',
+    projectsHighlight: 'Production.',
     projectsBtnGitHub: 'General GitHub →',
     projectCaseDetails: 'View Case Study →',
     projectBackToList: '← Go Back',
