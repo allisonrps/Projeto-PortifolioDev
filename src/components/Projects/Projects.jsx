@@ -151,8 +151,35 @@ export default function Projects({ lang }) {
                       style={{ overflow: 'hidden' }}
                     >
                       <div className={styles.accordionContent}>
-                        <div className={styles.expandedGrid}>
-                          {/* Left Col — Giant Image / Click to open Lightbox */}
+                        <div className={styles.expandedVerticalFlow}>
+                          {/* 1. First Row — Tech Stacks */}
+                          <div className={styles.expandedStacks}>
+                            {p.stacks.map((tech) => (
+                              <span key={tech} className={styles.expandedStackBadge}>
+                                {tech}
+                              </span>
+                            ))}
+                          </div>
+
+                          {/* 2. Middle Row — Texts & Descriptions */}
+                          <div className={styles.expandedTextSection}>
+                            <p className={styles.expandedSummary}>{p.summary[lang] || p.summary.pt}</p>
+
+                            {/* Detailed Curriculum/README list of features */}
+                            {details && (
+                              <div className={styles.detailsList}>
+                                <h4>{t.projectCaseHeader}</h4>
+                                <ul>
+                                  <li><strong>{t.projectArch}:</strong> {details.backend}</li>
+                                  <li><strong>{t.projectSecurity}:</strong> {details.security}</li>
+                                  <li><strong>{t.projectFront}:</strong> {details.frontend}</li>
+                                  <li><strong>{t.projectDevOps}:</strong> {details.devops}</li>
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* 3. Below Texts — Image Carousel */}
                           <div
                             className={styles.expandedImageArea}
                             onClick={() => setLightboxImage(p.images ? p.images[activeImageIndex] : p.image)}
@@ -209,53 +236,28 @@ export default function Projects({ lang }) {
                             )}
                           </div>
 
-                          {/* Right Col — Detailed Info */}
-                          <div className={styles.expandedInfoArea}>
-                            <p className={styles.expandedSummary}>{p.summary[lang] || p.summary.pt}</p>
-
-                            {/* Detailed Curriculum/README list of features */}
-                            {details && (
-                              <div className={styles.detailsList}>
-                                <h4>{t.projectCaseHeader}</h4>
-                                <ul>
-                                  <li><strong>{t.projectArch}:</strong> {details.backend}</li>
-                                  <li><strong>{t.projectSecurity}:</strong> {details.security}</li>
-                                  <li><strong>{t.projectFront}:</strong> {details.frontend}</li>
-                                  <li><strong>{t.projectDevOps}:</strong> {details.devops}</li>
-                                </ul>
-                              </div>
+                          {/* 4. Bottom Row — Action Links */}
+                          <div className={styles.expandedLinks}>
+                            {p.githubUrl && (
+                              <a
+                                href={p.githubUrl}
+                                target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={styles.expandedLink}
+                              >
+                                <FaGithub /> {t.projectBtnCode}
+                              </a>
                             )}
-
-                            <div className={styles.expandedStacks}>
-                              {p.stacks.map((tech) => (
-                                <span key={tech} className={styles.expandedStackBadge}>
-                                  {tech}
-                                </span>
-                              ))}
-                            </div>
-
-                            <div className={styles.expandedLinks}>
-                              {p.githubUrl && (
-                                <a
-                                  href={p.githubUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className={styles.expandedLink}
-                                >
-                                  <FaGithub /> {t.projectBtnCode}
-                                </a>
-                              )}
-                              {p.liveUrl && (
-                                <a
-                                  href={p.liveUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className={styles.expandedLink}
-                                >
-                                  <FiExternalLink /> {t.projectBtnDemo}
-                                </a>
-                              )}
-                            </div>
+                            {p.liveUrl && (
+                              <a
+                                href={p.liveUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={styles.expandedLink}
+                              >
+                                <FiExternalLink /> {t.projectBtnDemo}
+                              </a>
+                            )}
                           </div>
                         </div>
                       </div>
