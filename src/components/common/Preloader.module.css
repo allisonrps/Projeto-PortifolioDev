@@ -66,10 +66,11 @@
 
 .brandName {
   font-family: var(--font-primary, sans-serif);
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 800;
   color: var(--white, #ffffff);
-  margin-bottom: 8px;
+  line-height: 1.25;
+  margin-bottom: 12px;
   text-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
 }
 

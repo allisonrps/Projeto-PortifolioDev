@@ -49,7 +49,9 @@ export default function Preloader() {
             animate={{ letterSpacing: '0.3em', opacity: 1 }}
             transition={{ duration: 1, ease: 'easeOut' }}
           >
-            ALLISON RODRIGUES
+            ALLISON
+            <br />
+            RODRIGUES
           </motion.h1>
           <motion.span
             className={styles.brandSub}
