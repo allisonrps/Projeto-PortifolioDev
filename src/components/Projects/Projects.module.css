@@ -315,6 +315,135 @@
 
 
 
+/* ── Hero Banner Showcase ── */
+.projectHeroBanner {
+  position: relative;
+  width: 100%;
+  border: 1px solid var(--border);
+  border-bottom: 4px solid var(--accent);
+  background: #090a0f;
+  cursor: pointer;
+  overflow: hidden;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.45);
+  transition: all var(--transition-fast);
+}
+
+.projectHeroBanner:hover {
+  border-color: var(--accent);
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.65), 0 0 25px var(--accent-glow);
+  transform: translateY(-2px);
+}
+
+.projectHeroBanner img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+}
+
+.heroBannerOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(9, 10, 15, 0.85) 0%, transparent 60%);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 16px 20px;
+  pointer-events: none;
+}
+
+.heroBannerTag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent-light);
+  background: rgba(15, 17, 23, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 5px 12px;
+  border: 1px solid var(--accent);
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+/* ── Platform Core Pillars (Social, Gestão, Palco) ── */
+.pillarsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.pillarsHeader {
+  font-size: 13px;
+  font-family: var(--font-mono);
+  color: var(--accent-light);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.pillarsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.pillarCard {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-bottom: 3px solid var(--accent);
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: all var(--transition-fast);
+}
+
+.pillarCard:hover {
+  border-color: var(--accent);
+  background: rgba(18, 22, 32, 0.8);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4), 0 0 15px var(--accent-glow);
+}
+
+.pillarHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pillarIcon {
+  font-size: 20px;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+}
+
+.pillarTag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+}
+
+.pillarTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.35;
+}
+
+.pillarDesc {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
 .expandedSummary {
   font-size: 15px;
   color: var(--text-secondary);
@@ -401,6 +530,9 @@
 }
 
 @media (max-width: 960px) {
+  .pillarsGrid {
+    grid-template-columns: 1fr;
+  }
   .galleryCard {
     width: 360px;
   }

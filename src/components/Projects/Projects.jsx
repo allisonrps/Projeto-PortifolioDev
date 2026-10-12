@@ -5,7 +5,7 @@ import Badge from '../common/Badge';
 import { projects } from '../../data/projects';
 import { translations } from '../../data/translations';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiX, FiExternalLink, FiChevronRight, FiChevronLeft } from 'react-icons/fi';
+import { FiX, FiExternalLink, FiChevronRight, FiChevronLeft, FiUsers, FiLayers, FiMusic } from 'react-icons/fi';
 import { FaGithub, FaGooglePlay } from 'react-icons/fa';
 import styles from './Projects.module.css';
 
@@ -60,16 +60,16 @@ const projectDetails = {
   },
   3: { // Band Link
     pt: {
-      backend: 'Interface nativa multiplataforma utilizando React Native (Expo) integrada a serviços do dispositivo e banco local.',
-      security: 'Armazenamento interno seguro de arquivos de música e persistência local isolada de configurações e setlists.',
-      frontend: 'Layout 100% focado na usabilidade de palco, com suporte a gestos, roteiro de leitura rápida e controle de ensaios.',
-      devops: 'Ecosistema de armazenamento baseado em SQLite local (Expo SQLite), leitura em lote via File System e exportação de arquivos com Sharing.',
+      backend: 'Arquitetura modular em React Native (Expo) com SQLite embutido, isolando dados offline-first com alto desempenho.',
+      security: 'Armazenamento interno seguro de arquivos de cifras/músicas e integridade na persistência local de grupos e finanças.',
+      frontend: 'Interface otimizada para palco (Stage Mode), suporte a tablets no pedestal, gestos rápidos e controle dinâmico de tom e BPM.',
+      devops: 'Publicado na Google Play Store, pipeline de build via EAS (Expo Application Services) e exportação de setlists com Expo Sharing.',
     },
     en: {
-      backend: 'Cross-platform native interface using React Native (Expo) integrated with device services and local database.',
-      security: 'Secure internal storage of music files and isolated local persistence of configurations and setlists.',
-      frontend: 'Layout 100% focused on stage usability, with gestures support, fast-reading script, and rehearsal control.',
-      devops: 'Storage ecosystem based on local SQLite (Expo SQLite), bulk file reading via File System, and file exporting with Sharing.',
+      backend: 'Modular architecture in React Native (Expo) with embedded SQLite, isolating offline-first data with high performance.',
+      security: 'Secure local storage of chord/music files and referential integrity for band profiles, repertoires, and finances.',
+      frontend: 'Stage Mode interface tailored for stage pedestals and tablets, quick swipe gestures, dynamic key transposition, and BPM.',
+      devops: 'Published on Google Play Store, build pipeline via EAS (Expo Application Services), and setlist sharing via Expo Sharing.',
     }
   }
 };
@@ -253,6 +253,31 @@ export default function Projects({ lang }) {
                           <div className={styles.expandedTextSection}>
                             <p className={styles.expandedSummary}>{p.summary[lang] || p.summary.pt}</p>
 
+                            {/* Platform Core Pillars (e.g. Band Link: Social/Anúncios, Gestão, Palco) */}
+                            {p.pillars && (
+                              <div className={styles.pillarsContainer}>
+                                <h4 className={styles.pillarsHeader}>
+                                  {lang === 'en' ? 'Core Pillars & Experience' : 'Pilares da Plataforma'}
+                                </h4>
+                                <div className={styles.pillarsGrid}>
+                                  {p.pillars[lang].map((pillar, idx) => (
+                                    <div key={idx} className={styles.pillarCard}>
+                                      <div className={styles.pillarHeader}>
+                                        <span className={styles.pillarIcon}>
+                                          {idx === 0 && <FiUsers />}
+                                          {idx === 1 && <FiLayers />}
+                                          {idx === 2 && <FiMusic />}
+                                        </span>
+                                        <span className={styles.pillarTag}>{pillar.tag}</span>
+                                      </div>
+                                      <h5 className={styles.pillarTitle}>{pillar.title}</h5>
+                                      <p className={styles.pillarDesc}>{pillar.desc}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
                             {/* Detailed Curriculum/README list of features */}
                             {details && (
                               <div className={styles.detailsList}>
@@ -266,6 +291,23 @@ export default function Projects({ lang }) {
                               </div>
                             )}
                           </div>
+
+                          {/* Hero Banner Showcase (if available) */}
+                          {p.banner && (
+                            <div
+                              className={styles.projectHeroBanner}
+                              onClick={() => setLightboxImage(p.banner)}
+                              title="Clique para abrir imagem em tela cheia com zoom"
+                            >
+                              <img src={p.banner} alt={`${p.title} banner ecossistema`} />
+                              <div className={styles.heroBannerOverlay}>
+                                <span className={styles.heroBannerTag}>
+                                  {lang === 'en' ? 'Complete Ecosystem • Google Play' : 'Ecossistema Completo • Google Play'}
+                                </span>
+                                <span className={styles.zoomPill}>⤢ Zoom</span>
+                              </div>
+                            </div>
+                          )}
 
                           {/* 3. Below Texts — Side-by-Side Gallery Showcase */}
                           <ProjectGallery project={p} setLightboxImage={setLightboxImage} />

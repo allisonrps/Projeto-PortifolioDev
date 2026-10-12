@@ -70,8 +70,45 @@ export const projects = [
     },
     stacks: ['React Native', 'Expo', 'TypeScript', 'SQLite', 'File System', 'Expo Sharing'],
     summary: {
-      pt: 'Aplicativo móvel publicado na Google Play para organização de bandas e apresentações. Permite o gerenciamento de perfis de músicos, repertórios, criação de setlists, roteiros de palco, controle financeiro de shows e sincronização offline com exportação de arquivos.',
-      en: 'Mobile app published on Google Play for band and performance management. Allows musician profile management, repertoire tracking, setlist creation, stage charts, gig financial controls, and offline sync with file export.',
+      pt: 'Ecossistema musical completo desenvolvido para aproximar músicos e otimizar performances ao vivo. Une um canal social com anúncios e busca de integrantes, gestão integral de repertórios, ensaios e finanças de bandas, e o Modo Palco para tablets e celulares com rolagem de letras, cifras dinâmicas e controle de setlist em tempo real.',
+      en: 'Complete musical ecosystem designed to connect musicians and elevate live performances. Combines a social channel with musician classifieds, comprehensive band repertoire, rehearsals and financial management, and a dedicated Stage Mode for tablets and phones featuring scrolling lyrics, dynamic chords, and real-time setlist execution.',
+    },
+    banner: '/projects/bandlink/bandlink-banner.jpg',
+    pillars: {
+      pt: [
+        {
+          tag: 'Social & Anúncios',
+          title: 'Comunidade & Conexão de Músicos',
+          desc: 'Mural de classificados para recrutamento de integrantes e vagas em bandas. Busca por instrumento, gênero e cidade com perfis detalhados e portfólio.',
+        },
+        {
+          tag: 'Gestão de Bandas',
+          title: 'Organização, Repertório & Cachês',
+          desc: 'Gestão completa de múltiplos grupos: controle de repertório por banda, agenda de ensaios e shows, divisão de cachês e histórico de eventos.',
+        },
+        {
+          tag: 'Modo Palco',
+          title: 'Setlists, Cifras & Letras ao Vivo',
+          desc: 'Projetado para tablets e suportes de palco: letras com rolagem automática, visualização clara de cifras, tom musical, andamento (BPM) e troca rápida de faixas.',
+        },
+      ],
+      en: [
+        {
+          tag: 'Social & Classifieds',
+          title: 'Musician Community & Network',
+          desc: 'Classifieds board to find band members and audition openings. Filter by instrument, genre, and location with detailed profiles and portfolios.',
+        },
+        {
+          tag: 'Band Management',
+          title: 'Repertoire, Shows & Finances',
+          desc: 'Full multi-group management: band-specific repertoire, rehearsal and gig calendar, fee splitting, and performance history.',
+        },
+        {
+          tag: 'Stage Mode',
+          title: 'Live Setlists, Chords & Lyrics',
+          desc: 'Crafted for mic stands and stage tablets: auto-scrolling lyrics, clear chord charts, musical key, tempo (BPM), and instant song switching.',
+        },
+      ],
     },
     githubUrl: 'https://github.com/allisonrps/setlist-app',
     playStoreUrl: 'https://play.google.com/store/apps/details?id=com.setlistbandmanager.com',
