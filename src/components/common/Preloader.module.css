@@ -33,19 +33,19 @@
   width: 100%;
   height: 100%;
   border: 2px solid transparent;
-  border-top-color: var(--accent, #437bf2);
-  border-bottom-color: var(--accent, #437bf2);
+  border-top-color: var(--accent, #5993ff);
+  border-bottom-color: var(--accent, #5993ff);
   border-radius: 50%;
   animation: spinClockwise 2s linear infinite;
-  box-shadow: 0 0 15px rgba(67, 123, 242, 0.2);
+  box-shadow: 0 0 15px rgba(89, 147, 255, 0.25);
 }
 
 .hudRingInner {
   position: absolute;
   width: 70%;
   height: 70%;
-  border: 1px dashed rgba(67, 123, 242, 0.4);
-  border-left-color: var(--accent, #437bf2);
+  border: 1px dashed rgba(89, 147, 255, 0.45);
+  border-left-color: var(--accent, #5993ff);
   border-radius: 50%;
   animation: spinCounterClockwise 1.5s linear infinite;
 }
@@ -53,9 +53,9 @@
 .hudDot {
   width: 8px;
   height: 8px;
-  background: var(--accent, #437bf2);
+  background: var(--accent, #5993ff);
   border-radius: 50%;
-  box-shadow: 0 0 12px var(--accent, #437bf2);
+  box-shadow: 0 0 12px var(--accent, #5993ff);
   animation: pulse 1s ease-in-out infinite;
 }
 
@@ -78,8 +78,8 @@
   font-family: monospace;
   font-size: 11px;
   letter-spacing: 0.15em;
-  color: var(--accent, #437bf2);
-  text-shadow: 0 0 8px rgba(67, 123, 242, 0.3);
+  color: var(--accent, #5993ff);
+  text-shadow: 0 0 8px rgba(89, 147, 255, 0.35);
 }
 
 /* ── Progress Indicators ── */
@@ -101,8 +101,8 @@
 
 .progressBar {
   height: 100%;
-  background: linear-gradient(90deg, #1c4bb0, var(--accent, #437bf2));
-  box-shadow: 0 0 8px var(--accent, #437bf2);
+  background: linear-gradient(90deg, #2f6ee8, var(--accent, #5993ff));
+  box-shadow: 0 0 8px var(--accent, #5993ff);
   transition: width 0.1s ease-out;
 }
 

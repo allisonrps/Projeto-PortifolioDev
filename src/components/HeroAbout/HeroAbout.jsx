@@ -1,22 +1,7 @@
 import { motion } from 'framer-motion';
-import { FaReact, FaNodeJs, FaDocker, FaGitAlt, FaGithub, FaLinkedinIn } from 'react-icons/fa';
-import { SiTypescript, SiDotnet, SiMongodb, SiPostgresql, SiTailwindcss } from 'react-icons/si';
-import { VscAzure } from 'react-icons/vsc';
+import { FaGithub, FaLinkedinIn } from 'react-icons/fa';
 import { translations } from '../../data/translations';
 import styles from './HeroAbout.module.css';
-
-const skills = [
-  { name: '.NET / C#', icon: SiDotnet },
-  { name: 'Node.js', icon: FaNodeJs },
-  { name: 'React', icon: FaReact },
-  { name: 'TypeScript', icon: SiTypescript },
-  { name: 'Azure', icon: VscAzure },
-  { name: 'Docker', icon: FaDocker },
-  { name: 'PostgreSQL', icon: SiPostgresql },
-  { name: 'MongoDB', icon: SiMongodb },
-  { name: 'Tailwind CSS', icon: SiTailwindcss },
-  { name: 'Git', icon: FaGitAlt },
-];
 
 const containerVariants = {
   hidden: {},
@@ -139,15 +124,13 @@ export default function HeroAbout({ lang }) {
             <motion.p className={styles.bioText} variants={itemVariants}>
               {lang === 'pt' ? (
                 <>
-                  Minha paixão está em criar arquiteturas de dados escaláveis, 
-                  garantir segurança de dados integrada (padrões OWASP, criptografia, conformidade com a LGPD) 
-                  e implantar soluções cloud-native orquestradas com Docker e esteiras CI/CD automatizadas.
+                  Minha maior motivação é resolver problemas e eliminar a necessidade de papéis e planilhas, 
+                  criando soluções inteligentes que automatizam processos e facilitam a vida das pessoas.
                 </>
               ) : (
                 <>
-                  My passion lies in creating scalable data architectures,
-                  ensuring integrated data security (OWASP standards, encryption, compliance with LGPD/GDPR)
-                  and deploying cloud-native solutions orchestrated with Docker and automated CI/CD pipelines.
+                  My greatest motivation is solving real-world problems and eliminating the reliance on manual paperwork and spreadsheets, 
+                  crafting smart solutions that automate workflows and make people&apos;s lives easier.
                 </>
               )}
             </motion.p>
@@ -163,17 +146,6 @@ export default function HeroAbout({ lang }) {
           </div>
         </div>
 
-        {/* Stacks Row (Stack Aqui - Icon only with Tooltip) */}
-        <motion.div className={styles.stacksWrapper} variants={itemVariants}>
-          <h3 className={styles.stacksTitle}>{t.heroStacksTitle}</h3>
-          <div className={styles.stacksGrid}>
-            {skills.map(({ name, icon: Icon }) => (
-              <div key={name} className={styles.stackItem} data-tooltip={name}>
-                <Icon />
-              </div>
-            ))}
-          </div>
-        </motion.div>
       </motion.div>
     </section>
   );

@@ -54,7 +54,7 @@
 .photoCol:hover .techRing {
   animation-duration: 10s;
   color: var(--white);
-  filter: drop-shadow(0 0 8px rgba(67, 123, 242, 0.4));
+  filter: drop-shadow(0 0 8px rgba(89, 147, 255, 0.4));
 }
 
 @keyframes spinRing {
@@ -123,7 +123,7 @@
 .photoCol:hover .photoWrapper {
   border-color: var(--white);
   border-bottom-color: var(--white);
-  box-shadow: 0 10px 30px rgba(67, 123, 242, 0.25);
+  box-shadow: 0 10px 30px rgba(89, 147, 255, 0.25);
   transform: translateY(-4px);
 }
 
@@ -147,7 +147,7 @@
   inset: 0;
   background: 
     linear-gradient(rgba(15, 17, 23, 0) 50%, rgba(0, 0, 0, 0.18) 50%),
-    linear-gradient(90deg, rgba(67, 123, 242, 0.04), rgba(255, 255, 255, 0.02), rgba(67, 123, 242, 0.04));
+    linear-gradient(90deg, rgba(89, 147, 255, 0.04), rgba(255, 255, 255, 0.02), rgba(89, 147, 255, 0.04));
   background-size: 100% 4px, 6px 100%;
   opacity: 0.25;
   pointer-events: none;
@@ -314,7 +314,7 @@
 
 .ctaBtnPrimary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(67, 123, 242, 0.25);
+  box-shadow: 0 4px 15px rgba(89, 147, 255, 0.25);
   border-bottom-width: 4px;
 }
 
@@ -343,89 +343,7 @@
   transform: translateY(-2px);
 }
 
-/* ── Stacks Row (Stack Aqui - Responsive Icon Grid) ── */
-.stacksWrapper {
-  margin-top: 16px;
-  border-top: 1px solid var(--border);
-  padding-top: 32px;
-}
 
-.stacksTitle {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  letter-spacing: 2px;
-  margin-bottom: 16px;
-}
-
-.stacksGrid {
-  display: grid;
-  grid-template-columns: repeat(10, 1fr);
-  gap: 16px;
-  width: 100%;
-}
-
-.stackItem {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-bottom: 3px solid var(--border);
-  border-radius: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all var(--transition-normal);
-  cursor: pointer;
-}
-
-.stackItem:hover {
-  border-color: var(--white);
-  border-bottom-color: var(--white);
-  background: var(--bg-card-hover);
-  transform: translateY(-4px) rotate(6deg);
-  box-shadow: 0 6px 15px rgba(255, 255, 255, 0.12);
-}
-
-.stackItem svg {
-  font-size: 26px;
-  color: var(--accent);
-  transition: transform var(--transition-normal);
-}
-
-.stackItem:hover svg {
-  color: var(--white);
-  transform: scale(1.1) rotate(-6deg);
-}
-
-/* ── Tooltip Balloon (Neo-futurista) ── */
-.stackItem::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  bottom: 125%;
-  left: 50%;
-  transform: translateX(-50%) translateY(8px);
-  background: var(--bg-secondary);
-  border: 1px solid var(--accent);
-  color: var(--white);
-  padding: 6px 12px;
-  font-size: 11px;
-  font-family: var(--font-mono);
-  font-weight: 500;
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: all var(--transition-fast);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  z-index: 10;
-}
-
-.stackItem:hover::after {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
 
 @media (max-width: 960px) {
   .upperGrid {
@@ -473,18 +391,7 @@
   .ctaRow {
     justify-content: center;
   }
-  .stacksTitle {
-    text-align: center;
-  }
-  .stacksGrid {
-    grid-template-columns: repeat(5, 1fr);
-    gap: 12px;
-  }
-  .stackItem {
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    height: auto;
-  }
+
 }
 
 /* ── Cyber Glitch Animation (Varied monitor failure) ── */

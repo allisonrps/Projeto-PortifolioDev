@@ -68,7 +68,7 @@
 .accordionItemOpen {
   border-color: var(--accent);
   border-bottom-color: var(--accent);
-  box-shadow: 0 0 25px rgba(67, 123, 242, 0.1);
+  box-shadow: 0 0 25px rgba(89, 147, 255, 0.15);
 }
 
 .accordionHeader {
@@ -82,7 +82,7 @@
 }
 
 .accordionHeader:hover {
-  background: rgba(67, 123, 242, 0.04);
+  background: rgba(89, 147, 255, 0.05);
 }
 
 .headerLeft {
@@ -132,7 +132,7 @@
 
 .separatorLine {
   height: 1px;
-  background: linear-gradient(90deg, rgba(67, 123, 242, 0.2) 0%, rgba(255, 255, 255, 0.01) 100%);
+  background: linear-gradient(90deg, rgba(89, 147, 255, 0.25) 0%, rgba(255, 255, 255, 0.01) 100%);
   margin: 0 32px;
 }
 

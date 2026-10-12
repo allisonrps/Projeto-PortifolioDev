@@ -11,7 +11,7 @@ export const translations = {
     // HeroAbout Section
     heroRole: 'Software Developer & Cloud Architect',
     heroBio1: 'Sou desenvolvedor de software graduado pela FATEC Franca e pós-graduando em Arquitetura Avançada em Nuvem Azure na Faculdade Anhanguera. Especializado na construção de aplicações robustas e seguras usando C# .NET Core e Node.js (Express) no ecossistema de APIs, e interfaces de alta performance com React e TypeScript.',
-    heroBio2: 'Minha paixão está em criar arquiteturas de dados escaláveis, garantir segurança de dados integrada (padrões OWASP, criptografia, conformidade com a LGPD) e implantar soluções cloud-native orquestradas com Docker e esteiras CI/CD automatizadas.',
+    heroBio2: 'Minha maior motivação é resolver problemas e eliminar a necessidade de papéis e planilhas, criando soluções inteligentes que automatizam processos e facilitam a vida das pessoas.',
     heroCtaProjects: 'Ver Projetos →',
     heroCtaContact: 'Fale Comigo',
     heroStacksTitle: 'Stack Tecnológica',
@@ -40,6 +40,7 @@ export const translations = {
     projectBackToList: '← Voltar',
     projectBtnCode: 'Código Fonte',
     projectBtnDemo: 'Demo Online',
+    projectBtnPlayStore: 'Google Play',
     projectCaseHeader: 'Especificações do Caso',
     projectArch: 'Arquitetura & Backend',
     projectSecurity: 'Segurança & Proteção',
@@ -96,7 +97,7 @@ export const translations = {
     // HeroAbout Section
     heroRole: 'Software Developer & Cloud Architect',
     heroBio1: 'I am a software developer graduated from FATEC Franca and postgraduate in Advanced Azure Cloud Architecture at Faculdade Anhanguera. Specialized in building robust and secure applications using C# .NET Core and Node.js (Express) in the API ecosystem, and high-performance interfaces with React and TypeScript.',
-    heroBio2: 'My passion lies in creating scalable data architectures, ensuring integrated data security (OWASP patterns, cryptography, compliance with LGPD/GDPR) and deploying cloud-native solutions orchestrated with Docker and automated CI/CD pipelines.',
+    heroBio2: 'My greatest motivation is solving real-world problems and eliminating the reliance on manual paperwork and spreadsheets, crafting smart solutions that automate workflows and make people\'s lives easier.',
     heroCtaProjects: 'View Projects →',
     heroCtaContact: 'Get In Touch',
     heroStacksTitle: 'Tech Stack',
@@ -125,6 +126,7 @@ export const translations = {
     projectBackToList: '← Go Back',
     projectBtnCode: 'Source Code',
     projectBtnDemo: 'Live Demo',
+    projectBtnPlayStore: 'Google Play',
     projectCaseHeader: 'Case Specifications',
     projectArch: 'Architecture & Backend',
     projectSecurity: 'Security & Protection',

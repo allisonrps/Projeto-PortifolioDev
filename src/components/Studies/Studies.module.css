@@ -39,7 +39,7 @@
   border-color: var(--accent);
   border-bottom-color: var(--accent);
   transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(67, 123, 242, 0.15);
+  box-shadow: 0 8px 24px rgba(89, 147, 255, 0.15);
 }
 
 /* Icon overlapping the top-left border */
@@ -62,7 +62,7 @@
 
 .educationCard:hover .cardIconWrapper {
   transform: rotate(-12deg) translateY(-4px) scale(1.1);
-  box-shadow: 0 4px 12px rgba(67, 123, 242, 0.3);
+  box-shadow: 0 4px 12px rgba(89, 147, 255, 0.3);
 }
 
 .institution {
@@ -225,7 +225,7 @@
 }
 
 .badgeSelector:hover .badgeImg {
-  filter: grayscale(0%) contrast(110%) drop-shadow(0 0 15px rgba(67, 123, 242, 0.7));
+  filter: grayscale(0%) contrast(110%) drop-shadow(0 0 15px rgba(89, 147, 255, 0.7));
 }
 
 .badgePlaceholder {
@@ -238,15 +238,15 @@
   font-size: 42px;
   color: var(--accent);
   background: var(--accent-glow);
-  border: 1px dashed rgba(67, 123, 242, 0.35);
+  border: 1px dashed rgba(89, 147, 255, 0.35);
   transition: all var(--transition-fast);
 }
 
 .badgeSelector:hover .badgePlaceholder {
   color: var(--white);
-  background: rgba(67, 123, 242, 0.15);
+  background: rgba(89, 147, 255, 0.15);
   border-color: var(--white);
-  box-shadow: 0 0 15px rgba(67, 123, 242, 0.4);
+  box-shadow: 0 0 15px rgba(89, 147, 255, 0.4);
 }
 
 /* ── High-Fidelity Modal (Destaque para Leitura do Certificado) ── */
@@ -326,7 +326,7 @@
   width: 120px;
   height: 120px;
   background: var(--accent-glow);
-  border: 1px solid rgba(67, 123, 242, 0.25);
+  border: 1px solid rgba(89, 147, 255, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -406,7 +406,7 @@
 
 .modalBtn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(67, 123, 242, 0.25);
+  box-shadow: 0 4px 15px rgba(89, 147, 255, 0.25);
   border-bottom-width: 4px;
 }
 

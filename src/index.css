@@ -26,14 +26,14 @@ button { font: inherit; cursor: pointer; border: none; background: none; }
   --bg-card-hover: #1f2337;
   --bg-elevated: #232738;
 
-  /* Brand – Azul Vibrante */
-  --accent: #437bf2;
-  --accent-light: #7da6ff;
-  --accent-dark: #1e52c8;
-  --accent-glow: rgba(67, 123, 242, 0.12);
-  --accent-glow-strong: rgba(67, 123, 242, 0.25);
-  --accent-gradient: linear-gradient(135deg, #437bf2, #1e52c8);
-  --accent-gradient-hover: linear-gradient(135deg, #7da6ff, #437bf2);
+  /* Brand – Azul Vibrante Mais Claro */
+  --accent: #5993ff;
+  --accent-light: #94b8ff;
+  --accent-dark: #2f6ee8;
+  --accent-glow: rgba(89, 147, 255, 0.15);
+  --accent-glow-strong: rgba(89, 147, 255, 0.3);
+  --accent-gradient: linear-gradient(135deg, #5993ff, #2f6ee8);
+  --accent-gradient-hover: linear-gradient(135deg, #94b8ff, #5993ff);
 
   /* Neutrals */
   --white: #f1f5f9;

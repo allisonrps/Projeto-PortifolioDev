@@ -6,7 +6,7 @@ import { projects } from '../../data/projects';
 import { translations } from '../../data/translations';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiExternalLink, FiChevronRight, FiChevronLeft } from 'react-icons/fi';
-import { FaGithub } from 'react-icons/fa';
+import { FaGithub, FaGooglePlay } from 'react-icons/fa';
 import styles from './Projects.module.css';
 
 const statusMap = {
@@ -58,7 +58,7 @@ const projectDetails = {
       devops: 'Resource provisioning, local orchestration, and build automation focusing on agile deployments in Azure environments.',
     }
   },
-  3: { // Setlist Band Manager
+  3: { // Band Link
     pt: {
       backend: 'Interface nativa multiplataforma utilizando React Native (Expo) integrada a serviços do dispositivo e banco local.',
       security: 'Armazenamento interno seguro de arquivos de música e persistência local isolada de configurações e setlists.',
@@ -242,13 +242,23 @@ export default function Projects({ lang }) {
                               <a
                                 href={p.githubUrl}
                                 target="_blank"
-                                  rel="noopener noreferrer"
-                                  className={styles.expandedLink}
+                                rel="noopener noreferrer"
+                                className={styles.expandedLink}
                               >
                                 <FaGithub /> {t.projectBtnCode}
                               </a>
                             )}
-                            {p.liveUrl && (
+                            {p.playStoreUrl && (
+                              <a
+                                href={p.playStoreUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={styles.expandedLink}
+                              >
+                                <FaGooglePlay /> {t.projectBtnPlayStore || 'Google Play'}
+                              </a>
+                            )}
+                            {p.liveUrl && (!p.playStoreUrl || p.liveUrl !== p.playStoreUrl) && (
                               <a
                                 href={p.liveUrl}
                                 target="_blank"

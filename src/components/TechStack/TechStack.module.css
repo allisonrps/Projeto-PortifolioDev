@@ -1,0 +1,141 @@
+.techStack {
+  padding: 40px 0 80px;
+  position: relative;
+  z-index: 1;
+}
+
+.inner {
+  max-width: var(--max-width, 1200px);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--accent);
+  background: var(--accent-glow);
+  border: 1px solid rgba(89, 147, 255, 0.25);
+  padding: 4px 10px;
+  text-transform: uppercase;
+}
+
+.title {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  letter-spacing: 2px;
+  white-space: nowrap;
+}
+
+.line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(89, 147, 255, 0.3) 0%, rgba(255, 255, 255, 0.05) 100%);
+}
+
+.stacksGrid {
+  display: grid;
+  grid-template-columns: repeat(11, 1fr);
+  gap: 16px;
+  width: 100%;
+}
+
+.stackItem {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-bottom: 3px solid var(--border);
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color var(--transition-normal), background var(--transition-normal), box-shadow var(--transition-normal);
+  cursor: pointer;
+}
+
+.stackItem:hover {
+  border-color: var(--accent);
+  border-bottom-color: var(--accent);
+  background: var(--bg-card-hover);
+  box-shadow: 0 6px 18px rgba(89, 147, 255, 0.2);
+}
+
+.stackItem svg {
+  font-size: 28px;
+  color: var(--accent);
+  transition: transform var(--transition-normal), color var(--transition-normal);
+}
+
+.stackItem:hover svg {
+  color: var(--white);
+  transform: scale(1.12);
+}
+
+/* ── Tooltip Balloon (Neo-futurista) ── */
+.stackItem::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  background: var(--bg-secondary);
+  border: 1px solid var(--accent);
+  color: var(--white);
+  padding: 6px 12px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: all var(--transition-fast);
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.stackItem:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+@media (max-width: 1024px) {
+  .stacksGrid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .techStack {
+    padding: 30px 0 60px;
+  }
+  .headerRow {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .line {
+    display: none;
+  }
+  .stacksGrid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .stacksGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+}

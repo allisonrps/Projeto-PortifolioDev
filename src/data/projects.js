@@ -62,7 +62,7 @@ export const projects = [
   },
   {
     id: 3,
-    title: 'Setlist Band Manager',
+    title: 'Band Link',
     status: 'em-producao',
     type: {
       pt: 'Mobile App',
@@ -70,12 +70,19 @@ export const projects = [
     },
     stacks: ['React Native', 'Expo', 'TypeScript', 'SQLite', 'File System', 'Expo Sharing'],
     summary: {
-      pt: 'Aplicativo móvel para organização de bandas e apresentações. Permite o gerenciamento de repertórios de músicas, criação de setlists, roteiros de palco para músicos, controle de ensaios e exportação/compartilhamento de arquivos.',
-      en: 'Mobile application for organizing bands and gig setups. Allows managing song repertoires, creating setlists, stage charts for musicians, rehearsal tracking, and file sharing/exporting.',
+      pt: 'Aplicativo móvel publicado na Google Play para organização de bandas e apresentações. Permite o gerenciamento de perfis de músicos, repertórios, criação de setlists, roteiros de palco, controle financeiro de shows e sincronização offline com exportação de arquivos.',
+      en: 'Mobile app published on Google Play for band and performance management. Allows musician profile management, repertoire tracking, setlist creation, stage charts, gig financial controls, and offline sync with file export.',
     },
     githubUrl: 'https://github.com/allisonrps/setlist-app',
-    liveUrl: null,
-    image: '/project-setlist.jpg',
-    images: ['/project-setlist.jpg'],
+    playStoreUrl: 'https://play.google.com/store/apps/details?id=com.setlistbandmanager.com',
+    liveUrl: 'https://play.google.com/store/apps/details?id=com.setlistbandmanager.com',
+    image: '/projects/bandlink/bandlink-agenda-poster.jpg',
+    images: [
+      '/projects/bandlink/bandlink-agenda-poster.jpg',
+      '/projects/bandlink/bandlink-bands.jpg',
+      '/projects/bandlink/bandlink-events.jpg',
+      '/projects/bandlink/bandlink-finances.jpg',
+      '/projects/bandlink/bandlink-repertoire.jpg',
+    ],
   },
 ];

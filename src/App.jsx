@@ -3,6 +3,7 @@ import './App.css'
 import Header from './components/Header/Header'
 import HeroAbout from './components/HeroAbout/HeroAbout'
 import Services from './components/Services/Services'
+import TechStack from './components/TechStack/TechStack'
 import Projects from './components/Projects/Projects'
 import Studies from './components/Studies/Studies'
 import Contact from './components/Contact/Contact'
@@ -33,6 +34,7 @@ function App() {
       <main style={{ position: 'relative', zIndex: 1 }}>
         <HeroAbout lang={lang} />
         <Services lang={lang} />
+        <TechStack lang={lang} />
         <Projects lang={lang} />
         <Studies lang={lang} />
         <Contact lang={lang} />
