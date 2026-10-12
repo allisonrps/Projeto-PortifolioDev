@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import AnimatedSection from '../common/AnimatedSection';
 import SectionTitle from '../common/SectionTitle';
 import Badge from '../common/Badge';
@@ -74,15 +74,103 @@ const projectDetails = {
   }
 };
 
+function ProjectGallery({ project, setLightboxImage }) {
+  const trackRef = useRef(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const images = project.images && project.images.length > 0 ? project.images : [project.image];
+  const isMobile = project.type?.pt === 'Mobile App';
+
+  const checkScroll = () => {
+    if (!trackRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = trackRef.current;
+    setCanScrollLeft(scrollLeft > 15);
+    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 15);
+  };
+
+  const scroll = (direction) => {
+    if (!trackRef.current) return;
+    const amount = trackRef.current.clientWidth * 0.75;
+    trackRef.current.scrollBy({
+      left: direction === 'left' ? -amount : amount,
+      behavior: 'smooth',
+    });
+  };
+
+  useEffect(() => {
+    checkScroll();
+    const el = trackRef.current;
+    if (el) {
+      el.addEventListener('scroll', checkScroll, { passive: true });
+      window.addEventListener('resize', checkScroll);
+      return () => {
+        el.removeEventListener('scroll', checkScroll);
+        window.removeEventListener('resize', checkScroll);
+      };
+    }
+  }, []);
+
+  return (
+    <div className={styles.galleryWrapper}>
+      <div className={styles.galleryTopBar}>
+        <span className={styles.galleryCount}>
+          {images.length} {images.length === 1 ? 'tela' : 'telas'} • clique para tela cheia / zoom
+        </span>
+        {images.length > 1 && (
+          <div className={styles.galleryNav}>
+            <button
+              type="button"
+              className={styles.galleryNavBtn}
+              onClick={() => scroll('left')}
+              disabled={!canScrollLeft}
+              aria-label="Rolar para a esquerda"
+            >
+              <FiChevronLeft />
+            </button>
+            <button
+              type="button"
+              className={styles.galleryNavBtn}
+              onClick={() => scroll('right')}
+              disabled={!canScrollRight}
+              aria-label="Rolar para a direita"
+            >
+              <FiChevronRight />
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className={styles.galleryTrack} ref={trackRef}>
+        {images.map((src, idx) => (
+          <div
+            key={idx}
+            className={`${styles.galleryCard} ${isMobile ? styles.mobileCard : ''}`}
+            onClick={() => setLightboxImage(src)}
+            title="Clique para abrir imagem em tela cheia com zoom"
+          >
+            <img
+              src={src}
+              alt={`${project.title} screenshot ${idx + 1}`}
+              loading="lazy"
+            />
+            <div className={styles.galleryCardOverlay}>
+              <span className={styles.zoomPill}>⤢ Zoom</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function Projects({ lang }) {
   const t = translations[lang] || translations.pt;
   const [expandedProjectId, setExpandedProjectId] = useState(null);
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [lightboxImage, setLightboxImage] = useState(null);
 
   const handleHeaderClick = (id) => {
     setExpandedProjectId((prev) => (prev === id ? null : id));
-    setActiveImageIndex(0);
   };
 
   return (
@@ -179,62 +267,8 @@ export default function Projects({ lang }) {
                             )}
                           </div>
 
-                          {/* 3. Below Texts — Image Carousel */}
-                          <div
-                            className={styles.expandedImageArea}
-                            onClick={() => setLightboxImage(p.images ? p.images[activeImageIndex] : p.image)}
-                            title="Clique para abrir imagem em tela cheia"
-                          >
-                            <img
-                              src={p.images ? p.images[activeImageIndex] : p.image}
-                              alt={`${p.title} screenshot ${activeImageIndex + 1}`}
-                            />
-                            <div className={styles.expandedOverlay} />
-
-                            {p.images && p.images.length > 1 && (
-                              <>
-                                {/* Img Carousel Navigation Arrows */}
-                                <button
-                                  className={styles.imgArrowLeft}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setActiveImageIndex((prev) => (prev === 0 ? p.images.length - 1 : prev - 1));
-                                  }}
-                                  type="button"
-                                  aria-label="Imagem anterior"
-                                >
-                                  <FiChevronLeft />
-                                </button>
-                                <button
-                                  className={styles.imgArrowRight}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setActiveImageIndex((prev) => (prev === p.images.length - 1 ? 0 : prev + 1));
-                                  }}
-                                  type="button"
-                                  aria-label="Próxima imagem"
-                                >
-                                  <FiChevronRight />
-                                </button>
-
-                                {/* Img Indicator Dots */}
-                                <div className={styles.imgDots}>
-                                  {p.images.map((_, idx) => (
-                                    <button
-                                      key={idx}
-                                      className={`${styles.imgDot} ${idx === activeImageIndex ? styles.imgDotActive : ''}`}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setActiveImageIndex(idx);
-                                      }}
-                                      type="button"
-                                      aria-label={`Visualizar imagem ${idx + 1}`}
-                                    />
-                                  ))}
-                                </div>
-                              </>
-                            )}
-                          </div>
+                          {/* 3. Below Texts — Side-by-Side Gallery Showcase */}
+                          <ProjectGallery project={p} setLightboxImage={setLightboxImage} />
 
                           {/* 4. Bottom Row — Action Links */}
                           <div className={styles.expandedLinks}>
