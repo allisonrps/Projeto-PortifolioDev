@@ -115,6 +115,9 @@ export const projects = [
     liveUrl: 'https://play.google.com/store/apps/details?id=com.setlistbandmanager.com',
     image: '/projects/bandlink/bandlink-agenda-poster.jpg',
     images: [
+      '/projects/bandlink/bandlink-real-social.jpg',
+      '/projects/bandlink/bandlink-real-management.jpg',
+      '/projects/bandlink/bandlink-real-stage.jpg',
       '/projects/bandlink/bandlink-agenda-poster.jpg',
       '/projects/bandlink/bandlink-home.jpg',
       '/projects/bandlink/bandlink-bands.jpg',
