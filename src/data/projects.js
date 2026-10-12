@@ -79,10 +79,15 @@ export const projects = [
     image: '/projects/bandlink/bandlink-agenda-poster.jpg',
     images: [
       '/projects/bandlink/bandlink-agenda-poster.jpg',
+      '/projects/bandlink/bandlink-home.jpg',
       '/projects/bandlink/bandlink-bands.jpg',
+      '/projects/bandlink/bandlink-setlist.jpg',
+      '/projects/bandlink/bandlink-stage-chords.jpg',
       '/projects/bandlink/bandlink-events.jpg',
       '/projects/bandlink/bandlink-finances.jpg',
       '/projects/bandlink/bandlink-repertoire.jpg',
+      '/projects/bandlink/bandlink-network.jpg',
+      '/projects/bandlink/bandlink-options.jpg',
     ],
   },
 ];
