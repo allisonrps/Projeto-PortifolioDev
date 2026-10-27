@@ -166,7 +166,7 @@ function ProjectGallery({ project, setLightboxImage }) {
 
 export default function Projects({ lang }) {
   const t = translations[lang] || translations.pt;
-  const [selectedProjectId, setSelectedProjectId] = useState(1);
+  const [selectedProjectId, setSelectedProjectId] = useState(null);
   const [lightboxImage, setLightboxImage] = useState(null);
 
   const handleCardClick = (id) => {
@@ -216,27 +216,32 @@ export default function Projects({ lang }) {
                 }}
                 aria-selected={isSelected}
               >
-                <div className={styles.tabCardTop}>
-                  <span className={styles.tabCardType}>{typeText}</span>
-                  <Badge text={cardBadge.text} variant={cardBadge.variant} />
+                {/* Giant Logo filling the entire card background with subtle opacity */}
+                <div className={styles.tabCardBgLogo}>
+                  <img src={p.logo} alt="" aria-hidden="true" />
                 </div>
+                <div className={styles.tabCardOverlay} />
 
-                <div className={styles.tabCardLogoBox}>
-                  <img src={p.logo} alt={`${p.title} logo`} />
-                </div>
+                {/* Foreground Content */}
+                <div className={styles.tabCardContent}>
+                  <div className={styles.tabCardTop}>
+                    <span className={styles.tabCardType}>{typeText}</span>
+                    <Badge text={cardBadge.text} variant={cardBadge.variant} />
+                  </div>
 
-                <div className={styles.tabCardInfo}>
-                  <h3 className={styles.tabCardTitle}>{p.title}</h3>
-                  {taglineText && <p className={styles.tabCardTagline}>{taglineText}</p>}
-                </div>
+                  <div className={styles.tabCardInfo}>
+                    <h3 className={styles.tabCardTitle}>{p.title}</h3>
+                    {taglineText && <p className={styles.tabCardTagline}>{taglineText}</p>}
+                  </div>
 
-                <div className={styles.tabCardFooter}>
-                  <span className={styles.tabCardAction}>
-                    {isSelected ? `${t.projectTabActive} ▾` : `${t.projectTabExpand} →`}
-                  </span>
-                  <span className={`${styles.tabCardPlus} ${isSelected ? styles.tabCardPlusActive : ''}`}>
-                    {isSelected ? '−' : '+'}
-                  </span>
+                  <div className={styles.tabCardFooter}>
+                    <span className={styles.tabCardAction}>
+                      {isSelected ? `${t.projectTabActive} ▾` : `${t.projectTabExpand} →`}
+                    </span>
+                    <span className={`${styles.tabCardPlus} ${isSelected ? styles.tabCardPlusActive : ''}`}>
+                      {isSelected ? '−' : '+'}
+                    </span>
+                  </div>
                 </div>
               </div>
             );
