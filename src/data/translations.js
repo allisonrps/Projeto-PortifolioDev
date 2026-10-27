@@ -83,7 +83,9 @@ export const translations = {
     footerColLinks: 'Links',
     footerColServices: 'Serviços',
     footerColContact: 'Contato',
-    footerRights: 'Todos os direitos reservados.'
+    footerRights: 'Todos os direitos reservados.',
+    footerVisits: 'visitas',
+    footerViewsTooltip: 'Total de visualizações do portfólio'
   },
   en: {
     // Header & Navigation
@@ -169,6 +171,8 @@ export const translations = {
     footerColLinks: 'Links',
     footerColServices: 'Services',
     footerColContact: 'Contact',
-    footerRights: 'All rights reserved.'
+    footerRights: 'All rights reserved.',
+    footerVisits: 'views',
+    footerViewsTooltip: 'Total portfolio visits'
   }
 };

@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AnimatedSection from '../common/AnimatedSection';
 import SectionTitle from '../common/SectionTitle';
 import { FaGithub, FaLinkedinIn, FaEnvelope, FaWhatsapp } from 'react-icons/fa';
+import { FiEye } from 'react-icons/fi';
 import { socialLinks } from '../../data/socialLinks';
 import { translations } from '../../data/translations';
 import styles from './Contact.module.css';
@@ -15,6 +16,40 @@ const iconMap = {
 
 export default function Contact({ lang }) {
   const t = translations[lang] || translations.pt;
+
+  const [visitCount, setVisitCount] = useState(() => {
+    const cached = localStorage.getItem('allison_portfolio_views');
+    return cached ? parseInt(cached, 10) : 1482;
+  });
+
+  useEffect(() => {
+    const BASE_OFFSET = 1480;
+    const sessionKey = 'allison_portfolio_session_v1';
+    const hasVisited = sessionStorage.getItem(sessionKey);
+    const endpoint = hasVisited
+      ? 'https://countapi.mileshilliard.com/api/v1/get/allison_rodrigues_dev_portfolio'
+      : 'https://countapi.mileshilliard.com/api/v1/hit/allison_rodrigues_dev_portfolio';
+
+    fetch(endpoint)
+      .then((res) => {
+        if (!res.ok) throw new Error('Network error');
+        return res.json();
+      })
+      .then((data) => {
+        if (data && typeof data.value !== 'undefined') {
+          const val = parseInt(data.value, 10);
+          const total = BASE_OFFSET + (isNaN(val) ? 0 : val);
+          setVisitCount(total);
+          localStorage.setItem('allison_portfolio_views', total.toString());
+          if (!hasVisited) {
+            sessionStorage.setItem(sessionKey, '1');
+          }
+        }
+      })
+      .catch(() => {
+        // Keeps fallback or cached views gracefully
+      });
+  }, []);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -212,7 +247,19 @@ export default function Contact({ lang }) {
           </div>
         </div>
         <div className={styles.footerBottom}>
-          © 2026 Allison Rodrigues. {t.footerRights}
+          <div className={styles.footerBottomText}>
+            © 2026 Allison Rodrigues. {t.footerRights}
+          </div>
+          <div className={styles.visitorCounter} title={t.footerViewsTooltip}>
+            <span className={styles.counterPulse} />
+            <FiEye className={styles.counterIcon} />
+            <span className={styles.counterNumber}>
+              {visitCount !== null ? visitCount.toLocaleString(lang === 'pt' ? 'pt-BR' : 'en-US') : '...'}
+            </span>
+            <span className={styles.counterLabel}>
+              {t.footerVisits}
+            </span>
+          </div>
         </div>
       </footer>
     </>
