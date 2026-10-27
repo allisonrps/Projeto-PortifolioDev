@@ -60,16 +60,16 @@ const projectDetails = {
   },
   3: { // Band Link
     pt: {
-      backend: 'API RESTful em nuvem construída para sincronização em tempo real de contas, bandas, repertórios e classificados sociais, com persistência offline-first em SQLite no app mobile.',
-      security: 'Autenticação segura via tokens JWT, controle de acesso baseado em papéis (RBAC) para integrantes e gerenciamento de segredos de conexão via Azure Key Vault.',
+      backend: 'API RESTful em nuvem construída para sincronização em tempo real de contas, bandas, repertórios e classificados sociais, combinada a persistência offline-first em SQLite no app mobile.',
+      security: 'Autenticação segura via tokens JWT, senhas criptografadas e controle de acesso baseado em papéis (RBAC) para os integrantes de bandas.',
       frontend: 'Solução multiplataforma com frontend Web responsivo em React para desktop e gestão, e aplicativo mobile em React Native otimizado para o palco (Stage Mode).',
-      devops: 'Infraestrutura completa no Microsoft Azure utilizando Azure App Service para API e Web, Azure Blob Storage para mídias/cifras, Azure SQL Database e monitoramento via Azure Monitor.',
+      devops: 'Infraestrutura em nuvem no Microsoft Azure utilizando Azure App Service para hospedagem contínua da API e Web, integrado ao Azure SQL Database e publicação móvel na Google Play Store.',
     },
     en: {
-      backend: 'Cloud RESTful API built for real-time synchronization of accounts, bands, repertoires, and social classifieds, with offline-first SQLite persistence in the mobile app.',
-      security: 'JWT-based secure authentication, role-based access control (RBAC) across band members, and connection secrets management via Azure Key Vault.',
+      backend: 'Cloud RESTful API built for real-time synchronization of accounts, bands, repertoires, and social classifieds, coupled with offline-first SQLite persistence in the mobile app.',
+      security: 'JWT-based secure authentication, encrypted passwords, and role-based access control (RBAC) across band members.',
       frontend: 'Cross-platform solution with a responsive React Web frontend for desktop management and a React Native mobile app optimized for live stage performance (Stage Mode).',
-      devops: 'Comprehensive infrastructure on Microsoft Azure using Azure App Service for API and Web hosting, Azure Blob Storage for media/chords, Azure SQL Database, and monitoring via Azure Monitor.',
+      devops: 'Cloud infrastructure on Microsoft Azure using Azure App Service for continuous hosting of the API and Web app, integrated with Azure SQL Database and mobile release on Google Play Store.',
     }
   }
 };

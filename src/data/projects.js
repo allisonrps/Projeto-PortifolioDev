@@ -68,7 +68,7 @@ export const projects = [
       pt: 'Mobile, Web App & Cloud API',
       en: 'Mobile, Web App & Cloud API',
     },
-    stacks: ['React Native', 'React Web', 'Node.js / ASP.NET', 'TypeScript', 'Azure App Service', 'Azure Blob Storage', 'Azure SQL', 'SQLite', 'Expo'],
+    stacks: ['React Native', 'React Web', 'Node.js / ASP.NET', 'TypeScript', 'Microsoft Azure', 'Azure App Service', 'Azure SQL', 'SQLite', 'Expo'],
     summary: {
       pt: 'Ecossistema musical completo disponível em Web, Mobile (Android na Google Play) e API em Nuvem Azure. Conecta músicos com mural social de vagas e audições, oferece gestão integral de repertórios, ensaios e finanças para bandas, e traz o Modo Palco para tablets e smartphones com rolagem de letras e cifras ao vivo.',
       en: 'Complete musical ecosystem available across Web, Mobile (Android on Google Play), and Azure Cloud API. Connects musicians with a social recruitment feed and auditions, provides full repertoire, rehearsal, and financial band management, and delivers live Stage Mode for tablets and smartphones with scrolling lyrics and chords.',
