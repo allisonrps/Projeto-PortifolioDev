@@ -60,16 +60,16 @@ const projectDetails = {
   },
   3: { // Band Link
     pt: {
-      backend: 'Arquitetura modular em React Native (Expo) com SQLite embutido, isolando dados offline-first com alto desempenho.',
-      security: 'Armazenamento interno seguro de arquivos de cifras/músicas e integridade na persistência local de grupos e finanças.',
-      frontend: 'Interface otimizada para palco (Stage Mode), suporte a tablets no pedestal, gestos rápidos e controle dinâmico de tom e BPM.',
-      devops: 'Publicado na Google Play Store, pipeline de build via EAS (Expo Application Services) e exportação de setlists com Expo Sharing.',
+      backend: 'API RESTful em nuvem construída para sincronização em tempo real de contas, bandas, repertórios e classificados sociais, com persistência offline-first em SQLite no app mobile.',
+      security: 'Autenticação segura via tokens JWT, controle de acesso baseado em papéis (RBAC) para integrantes e gerenciamento de segredos de conexão via Azure Key Vault.',
+      frontend: 'Solução multiplataforma com frontend Web responsivo em React para desktop e gestão, e aplicativo mobile em React Native otimizado para o palco (Stage Mode).',
+      devops: 'Infraestrutura completa no Microsoft Azure utilizando Azure App Service para API e Web, Azure Blob Storage para mídias/cifras, Azure SQL Database e monitoramento via Azure Monitor.',
     },
     en: {
-      backend: 'Modular architecture in React Native (Expo) with embedded SQLite, isolating offline-first data with high performance.',
-      security: 'Secure local storage of chord/music files and referential integrity for band profiles, repertoires, and finances.',
-      frontend: 'Stage Mode interface tailored for stage pedestals and tablets, quick swipe gestures, dynamic key transposition, and BPM.',
-      devops: 'Published on Google Play Store, build pipeline via EAS (Expo Application Services), and setlist sharing via Expo Sharing.',
+      backend: 'Cloud RESTful API built for real-time synchronization of accounts, bands, repertoires, and social classifieds, with offline-first SQLite persistence in the mobile app.',
+      security: 'JWT-based secure authentication, role-based access control (RBAC) across band members, and connection secrets management via Azure Key Vault.',
+      frontend: 'Cross-platform solution with a responsive React Web frontend for desktop management and a React Native mobile app optimized for live stage performance (Stage Mode).',
+      devops: 'Comprehensive infrastructure on Microsoft Azure using Azure App Service for API and Web hosting, Azure Blob Storage for media/chords, Azure SQL Database, and monitoring via Azure Monitor.',
     }
   }
 };
@@ -80,7 +80,7 @@ function ProjectGallery({ project, setLightboxImage }) {
   const [canScrollRight, setCanScrollRight] = useState(true);
 
   const images = project.images && project.images.length > 0 ? project.images : [project.image];
-  const isMobile = project.type?.pt === 'Mobile App';
+  const isMobile = project.type?.pt?.includes('Mobile');
 
   const checkScroll = () => {
     if (!trackRef.current) return;
@@ -302,7 +302,7 @@ export default function Projects({ lang }) {
                               <img src={p.banner} alt={`${p.title} banner ecossistema`} />
                               <div className={styles.heroBannerOverlay}>
                                 <span className={styles.heroBannerTag}>
-                                  {lang === 'en' ? 'Complete Ecosystem • Google Play' : 'Ecossistema Completo • Google Play'}
+                                  {lang === 'en' ? 'Complete Ecosystem • Web & Google Play' : 'Ecossistema Completo • Web & Google Play'}
                                 </span>
                                 <span className={styles.zoomPill}>⤢ Zoom</span>
                               </div>
@@ -341,7 +341,7 @@ export default function Projects({ lang }) {
                                 rel="noopener noreferrer"
                                 className={styles.expandedLink}
                               >
-                                <FiExternalLink /> {t.projectBtnDemo}
+                                <FiExternalLink /> {p.playStoreUrl ? (t.projectBtnWeb || 'Plataforma Web') : t.projectBtnDemo}
                               </a>
                             )}
                           </div>

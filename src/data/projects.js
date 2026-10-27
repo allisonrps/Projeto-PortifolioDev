@@ -65,13 +65,13 @@ export const projects = [
     title: 'Band Link',
     status: 'em-producao',
     type: {
-      pt: 'Mobile App',
-      en: 'Mobile App',
+      pt: 'Mobile, Web App & Cloud API',
+      en: 'Mobile, Web App & Cloud API',
     },
-    stacks: ['React Native', 'Expo', 'TypeScript', 'SQLite', 'File System', 'Expo Sharing'],
+    stacks: ['React Native', 'React Web', 'Node.js / ASP.NET', 'TypeScript', 'Azure App Service', 'Azure Blob Storage', 'Azure SQL', 'SQLite', 'Expo'],
     summary: {
-      pt: 'Ecossistema musical completo desenvolvido para aproximar músicos e otimizar performances ao vivo. Une um canal social com anúncios e busca de integrantes, gestão integral de repertórios, ensaios e finanças de bandas, e o Modo Palco para tablets e celulares com rolagem de letras, cifras dinâmicas e controle de setlist em tempo real.',
-      en: 'Complete musical ecosystem designed to connect musicians and elevate live performances. Combines a social channel with musician classifieds, comprehensive band repertoire, rehearsals and financial management, and a dedicated Stage Mode for tablets and phones featuring scrolling lyrics, dynamic chords, and real-time setlist execution.',
+      pt: 'Ecossistema musical completo disponível em Web, Mobile (Android na Google Play) e API em Nuvem Azure. Conecta músicos com mural social de vagas e audições, oferece gestão integral de repertórios, ensaios e finanças para bandas, e traz o Modo Palco para tablets e smartphones com rolagem de letras e cifras ao vivo.',
+      en: 'Complete musical ecosystem available across Web, Mobile (Android on Google Play), and Azure Cloud API. Connects musicians with a social recruitment feed and auditions, provides full repertoire, rehearsal, and financial band management, and delivers live Stage Mode for tablets and smartphones with scrolling lyrics and chords.',
     },
     banner: '/projects/bandlink/bandlink-banner.jpg',
     pillars: {
@@ -110,9 +110,9 @@ export const projects = [
         },
       ],
     },
-    githubUrl: 'https://github.com/allisonrps/setlist-app',
+    githubUrl: null,
     playStoreUrl: 'https://play.google.com/store/apps/details?id=com.setlistbandmanager.com',
-    liveUrl: 'https://play.google.com/store/apps/details?id=com.setlistbandmanager.com',
+    liveUrl: 'https://www.bandlink.pro',
     image: '/projects/bandlink/bandlink-agenda-poster.jpg',
     images: [
       '/projects/bandlink/bandlink-real-social.jpg',
