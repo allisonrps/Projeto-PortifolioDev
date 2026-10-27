@@ -1,5 +1,9 @@
 .techStack {
-  padding: 40px 0 80px;
+  padding: 60px 0 80px;
+  background:
+    radial-gradient(circle at 15% 50%, rgba(47, 110, 232, 0.06) 0%, transparent 45%),
+    linear-gradient(180deg, #0d1018 0%, #10141f 100%);
+  border-bottom: 1px solid rgba(89, 147, 255, 0.07);
   position: relative;
   z-index: 1;
 }

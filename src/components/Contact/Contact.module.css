@@ -1,5 +1,9 @@
 .contact {
-  padding: var(--section-padding, 100px) 0;
+  padding: var(--section-padding, 100px) 0 40px;
+  background:
+    radial-gradient(circle at 50% 15%, rgba(89, 147, 255, 0.06) 0%, transparent 60%),
+    linear-gradient(180deg, #0f131f 0%, #0a0c13 100%);
+  position: relative;
 }
 
 .contactInner {
@@ -222,9 +226,13 @@
 
 /* ── Footer ── */
 .footer {
-  margin-top: 80px;
-  border-top: 1px solid var(--border);
-  padding: 40px 24px 24px;
+  margin-top: 0;
+  background:
+    radial-gradient(ellipse 60% 80% at 50% 100%, rgba(89, 147, 255, 0.07) 0%, transparent 60%),
+    linear-gradient(180deg, #08090e 0%, #050608 100%);
+  border-top: 1px solid rgba(89, 147, 255, 0.09);
+  padding: 50px 24px 28px;
+  position: relative;
 }
 
 .footerInner {

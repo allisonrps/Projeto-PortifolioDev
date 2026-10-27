@@ -1,5 +1,10 @@
 .projects {
   padding: var(--section-padding, 100px) 0;
+  background:
+    radial-gradient(ellipse 90% 40% at 50% 0%, rgba(89, 147, 255, 0.09) 0%, transparent 65%),
+    radial-gradient(circle at 90% 70%, rgba(47, 110, 232, 0.06) 0%, transparent 50%),
+    linear-gradient(180deg, #121727 0%, #181d30 50%, #121626 100%);
+  border-bottom: 1px solid rgba(89, 147, 255, 0.09);
   position: relative;
   overflow: hidden;
 }
