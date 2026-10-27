@@ -166,12 +166,14 @@ function ProjectGallery({ project, setLightboxImage }) {
 
 export default function Projects({ lang }) {
   const t = translations[lang] || translations.pt;
-  const [expandedProjectId, setExpandedProjectId] = useState(null);
+  const [selectedProjectId, setSelectedProjectId] = useState(1);
   const [lightboxImage, setLightboxImage] = useState(null);
 
-  const handleHeaderClick = (id) => {
-    setExpandedProjectId((prev) => (prev === id ? null : id));
+  const handleCardClick = (id) => {
+    setSelectedProjectId((prev) => (prev === id ? null : id));
   };
+
+  const selectedProject = projects.find((p) => p.id === selectedProjectId);
 
   return (
     <AnimatedSection id="projects" className={styles.projects}>
@@ -192,168 +194,203 @@ export default function Projects({ lang }) {
           </a>
         </div>
 
-        <div className={styles.accordionContainer}>
+        {/* 1. 3 Square Calling Cards Side-by-Side */}
+        <div className={styles.projectsTabsGrid}>
           {projects.map((p) => {
-            const isOpen = expandedProjectId === p.id;
-            const cardBadge = statusMap[p.status][lang] || statusMap.concluido[lang];
+            const isSelected = selectedProjectId === p.id;
+            const cardBadge = statusMap[p.status]?.[lang] || statusMap.concluido[lang];
             const typeText = p.type[lang] || p.type.pt;
-            const details = projectDetails[p.id][lang];
+            const taglineText = p.tagline ? (p.tagline[lang] || p.tagline.pt) : '';
 
             return (
-              <div key={p.id} className={`${styles.accordionItem} ${isOpen ? styles.accordionItemOpen : ''}`}>
-                {/* Header Row */}
-                <div
-                  className={styles.accordionHeader}
-                  onClick={() => handleHeaderClick(p.id)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      handleHeaderClick(p.id);
-                    }
-                  }}
-                >
-                  <div className={styles.headerLeft}>
-                    <h3 className={styles.projectTitle}>{p.title}</h3>
-                    <span className={styles.projectType}>{typeText}</span>
-                  </div>
-                  <div className={styles.headerRight}>
-                    <Badge text={cardBadge.text} variant={cardBadge.variant} />
-                    <span className={`${styles.iconPlus} ${isOpen ? styles.rotated : ''}`}>
-                      {isOpen ? '−' : '+'}
-                    </span>
-                  </div>
+              <div
+                key={p.id}
+                className={`${styles.projectTabCard} ${isSelected ? styles.projectTabCardActive : ''}`}
+                onClick={() => handleCardClick(p.id)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    handleCardClick(p.id);
+                  }
+                }}
+                aria-selected={isSelected}
+              >
+                <div className={styles.tabCardTop}>
+                  <span className={styles.tabCardType}>{typeText}</span>
+                  <Badge text={cardBadge.text} variant={cardBadge.variant} />
                 </div>
 
-                {/* Separator line */}
-                <div className={styles.separatorLine} />
+                <div className={styles.tabCardLogoBox}>
+                  <img src={p.logo} alt={`${p.title} logo`} />
+                </div>
 
-                {/* Collapsible Content */}
-                <AnimatePresence initial={false}>
-                  {isOpen && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.35, ease: [0.04, 0.62, 0.23, 0.98] }}
-                      style={{ overflow: 'hidden' }}
-                    >
-                      <div className={styles.accordionContent}>
-                        <div className={styles.expandedVerticalFlow}>
-                          {/* 1. First Row — Tech Stacks */}
-                          <div className={styles.expandedStacks}>
-                            {p.stacks.map((tech) => (
-                              <span key={tech} className={styles.expandedStackBadge}>
-                                {tech}
-                              </span>
-                            ))}
-                          </div>
+                <div className={styles.tabCardInfo}>
+                  <h3 className={styles.tabCardTitle}>{p.title}</h3>
+                  {taglineText && <p className={styles.tabCardTagline}>{taglineText}</p>}
+                </div>
 
-                          {/* 2. Middle Row — Texts & Descriptions */}
-                          <div className={styles.expandedTextSection}>
-                            <p className={styles.expandedSummary}>{p.summary[lang] || p.summary.pt}</p>
-
-                            {/* Platform Core Pillars (e.g. Band Link: Social/Anúncios, Gestão, Palco) */}
-                            {p.pillars && (
-                              <div className={styles.pillarsContainer}>
-                                <h4 className={styles.pillarsHeader}>
-                                  {lang === 'en' ? 'Core Pillars & Experience' : 'Pilares da Plataforma'}
-                                </h4>
-                                <div className={styles.pillarsGrid}>
-                                  {p.pillars[lang].map((pillar, idx) => (
-                                    <div key={idx} className={styles.pillarCard}>
-                                      <div className={styles.pillarHeader}>
-                                        <span className={styles.pillarIcon}>
-                                          {idx === 0 && <FiUsers />}
-                                          {idx === 1 && <FiLayers />}
-                                          {idx === 2 && <FiMusic />}
-                                        </span>
-                                        <span className={styles.pillarTag}>{pillar.tag}</span>
-                                      </div>
-                                      <h5 className={styles.pillarTitle}>{pillar.title}</h5>
-                                      <p className={styles.pillarDesc}>{pillar.desc}</p>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Detailed Curriculum/README list of features */}
-                            {details && (
-                              <div className={styles.detailsList}>
-                                <h4>{t.projectCaseHeader}</h4>
-                                <ul>
-                                  <li><strong>{t.projectArch}:</strong> {details.backend}</li>
-                                  <li><strong>{t.projectSecurity}:</strong> {details.security}</li>
-                                  <li><strong>{t.projectFront}:</strong> {details.frontend}</li>
-                                  <li><strong>{t.projectDevOps}:</strong> {details.devops}</li>
-                                </ul>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Hero Banner Showcase (if available) */}
-                          {p.banner && (
-                            <div
-                              className={styles.projectHeroBanner}
-                              onClick={() => setLightboxImage(p.banner)}
-                              title="Clique para abrir imagem em tela cheia com zoom"
-                            >
-                              <img src={p.banner} alt={`${p.title} banner ecossistema`} />
-                              <div className={styles.heroBannerOverlay}>
-                                <span className={styles.heroBannerTag}>
-                                  {lang === 'en' ? 'Complete Ecosystem • Web & Google Play' : 'Ecossistema Completo • Web & Google Play'}
-                                </span>
-                                <span className={styles.zoomPill}>⤢ Zoom</span>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* 3. Below Texts — Side-by-Side Gallery Showcase */}
-                          <ProjectGallery project={p} setLightboxImage={setLightboxImage} />
-
-                          {/* 4. Bottom Row — Action Links */}
-                          <div className={styles.expandedLinks}>
-                            {p.githubUrl && (
-                              <a
-                                href={p.githubUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={styles.expandedLink}
-                              >
-                                <FaGithub /> {t.projectBtnCode}
-                              </a>
-                            )}
-                            {p.playStoreUrl && (
-                              <a
-                                href={p.playStoreUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={styles.expandedLink}
-                              >
-                                <FaGooglePlay /> {t.projectBtnPlayStore || 'Google Play'}
-                              </a>
-                            )}
-                            {p.liveUrl && (!p.playStoreUrl || p.liveUrl !== p.playStoreUrl) && (
-                              <a
-                                href={p.liveUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={styles.expandedLink}
-                              >
-                                <FiExternalLink /> {p.playStoreUrl ? (t.projectBtnWeb || 'Plataforma Web') : t.projectBtnDemo}
-                              </a>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                <div className={styles.tabCardFooter}>
+                  <span className={styles.tabCardAction}>
+                    {isSelected ? `${t.projectTabActive} ▾` : `${t.projectTabExpand} →`}
+                  </span>
+                  <span className={`${styles.tabCardPlus} ${isSelected ? styles.tabCardPlusActive : ''}`}>
+                    {isSelected ? '−' : '+'}
+                  </span>
+                </div>
               </div>
             );
           })}
         </div>
+
+        {/* 2. Detailed Project Window Below */}
+        <AnimatePresence mode="wait">
+          {selectedProject && (
+            <motion.div
+              key={selectedProject.id}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.35, ease: [0.04, 0.62, 0.23, 0.98] }}
+              className={styles.detailedProjectWindow}
+            >
+              {/* Window Header */}
+              <div className={styles.windowHeader}>
+                <div className={styles.windowHeaderLeft}>
+                  <div className={styles.windowHeaderLogo}>
+                    <img src={selectedProject.logo} alt={selectedProject.title} />
+                  </div>
+                  <div>
+                    <h3 className={styles.windowTitle}>{selectedProject.title}</h3>
+                    <span className={styles.windowSubtitle}>
+                      {selectedProject.type[lang] || selectedProject.type.pt}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className={styles.windowCloseBtn}
+                  onClick={() => setSelectedProjectId(null)}
+                  title={t.projectTabClose || 'Fechar Janela'}
+                  aria-label="Fechar janela"
+                >
+                  <FiX />
+                </button>
+              </div>
+
+              {/* Expanded Vertical Flow */}
+              <div className={styles.expandedVerticalFlow}>
+                {/* 1. Tech Stacks */}
+                <div className={styles.expandedStacks}>
+                  {selectedProject.stacks.map((tech) => (
+                    <span key={tech} className={styles.expandedStackBadge}>
+                      {tech}
+                    </span>
+                  ))}
+                </div>
+
+                {/* 2. Middle Row — Texts & Descriptions */}
+                <div className={styles.expandedTextSection}>
+                  <p className={styles.expandedSummary}>
+                    {selectedProject.summary[lang] || selectedProject.summary.pt}
+                  </p>
+
+                  {/* Platform Core Pillars (e.g. Band Link) */}
+                  {selectedProject.pillars && (
+                    <div className={styles.pillarsContainer}>
+                      <h4 className={styles.pillarsHeader}>
+                        {lang === 'en' ? 'Core Pillars & Experience' : 'Pilares da Plataforma'}
+                      </h4>
+                      <div className={styles.pillarsGrid}>
+                        {selectedProject.pillars[lang].map((pillar, idx) => (
+                          <div key={idx} className={styles.pillarCard}>
+                            <div className={styles.pillarHeader}>
+                              <span className={styles.pillarIcon}>
+                                {idx === 0 && <FiUsers />}
+                                {idx === 1 && <FiLayers />}
+                                {idx === 2 && <FiMusic />}
+                              </span>
+                              <span className={styles.pillarTag}>{pillar.tag}</span>
+                            </div>
+                            <h5 className={styles.pillarTitle}>{pillar.title}</h5>
+                            <p className={styles.pillarDesc}>{pillar.desc}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Detailed Curriculum/README list of features */}
+                  {projectDetails[selectedProject.id]?.[lang] && (
+                    <div className={styles.detailsList}>
+                      <h4>{t.projectCaseHeader}</h4>
+                      <ul>
+                        <li><strong>{t.projectArch}:</strong> {projectDetails[selectedProject.id][lang].backend}</li>
+                        <li><strong>{t.projectSecurity}:</strong> {projectDetails[selectedProject.id][lang].security}</li>
+                        <li><strong>{t.projectFront}:</strong> {projectDetails[selectedProject.id][lang].frontend}</li>
+                        <li><strong>{t.projectDevOps}:</strong> {projectDetails[selectedProject.id][lang].devops}</li>
+                      </ul>
+                    </div>
+                  )}
+                </div>
+
+                {/* Hero Banner Showcase (if available) */}
+                {selectedProject.banner && (
+                  <div
+                    className={styles.projectHeroBanner}
+                    onClick={() => setLightboxImage(selectedProject.banner)}
+                    title="Clique para abrir imagem em tela cheia com zoom"
+                  >
+                    <img src={selectedProject.banner} alt={`${selectedProject.title} banner ecossistema`} />
+                    <div className={styles.heroBannerOverlay}>
+                      <span className={styles.heroBannerTag}>
+                        {lang === 'en' ? 'Complete Ecosystem • Web & Google Play' : 'Ecossistema Completo • Web & Google Play'}
+                      </span>
+                      <span className={styles.zoomPill}>⤢ Zoom</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. Below Texts — Side-by-Side Gallery Showcase */}
+                <ProjectGallery project={selectedProject} setLightboxImage={setLightboxImage} />
+
+                {/* 4. Bottom Row — Action Links */}
+                <div className={styles.expandedLinks}>
+                  {selectedProject.githubUrl && (
+                    <a
+                      href={selectedProject.githubUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.expandedLink}
+                    >
+                      <FaGithub /> {t.projectBtnCode}
+                    </a>
+                  )}
+                  {selectedProject.playStoreUrl && (
+                    <a
+                      href={selectedProject.playStoreUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.expandedLink}
+                    >
+                      <FaGooglePlay /> {t.projectBtnPlayStore || 'Google Play'}
+                    </a>
+                  )}
+                  {selectedProject.liveUrl && (!selectedProject.playStoreUrl || selectedProject.liveUrl !== selectedProject.playStoreUrl) && (
+                    <a
+                      href={selectedProject.liveUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.expandedLink}
+                    >
+                      <FiExternalLink /> {selectedProject.playStoreUrl ? (t.projectBtnWeb || 'Plataforma Web') : t.projectBtnDemo}
+                    </a>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* ── Fullscreen Lightbox Overlay for Screenshots ── */}

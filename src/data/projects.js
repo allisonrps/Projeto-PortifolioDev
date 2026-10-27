@@ -3,6 +3,11 @@ export const projects = [
     id: 1,
     title: 'Autonomax',
     status: 'em-producao',
+    logo: '/projects/logos/autonomax-logo-white.png',
+    tagline: {
+      pt: 'Gestão Financeira & Fluxo de Caixa',
+      en: 'Financial Management & Cash Flow',
+    },
     type: {
       pt: 'Web App',
       en: 'Web App',
@@ -28,6 +33,11 @@ export const projects = [
     id: 2,
     title: 'Aura',
     status: 'em-producao',
+    logo: '/projects/logos/aura-logo-raw.png',
+    tagline: {
+      pt: 'Gestão Escolar & Acadêmica',
+      en: 'School & Academic Management',
+    },
     type: {
       pt: 'Web App & API',
       en: 'Web App & API',
@@ -64,6 +74,11 @@ export const projects = [
     id: 3,
     title: 'Band Link',
     status: 'em-producao',
+    logo: '/projects/logos/bandlink-logo.jpg',
+    tagline: {
+      pt: 'Rede Musical, Bandas & Modo Palco',
+      en: 'Musician Network, Bands & Stage Mode',
+    },
     type: {
       pt: 'Mobile, Web App & Cloud API',
       en: 'Mobile, Web App & Cloud API',
