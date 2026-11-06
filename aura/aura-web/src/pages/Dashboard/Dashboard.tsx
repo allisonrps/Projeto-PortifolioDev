@@ -1,63 +1,25 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  MdPeople, MdAccessTime, MdMenuBook, MdCake, MdPersonOff, MdSchool,
-  MdPercent, MdCalendarToday, MdCalendarMonth, MdPieChart, MdCheckCircle,
-  MdVisibility, MdVisibilityOff, MdEdit, MdSchedule, MdCancel
+  MdAccessTime, MdEdit, MdSchedule, MdCancel, MdCheckCircle, MdSchool,
+  MdCake, MdTaskAlt, MdAttachMoney, MdAssignmentTurnedIn, MdOpenInNew, MdNotificationsActive,
+  MdHistory
 } from 'react-icons/md';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import Avatar from '../../components/ui/Avatar';
 import Button from '../../components/ui/Button';
 import Modal from '../../components/ui/Modal';
 import { dashboardService, lessonService } from '../../services/dataServices';
-import type { DashboardData, LessonStatusStat, Lesson } from '../../types';
+import type { DashboardData, Lesson } from '../../types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import toast from 'react-hot-toast';
 import './Dashboard.css';
 
-const STATUS_COLORS: Record<string, string> = {
-  completed: '#10B981', // Verde / Sucesso
-  cancelled: '#EF4444', // Vermelho / Perigo
-  holiday: '#F59E0B',   // Amarelo / Alerta
-  scheduled: '#7C3AED', // Roxo / Primário
-};
-
-const MONTH_OPTIONS = [
-  { value: 1, label: 'Janeiro' },
-  { value: 2, label: 'Fevereiro' },
-  { value: 3, label: 'Março' },
-  { value: 4, label: 'Abril' },
-  { value: 5, label: 'Maio' },
-  { value: 6, label: 'Junho' },
-  { value: 7, label: 'Julho' },
-  { value: 8, label: 'Agosto' },
-  { value: 9, label: 'Setembro' },
-  { value: 10, label: 'Outubro' },
-  { value: 11, label: 'Novembro' },
-  { value: 12, label: 'Dezembro' },
-];
-
-const SUBJECT_COLORS = ['#7C3AED', '#06B6D4', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#8B5CF6'];
-
 export default function DashboardPage() {
   const navigate = useNavigate();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
-
-  // Section visibility toggles (hidden by default)
-  const [showStudentsSection, setShowStudentsSection] = useState(false);
-  const [showTeacherSection, setShowTeacherSection] = useState(false);
-
-  // Period filters for Status distribution chart
-  const [chartMode, setChartMode] = useState<'monthly' | 'yearly'>('monthly');
-  const [chartMonth, setChartMonth] = useState<number>(new Date().getMonth() + 1);
-  const [chartYear, setChartYear] = useState<number>(new Date().getFullYear());
-
-  // Period filter for Effectiveness chart
-  const [effMode, setEffMode] = useState<'monthly' | 'yearly'>('monthly');
 
   // Edit Lesson Modal state
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
@@ -65,6 +27,39 @@ export default function DashboardPage() {
   const [lessonStatus, setLessonStatus] = useState<'scheduled' | 'completed' | 'cancelled' | 'holiday'>('scheduled');
   const [lessonNotes, setLessonNotes] = useState('');
   const [savingLesson, setSavingLesson] = useState(false);
+  const [pendingModalOpen, setPendingModalOpen] = useState(false);
+  const [correctionsModalOpen, setCorrectionsModalOpen] = useState(false);
+  const [birthdayModalOpen, setBirthdayModalOpen] = useState(false);
+  const [completedActivitiesModalOpen, setCompletedActivitiesModalOpen] = useState(false);
+  const [pendingPaymentsModalOpen, setPendingPaymentsModalOpen] = useState(false);
+
+  // Local storage state for tracking viewed completed activities
+  const [viewedActivityIds, setViewedActivityIds] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem('aura_viewed_activity_ids');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Check for unviewed completed activities
+  const unviewedCompletedActivities = data?.completedActivities?.filter(
+    act => !viewedActivityIds.includes(act.studentActivityId)
+  ) || [];
+  const hasUnviewedActivities = unviewedCompletedActivities.length > 0;
+
+  const handleOpenCompletedActivities = () => {
+    setCompletedActivitiesModalOpen(true);
+    if (data?.completedActivities && data.completedActivities.length > 0) {
+      const allIds = data.completedActivities.map(a => a.studentActivityId);
+      const updated = Array.from(new Set([...viewedActivityIds, ...allIds]));
+      setViewedActivityIds(updated);
+      try {
+        localStorage.setItem('aura_viewed_activity_ids', JSON.stringify(updated));
+      } catch {}
+    }
+  };
 
   const handleOpenEditLesson = (lesson: Lesson, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
@@ -84,7 +79,7 @@ export default function DashboardPage() {
       });
       toast.success('Aula atualizada!');
       setLessonModalOpen(false);
-      dashboardService.get(chartMonth, chartYear).then(r => setData(r.data));
+      dashboardService.get().then(r => setData(r.data));
     } catch {
       toast.error('Erro ao atualizar a aula.');
     }
@@ -93,69 +88,13 @@ export default function DashboardPage() {
 
   useEffect(() => {
     setLoading(true);
-    dashboardService.get(chartMonth, chartYear)
+    dashboardService.get()
       .then(r => setData(r.data))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [chartMonth, chartYear]);
+  }, []);
 
   if (loading || !data) return <div className="page-loading"><span className="loading-spinner" /></div>;
-
-  const studentStats = [
-    { icon: <MdPeople />, label: 'Total de Alunos', value: data?.totalStudents ?? 0, color: 'primary' as const },
-    { icon: <MdPeople />, label: 'Alunos Ativos', value: data?.activeStudentsCount ?? 0, color: 'success' as const },
-    { icon: <MdPersonOff />, label: 'Alunos Arquivados', value: data?.archivedStudentsCount ?? 0, color: 'danger' as const },
-    { icon: <MdPercent />, label: 'Presença Média', value: `${data?.averageAttendanceRate ?? 100}%`, color: 'warning' as const },
-    { icon: <MdSchool />, label: 'Matérias Ativas', value: data?.subjectStats.length ?? 0, color: 'secondary' as const },
-  ];
-
-  const teacherStats = [
-    {
-      icon: <MdCalendarToday />,
-      label: 'Aulas / Horas no Mês',
-      value: `${data?.monthlyLessonsCount ?? 0} aulas`,
-      hours: `${data?.monthlyWorkloadHours ?? 0}h`,
-      color: 'primary' as const
-    },
-    {
-      icon: <MdCalendarMonth />,
-      label: 'Aulas / Horas no Ano',
-      value: `${data?.yearlyLessonsCount ?? 0} aulas`,
-      hours: `${data?.yearlyWorkloadHours ?? 0}h`,
-      color: 'secondary' as const
-    },
-  ];
-
-  const currentStats: LessonStatusStat[] = chartMode === 'monthly'
-    ? (data?.monthlyLessonStatusStats || [])
-    : (data?.yearlyLessonStatusStats || []);
-
-  const chartData = currentStats
-    .filter((s: LessonStatusStat) => s.count > 0)
-    .map((s: LessonStatusStat) => ({
-      name: s.label,
-      value: s.count,
-      hours: s.hours,
-      percentage: s.percentage,
-      color: STATUS_COLORS[s.status] || '#7C3AED'
-    }));
-
-  const subjectChartData = (data?.subjectStats || [])
-    .filter(s => s.studentCount > 0)
-    .map((s, idx) => ({
-      name: s.subjectName,
-      value: s.studentCount,
-      color: SUBJECT_COLORS[idx % SUBJECT_COLORS.length]
-    }));
-
-  const effRate = effMode === 'monthly'
-    ? (data?.monthlyEffectivenessRate ?? 100)
-    : (data?.yearlyEffectivenessRate ?? 100);
-
-  const effChartData = [
-    { name: 'Aulas Dadas', value: effRate, color: '#10B981' },
-    { name: 'Não Dadas / Faltas', value: Math.max(0, 100 - effRate), color: 'rgba(239, 68, 68, 0.2)' }
-  ];
 
   const today = new Date();
   const todayDay = today.getDate();
@@ -168,69 +107,282 @@ export default function DashboardPage() {
 
   return (
     <div className="dashboard animate-fadeIn">
-      {/* 1. Card PRIMEIRO: Aulas de Hoje */}
-      <div style={{ marginBottom: 'var(--space-xl)' }}>
-        <Card variant="elevated" className="animate-slideUp stagger-1">
-          <div className="card-section-header">
-            <MdAccessTime /> <h3>{todayTitle}</h3>
+      {/* 5 Quadradinhos de Lembretes */}
+      <div className="dashboard-reminders-grid animate-slideDown">
+        {/* 1. Aniversariantes do Dia */}
+        <div 
+          className={`reminder-square-card ${todaysBirthdays.length > 0 ? 'has-items' : ''}`}
+          onClick={() => setBirthdayModalOpen(true)}
+          title="Ver aniversariantes do dia"
+        >
+          <div className="reminder-header-row">
+            <div className="reminder-icon-badge reminder-icon-birthday">
+              <MdCake />
+            </div>
+            <span className={`reminder-count ${todaysBirthdays.length > 0 ? 'active-birthday' : ''}`}>
+              {todaysBirthdays.length}
+            </span>
           </div>
+          <span className="reminder-title">Aniversariantes</span>
+          <span className="reminder-subtitle">Hoje</span>
+        </div>
 
-          {todaysBirthdays.length > 0 && (
-            <div 
-              className="birthday-reminder-banner animate-slideDown"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                background: 'var(--accent-primary-light)',
-                border: '1px solid var(--accent-primary)',
-                borderRadius: 'var(--radius-md)',
-                padding: '12px var(--space-md)',
-                marginBottom: 'var(--space-md)',
-                color: 'var(--text-primary)',
-              }}
-            >
-              <span style={{ fontSize: '24px' }}>🎉</span>
-              <div style={{ flex: 1 }}>
-                <strong style={{ display: 'block', fontSize: '13px', color: 'var(--accent-primary)', fontWeight: 800 }}>
-                  Aniversariante(s) do Dia!
-                </strong>
-                <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                  Hoje é o aniversário de:{' '}
-                  <strong style={{ color: 'var(--text-primary)' }}>
-                    {todaysBirthdays.map(b => `${b.studentName} (${b.age} ${b.age === 1 ? 'ano' : 'anos'})`).join(', ')}
-                  </strong>
-                  . Não se esqueça de dar os parabéns! 🎂🎈
-                </span>
-              </div>
+        {/* 2. Tarefas Feitas (Entregues) */}
+        <div 
+          className={`reminder-square-card ${(data?.completedActivities?.length || 0) > 0 ? 'has-items' : ''}`}
+          onClick={handleOpenCompletedActivities}
+          title="Ver tarefas entregues neste mês"
+        >
+          {hasUnviewedActivities && (
+            <div className="reminder-notification-pill" title="Nova atividade entregue!">
+              <MdNotificationsActive /> Nova
             </div>
           )}
+          <div className="reminder-header-row">
+            <div className="reminder-icon-badge reminder-icon-completed">
+              <MdTaskAlt />
+            </div>
+            <span className={`reminder-count ${(data?.completedActivities?.length || 0) > 0 ? 'active-completed' : ''}`}>
+              {data?.completedActivities?.length || 0}
+            </span>
+          </div>
+          <span className="reminder-title">Tarefas Feitas</span>
+          <span className="reminder-subtitle">Neste mês</span>
+        </div>
 
-          <div className="lesson-list">
-            {data?.todayLessons.length === 0 ? (
-              <div className="empty-lessons-wrapper">
-                <p className="empty-text font-bold">Nenhuma aula agendada para hoje!!</p>
-                {data?.nextUpcomingLesson && (
-                  <p className="next-lesson-text">
-                    Sua próxima aula será em:{' '}
-                    <span className="next-lesson-highlight">
-                      {format(new Date(data.nextUpcomingLesson.scheduledAt), "EEEE, dd/MM 'às' HH:mm", { locale: ptBR })}
-                    </span>
-                  </p>
-                )}
-              </div>
-            ) : (
-              data?.todayLessons.map(lesson => {
-                const startTime = new Date(lesson.scheduledAt);
-                const endTime = new Date(startTime.getTime() + (lesson.durationMinutes || 60) * 60000);
-                const timeRangeStr = `${format(startTime, 'HH:mm')} - ${format(endTime, 'HH:mm')}`;
+        {/* 3. Pagamentos Pendentes do Mês */}
+        <div 
+          className={`reminder-square-card ${(data?.pendingPayments?.length || 0) > 0 ? 'has-items' : ''}`}
+          onClick={() => setPendingPaymentsModalOpen(true)}
+          title="Ver mensalidades pendentes deste mês"
+        >
+          <div className="reminder-header-row">
+            <div className="reminder-icon-badge reminder-icon-payments">
+              <MdAttachMoney />
+            </div>
+            <span className={`reminder-count ${(data?.pendingPayments?.length || 0) > 0 ? 'active-payments' : ''}`}>
+              {data?.pendingPayments?.length || 0}
+            </span>
+          </div>
+          <span className="reminder-title">Pagamentos</span>
+          <span className="reminder-subtitle">Pendentes</span>
+        </div>
 
-                return (
-                  <div
-                    key={lesson.id}
-                    className={`lesson-item animate-fadeIn status-${lesson.status}`}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', padding: '12px var(--space-md)' }}
-                  >
+        {/* 4. Tarefas para Corrigir */}
+        <div 
+          className={`reminder-square-card ${(data?.pendingCorrections?.length || 0) > 0 ? 'has-items' : ''}`}
+          onClick={() => setCorrectionsModalOpen(true)}
+          title="Ver tarefas aguardando correção"
+        >
+          <div className="reminder-header-row">
+            <div className="reminder-icon-badge reminder-icon-corrections">
+              <MdAssignmentTurnedIn />
+            </div>
+            <span className={`reminder-count ${(data?.pendingCorrections?.length || 0) > 0 ? 'active-corrections' : ''}`}>
+              {data?.pendingCorrections?.length || 0}
+            </span>
+          </div>
+          <span className="reminder-title">Para Corrigir</span>
+          <span className="reminder-subtitle">Aguardando nota</span>
+        </div>
+
+        {/* 5. Aulas por Completar */}
+        <div 
+          className={`reminder-square-card ${(data?.pendingPreviousLessons?.length || 0) > 0 ? 'has-items' : ''}`}
+          onClick={() => setPendingModalOpen(true)}
+          title="Ver aulas de dias anteriores a completar"
+        >
+          <div className="reminder-header-row">
+            <div className="reminder-icon-badge reminder-icon-lessons">
+              <MdSchedule />
+            </div>
+            <span className={`reminder-count ${(data?.pendingPreviousLessons?.length || 0) > 0 ? 'active-lessons' : ''}`}>
+              {data?.pendingPreviousLessons?.length || 0}
+            </span>
+          </div>
+          <span className="reminder-title">Aulas a Completar</span>
+          <span className="reminder-subtitle">Pendentes</span>
+        </div>
+      </div>
+
+      {/* 1. Seção: Aulas de Hoje / Próxima Aula (Cards Individuais) */}
+      <div className="dashboard-lessons-section animate-slideUp stagger-1" style={{ marginBottom: 'var(--space-xl)' }}>
+        <div className="card-section-header" style={{ marginBottom: '12px' }}>
+          <MdAccessTime /> <h3>{todayTitle}</h3>
+        </div>
+
+        <div className="lesson-list">
+          {data?.todayLessons.length === 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
+              <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', margin: 0 }}>
+                Nenhuma aula agendada para hoje!!
+              </p>
+              {data?.nextUpcomingLesson && (
+                <div style={{ width: '100%', textAlign: 'left', marginTop: '4px' }}>
+                  <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '10px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <MdSchedule style={{ color: 'var(--warning)' }} /> Próxima aula agendada:
+                  </div>
+                  {(() => {
+                    const lesson = data.nextUpcomingLesson;
+                    const startTime = new Date(lesson.scheduledAt);
+                    const timeRangeStr = format(startTime, "EEEE, dd/MM 'às' HH:mm", { locale: ptBR });
+                    const timeRangeSimplified = format(startTime, "dd/MM 'às' HH:mm", { locale: ptBR });
+
+                    return (
+                      <div
+                        key={lesson.id}
+                        className={`lesson-item animate-fadeIn status-${lesson.status}`}
+                        style={{ cursor: 'pointer' }}
+                        onClick={(e) => handleOpenEditLesson(lesson as any, e)}
+                      >
+                        {/* LAYOUT DESKTOP */}
+                        <div className="lesson-item-desktop-layout" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '12px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+                            <div
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/students/${lesson.studentId}`);
+                              }}
+                              style={{ cursor: 'pointer' }}
+                              title="Ver perfil do aluno"
+                            >
+                              <Avatar name={lesson.studentName || ''} size="md" shape="square" />
+                            </div>
+
+                            <div className="lesson-info" style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: 0 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                <span
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate(`/students/${lesson.studentId}`);
+                                  }}
+                                  style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '15px', textDecoration: 'none', cursor: 'pointer' }}
+                                  title="Ver perfil do aluno"
+                                >
+                                  {lesson.studentName}
+                                </span>
+                                {lesson.subjectName && <Badge variant="primary">{lesson.subjectName}</Badge>}
+                                {lesson.levelName && <Badge variant="secondary">{lesson.levelName}</Badge>}
+                              </div>
+                              {lesson.title && <p className="lesson-title" style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>{lesson.title}</p>}
+
+                              {/* Rodapé discreto da última aula */}
+                              <div className="lesson-last-class-footer" style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '3px', opacity: 0.85 }}>
+                                <MdHistory style={{ fontSize: '13px', opacity: 0.75, flexShrink: 0 }} />
+                                <span>
+                                  Última aula:{' '}
+                                  {lesson.lastLessonDate ? (
+                                    <>
+                                      <strong style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>
+                                        {format(new Date(lesson.lastLessonDate), "dd/MM 'às' HH:mm", { locale: ptBR })}
+                                      </strong>
+                                      {[lesson.lastLessonTitle, lesson.lastLessonNotes ? `Obs: ${lesson.lastLessonNotes}` : null].filter(Boolean).join(' • ') ? ` • ${[lesson.lastLessonTitle, lesson.lastLessonNotes ? `Obs: ${lesson.lastLessonNotes}` : null].filter(Boolean).join(' • ')}` : ''}
+                                    </>
+                                  ) : (
+                                    <span style={{ fontStyle: 'italic' }}>Nenhuma aula anterior</span>
+                                  )}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="lesson-meta" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                            <Badge variant="warning">
+                              {timeRangeStr}
+                            </Badge>
+                            <button
+                              className="icon-btn"
+                              onClick={(e) => handleOpenEditLesson(lesson as any, e)}
+                              title="Editar status/observações da aula"
+                              style={{ padding: '6px', fontSize: '18px', color: 'var(--accent-primary)', cursor: 'pointer', background: 'transparent', border: 'none' }}
+                            >
+                              <MdEdit />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* LAYOUT MOBILE */}
+                        <div className="lesson-item-mobile-layout" style={{ width: '100%', gap: '8px' }}>
+                          <div className="lesson-item-mobile-line-1" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                            <span
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/students/${lesson.studentId}`);
+                              }}
+                              style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '15px', textDecoration: 'none', cursor: 'pointer', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}
+                              title="Ver perfil do aluno"
+                            >
+                              {lesson.studentName}
+                            </span>
+                            <Badge variant="warning">
+                              {timeRangeSimplified}
+                            </Badge>
+                          </div>
+
+                          <div className="lesson-item-mobile-line-2" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                              {lesson.subjectName && <Badge variant="primary">{lesson.subjectName}</Badge>}
+                              {lesson.levelName && <Badge variant="secondary">{lesson.levelName}</Badge>}
+                            </div>
+                            <button
+                              className="icon-btn"
+                              onClick={(e) => handleOpenEditLesson(lesson as any, e)}
+                              title="Editar status/observações da aula"
+                              style={{ padding: '6px', fontSize: '18px', color: 'var(--accent-primary)', cursor: 'pointer', background: 'transparent', border: 'none' }}
+                            >
+                              <MdEdit />
+                            </button>
+                          </div>
+
+                          {/* Rodapé discreto da última aula (Mobile) */}
+                          <div className="lesson-last-class-footer-mobile" style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px', opacity: 0.85 }}>
+                            <MdHistory style={{ fontSize: '12px', opacity: 0.75, flexShrink: 0 }} />
+                            <span>
+                              Última aula:{' '}
+                              {lesson.lastLessonDate ? (
+                                <>
+                                  <strong style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>
+                                    {format(new Date(lesson.lastLessonDate), "dd/MM 'às' HH:mm", { locale: ptBR })}
+                                  </strong>
+                                  {[lesson.lastLessonTitle, lesson.lastLessonNotes ? `Obs: ${lesson.lastLessonNotes}` : null].filter(Boolean).join(' • ') ? ` • ${[lesson.lastLessonTitle, lesson.lastLessonNotes ? `Obs: ${lesson.lastLessonNotes}` : null].filter(Boolean).join(' • ')}` : ''}
+                                </>
+                              ) : (
+                                <span style={{ fontStyle: 'italic' }}>Nenhuma aula anterior</span>
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+            </div>
+          ) : (
+            data?.todayLessons.map(lesson => {
+              const startTime = new Date(lesson.scheduledAt);
+              const endTime = new Date(startTime.getTime() + (lesson.durationMinutes || 60) * 60000);
+              const timeRangeStr = `${format(startTime, 'HH:mm')} - ${format(endTime, 'HH:mm')}`;
+              
+              const startHour = startTime.getHours();
+              const startMin = startTime.getMinutes();
+              const endHour = endTime.getHours();
+              const endMin = endTime.getMinutes();
+              const startStr = startMin === 0 ? `${startHour}` : format(startTime, 'HH:mm');
+              const endStr = endMin === 0 ? `${endHour}` : format(endTime, 'HH:mm');
+              const timeRangeSimplified = `${startStr}-${endStr}h`;
+
+              const lastDetails = [lesson.lastLessonTitle, lesson.lastLessonNotes ? `Obs: ${lesson.lastLessonNotes}` : null].filter(Boolean).join(' • ');
+
+              return (
+                <div
+                  key={lesson.id}
+                  className={`lesson-item animate-fadeIn status-${lesson.status}`}
+                  style={{ cursor: 'pointer' }}
+                  onClick={(e) => handleOpenEditLesson(lesson as any, e)}
+                >
+                  {/* LAYOUT DESKTOP */}
+                  <div className="lesson-item-desktop-layout" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
                       <div
                         onClick={(e) => {
@@ -250,7 +402,7 @@ export default function DashboardPage() {
                               e.stopPropagation();
                               navigate(`/students/${lesson.studentId}`);
                             }}
-                            style={{ fontWeight: 700, color: '#ffffff', fontSize: '15px', textDecoration: 'none', cursor: 'pointer' }}
+                            style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '15px', textDecoration: 'none', cursor: 'pointer' }}
                             title="Ver perfil do aluno"
                           >
                             {lesson.studentName}
@@ -258,8 +410,25 @@ export default function DashboardPage() {
                           {lesson.subjectName && <Badge variant="primary">{lesson.subjectName}</Badge>}
                           {lesson.levelName && <Badge variant="secondary">{lesson.levelName}</Badge>}
                         </div>
+                        {lesson.title && <p className="lesson-title" style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>{lesson.title}</p>}
 
-                        {lesson.title && <p className="lesson-title" style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{lesson.title}</p>}
+                        {/* Rodapé discreto da última aula */}
+                        <div className="lesson-last-class-footer" style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '3px', opacity: 0.85 }}>
+                          <MdHistory style={{ fontSize: '13px', opacity: 0.75, flexShrink: 0 }} />
+                          <span>
+                            Última aula:{' '}
+                            {lesson.lastLessonDate ? (
+                              <>
+                                <strong style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>
+                                  {format(new Date(lesson.lastLessonDate), "dd/MM 'às' HH:mm", { locale: ptBR })}
+                                </strong>
+                                {lastDetails ? ` • ${lastDetails}` : ''}
+                              </>
+                            ) : (
+                              <span style={{ fontStyle: 'italic' }}>Nenhuma aula anterior</span>
+                            )}
+                          </span>
+                        </div>
                       </div>
                     </div>
 
@@ -277,359 +446,65 @@ export default function DashboardPage() {
                       </button>
                     </div>
                   </div>
-                );
-              })
-            )}
-          </div>
-        </Card>
-      </div>
 
-      {/* 2. Seção de Alunos */}
-      <div className="dashboard-section">
-        <div className="dashboard-section-header">
-          <h3 className="dashboard-section-title">👥 Gestão de Alunos</h3>
-          <button
-            className="toggle-visibility-btn"
-            onClick={() => setShowStudentsSection(!showStudentsSection)}
-            title={showStudentsSection ? "Ocultar seção de alunos" : "Mostrar seção de alunos"}
-          >
-            {showStudentsSection ? <MdVisibility /> : <MdVisibilityOff />}
-          </button>
-        </div>
-
-        {showStudentsSection && (
-          <>
-            <div className="stats-grid">
-              {studentStats.map((stat, i) => (
-                <Card key={stat.label + '-' + i} variant="elevated" accentColor={stat.color} className={`stat-card animate-slideUp stagger-${i + 1}`}>
-                  <div className="stat-icon-wrap" data-color={stat.color}>{stat.icon}</div>
-                  <div className="stat-info">
-                    <p className="stat-label">{stat.label}</p>
-                    <p className="stat-value">{stat.value}</p>
-                  </div>
-                </Card>
-              ))}
-            </div>
-
-            <div className="dashboard-grid" style={{ marginTop: 'var(--space-md)' }}>
-              {/* Subjects stats Card with PieChart */}
-              <Card variant="elevated" className="animate-slideUp stagger-2">
-                <div className="card-section-header">
-                  <MdMenuBook /> <h3>Distribuição de Alunos por Matéria</h3>
-                </div>
-                {subjectChartData.length === 0 ? (
-                  <p className="empty-text">Nenhuma matéria com alunos cadastrados.</p>
-                ) : (
-                  <div className="status-chart-container">
-                    <div style={{ width: '100%', height: 180 }}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={subjectChartData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={45}
-                            outerRadius={70}
-                            paddingAngle={4}
-                            dataKey="value"
-                          >
-                            {subjectChartData.map((entry: any, index: number) => (
-                              <Cell key={`subject-cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <Tooltip
-                            formatter={(val: any, name: any) => [`${val} aluno(s)`, name]}
-                            contentStyle={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', borderRadius: '8px', fontSize: '13px' }}
-                          />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-                    <div className="status-stats-list">
-                      {subjectChartData.map((s, idx) => (
-                        <div key={idx} className="status-stat-row">
-                          <div className="status-stat-header">
-                            <span className="status-color-dot" style={{ background: s.color }} />
-                            <span className="status-stat-label">{s.name}</span>
-                            <span className="status-stat-percent">{s.value} aluno(s)</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </Card>
-
-              {/* Birthdays Card */}
-              <Card variant="elevated" className="animate-slideUp stagger-3">
-                <div className="card-section-header">
-                  <MdCake className="birthday-header-icon" /> <h3>Aniversariantes do Mês</h3>
-                </div>
-                <div className="birthday-list">
-                  {data?.birthdayStudents.length === 0 ? (
-                    <p className="empty-text">Nenhum aniversariante este mês</p>
-                  ) : (
-                    data?.birthdayStudents.map(b => (
-                      <div key={b.studentId} className="birthday-item animate-fadeIn">
-                        <Avatar name={b.studentName} size="sm" />
-                        <div className="birthday-info">
-                          <p className="birthday-student-name">{b.studentName}</p>
-                          <p className="birthday-desc">Dia {b.birthDay} — completando <strong style={{ color: 'var(--accent-primary)' }}>{b.age} anos</strong></p>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </Card>
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* 3. Seção do Professor */}
-      <div className="dashboard-section" style={{ marginTop: 'var(--space-xl)' }}>
-        <div className="dashboard-section-header">
-          <h3 className="dashboard-section-title">⏱️ Ensino & Carga Horária do Professor</h3>
-          <button
-            className="toggle-visibility-btn"
-            onClick={() => setShowTeacherSection(!showTeacherSection)}
-            title={showTeacherSection ? "Ocultar seção do professor" : "Mostrar seção do professor"}
-          >
-            {showTeacherSection ? <MdVisibility /> : <MdVisibilityOff />}
-          </button>
-        </div>
-
-        {showTeacherSection && (
-          <>
-            <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
-              {teacherStats.map((stat, i) => (
-                <Card key={stat.label + '-' + i} variant="elevated" accentColor={stat.color} className={`stat-card animate-slideUp stagger-${i + 1}`}>
-                  <div className="stat-icon-wrap" data-color={stat.color}>{stat.icon}</div>
-                  <div className="stat-info">
-                    <p className="stat-label">{stat.label}</p>
-                    <p className="stat-value" style={{ fontSize: '20px' }}>
-                      {stat.value} <span style={{ fontSize: '15px', color: 'var(--accent-secondary)', fontWeight: '600' }}>({stat.hours})</span>
-                    </p>
-                  </div>
-                </Card>
-              ))}
-            </div>
-
-            <div className="dashboard-grid" style={{ marginTop: 'var(--space-md)' }}>
-              {/* Card do Gráfico de Rosca de Distribuição de Status */}
-              <Card variant="elevated" className="animate-slideUp stagger-4">
-                <div className="card-section-header" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <MdPieChart /> <h3>Distribuição de Aulas & Carga Horária</h3>
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '4px' }}>
-                    <div className="chart-mode-toggle">
-                      <button
-                        className={`mode-btn ${chartMode === 'monthly' ? 'active' : ''}`}
-                        onClick={() => setChartMode('monthly')}
+                  {/* LAYOUT MOBILE */}
+                  <div className="lesson-item-mobile-layout" style={{ width: '100%', gap: '8px' }}>
+                    {/* Linha 1: Nome e Horário simplificado */}
+                    <div className="lesson-item-mobile-line-1" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                      <span
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/students/${lesson.studentId}`);
+                        }}
+                        style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '15px', textDecoration: 'none', cursor: 'pointer', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}
+                        title="Ver perfil do aluno"
                       >
-                        Mês
-                      </button>
-                      <button
-                        className={`mode-btn ${chartMode === 'yearly' ? 'active' : ''}`}
-                        onClick={() => setChartMode('yearly')}
-                      >
-                        Anual
-                      </button>
-                    </div>
-
-                    {chartMode === 'monthly' && (
-                      <select
-                        className="filter-select-sm"
-                        value={chartMonth}
-                        onChange={e => setChartMonth(parseInt(e.target.value))}
-                      >
-                        {MONTH_OPTIONS.map(m => (
-                          <option key={m.value} value={m.value}>{m.label}</option>
-                        ))}
-                      </select>
-                    )}
-
-                    <select
-                      className="filter-select-sm"
-                      value={chartYear}
-                      onChange={e => setChartYear(parseInt(e.target.value))}
-                    >
-                      {[2026, 2025, 2024].map(y => (
-                        <option key={y} value={y}>{y}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {chartData.length === 0 ? (
-                  <p className="empty-text">Nenhuma aula registrada para o período selecionado ({chartMode === 'monthly' ? `${MONTH_OPTIONS.find(m=>m.value===chartMonth)?.label}/${chartYear}` : `Acumulado ${chartYear}`}).</p>
-                ) : (
-                  <div className="status-chart-container">
-                    <div style={{ width: '100%', height: 200 }}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={chartData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={55}
-                            outerRadius={80}
-                            paddingAngle={4}
-                            dataKey="value"
-                          >
-                            {chartData.map((entry: any, index: number) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <Tooltip
-                            formatter={(val: any, name: any, item: any) => [
-                              `${val} aula(s) (${item.payload.hours}h) — ${item.payload.percentage}%`,
-                              name
-                            ]}
-                            contentStyle={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', borderRadius: '8px', fontSize: '13px' }}
-                          />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-
-                    <div className="status-stats-list">
-                      {currentStats.map((stat: LessonStatusStat) => {
-                        const color = STATUS_COLORS[stat.status] || '#7C3AED';
-                        return (
-                          <div key={stat.status} className="status-stat-row">
-                            <div className="status-stat-header">
-                              <span className="status-color-dot" style={{ background: color }} />
-                              <span className="status-stat-label">{stat.label}</span>
-                              <span className="status-stat-badge">{stat.count} aula(s) ({stat.hours}h)</span>
-                              <span className="status-stat-percent">{stat.percentage}%</span>
-                            </div>
-                            <div className="status-stat-bar">
-                              <div className="status-stat-fill" style={{ width: `${stat.percentage}%`, background: color }} />
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </Card>
-
-              {/* Card de Gráfico Único de Efetividade de Aulas Dadas */}
-              <Card variant="elevated" className="animate-slideUp stagger-5">
-                <div className="card-section-header" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <MdCheckCircle style={{ color: 'var(--success)' }} /> <h3>Efetividade (Aulas Dadas)</h3>
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '4px' }}>
-                    <div className="chart-mode-toggle">
-                      <button
-                        className={`mode-btn ${effMode === 'monthly' ? 'active' : ''}`}
-                        onClick={() => setEffMode('monthly')}
-                      >
-                        Mês
-                      </button>
-                      <button
-                        className={`mode-btn ${effMode === 'yearly' ? 'active' : ''}`}
-                        onClick={() => setEffMode('yearly')}
-                      >
-                        Anual
-                      </button>
-                    </div>
-
-                    {effMode === 'monthly' && (
-                      <select
-                        className="filter-select-sm"
-                        value={chartMonth}
-                        onChange={e => setChartMonth(parseInt(e.target.value))}
-                      >
-                        {MONTH_OPTIONS.map(m => (
-                          <option key={m.value} value={m.value}>{m.label}</option>
-                        ))}
-                      </select>
-                    )}
-
-                    <select
-                      className="filter-select-sm"
-                      value={chartYear}
-                      onChange={e => setChartYear(parseInt(e.target.value))}
-                    >
-                      {[2026, 2025, 2024].map(y => (
-                        <option key={y} value={y}>{y}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="status-chart-container" style={{ position: 'relative' }}>
-                  <div style={{ width: '100%', height: 200, position: 'relative' }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={effChartData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={60}
-                          outerRadius={82}
-                          startAngle={90}
-                          endAngle={-270}
-                          dataKey="value"
-                        >
-                          {effChartData.map((entry, index) => (
-                            <Cell key={`eff-cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip
-                          formatter={(val: any, name: any) => [`${val}%`, name]}
-                          contentStyle={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)', borderRadius: '8px', fontSize: '13px' }}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div style={{
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      transform: 'translate(-50%, -50%)',
-                      textAlign: 'center'
-                    }}>
-                      <span style={{ fontSize: '26px', fontWeight: '800', color: '#10B981', display: 'block' }}>
-                        {effRate}%
+                        {lesson.studentName}
                       </span>
-                      <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                        {effMode === 'monthly' ? 'Efetividade Mês' : 'Efetividade Anual'}
+                      <Badge variant={lesson.status === 'completed' ? 'success' : lesson.status === 'cancelled' ? 'danger' : lesson.status === 'holiday' ? 'warning' : 'info'}>
+                        {timeRangeSimplified}
+                      </Badge>
+                    </div>
+
+                    {/* Linha 2: Matéria, Nível e botão de ação */}
+                    <div className="lesson-item-mobile-line-2" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                        {lesson.subjectName && <Badge variant="primary">{lesson.subjectName}</Badge>}
+                        {lesson.levelName && <Badge variant="secondary">{lesson.levelName}</Badge>}
+                      </div>
+                      <button
+                        className="icon-btn"
+                        onClick={(e) => handleOpenEditLesson(lesson as any, e)}
+                        title="Editar status/observações da aula"
+                        style={{ padding: '6px', fontSize: '18px', color: 'var(--accent-primary)', cursor: 'pointer', background: 'transparent', border: 'none' }}
+                      >
+                        <MdEdit />
+                      </button>
+                    </div>
+
+                    {/* Rodapé discreto da última aula (Mobile) */}
+                    <div className="lesson-last-class-footer-mobile" style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px', opacity: 0.85 }}>
+                      <MdHistory style={{ fontSize: '12px', opacity: 0.75, flexShrink: 0 }} />
+                      <span>
+                        Última aula:{' '}
+                        {lesson.lastLessonDate ? (
+                          <>
+                            <strong style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>
+                              {format(new Date(lesson.lastLessonDate), "dd/MM 'às' HH:mm", { locale: ptBR })}
+                            </strong>
+                            {lastDetails ? ` • ${lastDetails}` : ''}
+                          </>
+                        ) : (
+                          <span style={{ fontStyle: 'italic' }}>Nenhuma aula anterior</span>
+                        )}
                       </span>
                     </div>
                   </div>
-
-                  <div className="status-stats-list">
-                    <div className="status-stat-row">
-                      <div className="status-stat-header">
-                        <span className="status-color-dot" style={{ background: '#10B981' }} />
-                        <span className="status-stat-label">Aulas Concluídas / Realmente Dadas</span>
-                        <span className="status-stat-percent">{effRate}%</span>
-                      </div>
-                      <div className="status-stat-bar">
-                        <div className="status-stat-fill" style={{ width: `${effRate}%`, background: '#10B981' }} />
-                      </div>
-                    </div>
-
-                    <div className="status-stat-row">
-                      <div className="status-stat-header">
-                        <span className="status-color-dot" style={{ background: '#EF4444' }} />
-                        <span className="status-stat-label">Faltas, Canceladas & Feriados</span>
-                        <span className="status-stat-percent">{Math.max(0, 100 - effRate)}%</span>
-                      </div>
-                      <div className="status-stat-bar">
-                        <div className="status-stat-fill" style={{ width: `${Math.max(0, 100 - effRate)}%`, background: '#EF4444' }} />
-                      </div>
-                    </div>
-                  </div>
                 </div>
-              </Card>
-            </div>
-          </>
-        )}
+              );
+            })
+          )}
+        </div>
       </div>
 
       {/* Edit Lesson Modal */}
@@ -706,6 +581,325 @@ export default function DashboardPage() {
           </div>
         </Modal>
       )}
+
+      {/* Modal de Aulas Passadas Pendentes */}
+      <Modal
+        isOpen={pendingModalOpen}
+        onClose={() => setPendingModalOpen(false)}
+        title="Aulas Pendentes de Finalização"
+        size="md"
+        footer={<Button onClick={() => setPendingModalOpen(false)}>Fechar</Button>}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', maxHeight: '60vh', overflowY: 'auto', paddingRight: '4px' }}>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+            As seguintes aulas de dias anteriores ainda estão com o status "Agendada". Você pode finalizar ou ajustar o status de cada uma delas abaixo para manter o seu histórico atualizado.
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {data?.pendingPreviousLessons.map(lesson => {
+              const startTime = new Date(lesson.scheduledAt);
+              return (
+                <div
+                  key={lesson.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '12px',
+                    padding: '12px',
+                    background: 'var(--bg-secondary)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: 'var(--radius-md)'
+                  }}
+                >
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                      <strong style={{ fontSize: '14px', color: '#ffffff' }}>{lesson.studentName}</strong>
+                      {lesson.subjectName && <Badge variant="primary">{lesson.subjectName}</Badge>}
+                    </div>
+                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                      Agendada para: {format(startTime, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                    </span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    icon={<MdEdit />}
+                    onClick={() => handleOpenEditLesson(lesson as any)}
+                  >
+                    Finalizar
+                  </Button>
+                </div>
+              );
+            })}
+
+            {data?.pendingPreviousLessons.length === 0 && (
+              <p className="empty-text" style={{ textAlign: 'center', padding: '20px' }}>
+                🎉 Ótimo trabalho! Nenhuma aula de dias anteriores pendente de finalização.
+              </p>
+            )}
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal de Atividades Pendentes de Correção */}
+      <Modal
+        isOpen={correctionsModalOpen}
+        onClose={() => setCorrectionsModalOpen(false)}
+        title="Atividades Aguardando Correção"
+        size="md"
+        footer={<Button onClick={() => setCorrectionsModalOpen(false)}>Fechar</Button>}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', maxHeight: '60vh', overflowY: 'auto', paddingRight: '4px' }}>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+            As seguintes atividades foram enviadas pelos alunos e estão aguardando a sua correção. Clique em "Corrigir" para abrir a ficha do aluno correspondente.
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {data?.pendingCorrections && data.pendingCorrections.map(c => (
+              <div
+                key={c.studentActivityId}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  background: 'var(--bg-secondary)',
+                  padding: '12px 16px',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--border-color)'
+                }}
+              >
+                <div>
+                  <strong style={{ display: 'block', fontSize: '14px', color: 'var(--text-primary)' }}>{c.activityTitle}</strong>
+                  <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                    Aluno: <strong>{c.studentName}</strong> {c.submittedAt && `— Enviado em ${format(new Date(c.submittedAt), 'dd/MM/yyyy HH:mm')}`}
+                  </span>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setCorrectionsModalOpen(false);
+                    navigate(`/students/${c.studentId}`);
+                  }}
+                >
+                  Corrigir
+                </Button>
+              </div>
+            ))}
+
+            {(!data?.pendingCorrections || data.pendingCorrections.length === 0) && (
+              <p className="empty-text" style={{ textAlign: 'center', padding: '20px' }}>
+                🎉 Nenhuma atividade pendente de correção no momento!
+              </p>
+            )}
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal de Aniversariantes do Dia */}
+      <Modal
+        isOpen={birthdayModalOpen}
+        onClose={() => setBirthdayModalOpen(false)}
+        title="Aniversariantes do Dia"
+        size="md"
+        footer={<Button onClick={() => setBirthdayModalOpen(false)}>Fechar</Button>}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', maxHeight: '60vh', overflowY: 'auto', paddingRight: '4px' }}>
+          {todaysBirthdays.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                Hoje é dia de festa! Não se esqueça de parabenizar seus alunos aniversariantes de hoje:
+              </p>
+              {todaysBirthdays.map(b => (
+                <div
+                  key={b.studentId}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '12px',
+                    padding: '12px',
+                    background: 'var(--bg-secondary)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: 'var(--radius-md)'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ fontSize: '24px' }}>🎂</div>
+                    <div>
+                      <strong style={{ fontSize: '14px', color: '#ffffff', display: 'block' }}>{b.studentName}</strong>
+                      <span style={{ fontSize: '12px', color: 'var(--accent-primary)', fontWeight: 600 }}>
+                        Completando {b.age} {b.age === 1 ? 'ano' : 'anos'} hoje! 🎉
+                      </span>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setBirthdayModalOpen(false);
+                      navigate(`/students/${b.studentId}`);
+                    }}
+                  >
+                    Ver Aluno
+                  </Button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="empty-text" style={{ textAlign: 'center', padding: '20px' }}>
+              Nenhum aluno fazendo aniversário no dia de hoje.
+            </p>
+          )}
+        </div>
+      </Modal>
+
+      {/* Modal de Tarefas Feitas / Entregues */}
+      <Modal
+        isOpen={completedActivitiesModalOpen}
+        onClose={() => setCompletedActivitiesModalOpen(false)}
+        title="Tarefas Feitas e Entregues"
+        size="md"
+        footer={<Button onClick={() => setCompletedActivitiesModalOpen(false)}>Fechar</Button>}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', maxHeight: '60vh', overflowY: 'auto', paddingRight: '4px' }}>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+            Atividades concluídas e entregues pelos alunos neste mês:
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {data?.completedActivities && data.completedActivities.length > 0 ? (
+              data.completedActivities.map(act => (
+                <div
+                  key={act.studentActivityId}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '12px',
+                    padding: '12px',
+                    background: 'var(--bg-secondary)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: 'var(--radius-md)'
+                  }}
+                >
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                      <strong style={{ fontSize: '14px', color: '#ffffff' }}>{act.activityTitle}</strong>
+                      <Badge variant="success">
+                        {act.grade !== null && act.grade !== undefined
+                          ? `${act.grade % 1 === 0 ? act.grade.toFixed(0) : act.grade.toFixed(1)}/${act.maxGrade}`
+                          : 'Entregue'}
+                      </Badge>
+                    </div>
+                    <span style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block' }}>
+                      Aluno: <strong style={{ color: 'var(--text-primary)' }}>{act.studentName}</strong>
+                      {act.completedAt && ` • Entregue em: ${format(new Date(act.completedAt), "dd/MM 'às' HH:mm", { locale: ptBR })}`}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      title="Abrir atividade em nova aba"
+                      onClick={() => window.open(`${window.location.origin}/quiz/${act.studentActivityId}`, '_blank')}
+                    >
+                      <MdOpenInNew />
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setCompletedActivitiesModalOpen(false);
+                        navigate(`/students/${act.studentId}`);
+                      }}
+                    >
+                      Ver Aluno
+                    </Button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="empty-text" style={{ textAlign: 'center', padding: '20px' }}>
+                Nenhuma tarefa entregue pelos alunos neste mês até o momento.
+              </p>
+            )}
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal de Pagamentos Pendentes do Mês */}
+      <Modal
+        isOpen={pendingPaymentsModalOpen}
+        onClose={() => setPendingPaymentsModalOpen(false)}
+        title="Mensalidades Pendentes do Mês"
+        size="md"
+        footer={
+          <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+            <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--warning)' }}>
+              Total: R$ {data?.pendingPayments?.reduce((acc, p) => acc + p.monthlyPrice, 0).toFixed(2) || '0.00'}
+            </span>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setPendingPaymentsModalOpen(false);
+                  navigate('/finance');
+                }}
+              >
+                Ir para Financeiro
+              </Button>
+              <Button onClick={() => setPendingPaymentsModalOpen(false)}>Fechar</Button>
+            </div>
+          </div>
+        }
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', maxHeight: '60vh', overflowY: 'auto', paddingRight: '4px' }}>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+            Alunos ativos com mensalidade em aberto para o mês atual:
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {data?.pendingPayments && data.pendingPayments.length > 0 ? (
+              data.pendingPayments.map(pay => (
+                <div
+                  key={pay.studentId}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '12px',
+                    padding: '12px',
+                    background: 'var(--bg-secondary)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: 'var(--radius-md)'
+                  }}
+                >
+                  <div>
+                    <strong style={{ fontSize: '14px', color: '#ffffff', display: 'block' }}>{pay.studentName}</strong>
+                    <span style={{ fontSize: '12px', color: 'var(--warning)', fontWeight: 700 }}>
+                      Mensalidade: R$ {pay.monthlyPrice.toFixed(2)}
+                    </span>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setPendingPaymentsModalOpen(false);
+                      navigate(`/students/${pay.studentId}`);
+                    }}
+                  >
+                    Ver Aluno
+                  </Button>
+                </div>
+              ))
+            ) : (
+              <p className="empty-text" style={{ textAlign: 'center', padding: '20px' }}>
+                🎉 Parabéns! Todas as mensalidades deste mês estão em dia.
+              </p>
+            )}
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
