@@ -1,10 +1,11 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
-  MdArrowBack, MdSchool, MdPayment, MdAssignment, MdCalendarToday,
+  MdSchool, MdPayment, MdCalendarToday,
   MdSchedule, MdDelete, MdAdd, MdEdit, MdCheckCircle, MdCancel, MdPercent, MdAttachMoney,
   MdExpandMore, MdExpandLess, MdTimer, MdPhone, MdCake, MdEventAvailable, MdEventBusy, MdPerson, MdSwapVert,
-  MdAssignmentTurnedIn, MdContentCopy
+  MdAssignmentTurnedIn, MdOpenInNew, MdAccessTime, MdShare, MdMenuBook,
+  MdEmojiEvents, MdVerified
 } from 'react-icons/md';
 import { FaWhatsapp } from 'react-icons/fa';
 import Card from '../../components/ui/Card';
@@ -15,11 +16,12 @@ import Modal from '../../components/ui/Modal';
 import Input from '../../components/ui/Input';
 import { studentService } from '../../services/studentService';
 import { activityService } from '../../services/activityService';
-import { scheduleService, lessonService, paymentService, examService, exerciseService, subjectService, levelService } from '../../services/dataServices';
-import type { StudentDetail, ScheduleEntry, Lesson, Exam, Exercise, Subject, Level, StudentActivity, TemplateActivity } from '../../types';
+import { scheduleService, lessonService, paymentService, examService, exerciseService, subjectService, levelService, classSheetService } from '../../services/dataServices';
+import type { StudentDetail, ScheduleEntry, Lesson, Subject, Level, StudentActivity, TemplateActivity, ClassSheet } from '../../types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import toast from 'react-hot-toast';
+import { sanitizeHtml } from '../../utils/sanitizeHtml';
 import './StudentDetail.css';
 
 const DAYS_OF_WEEK = [
@@ -63,7 +65,7 @@ export default function StudentDetailPage() {
   const [loading, setLoading] = useState(true);
   const location = useLocation();
   const initialTab = (location.state as any)?.activeTab || 'lessons';
-  const [tab, setTab] = useState<'lessons' | 'schedules' | 'payments' | 'exams' | 'exercises' | 'activities'>(initialTab);
+  const [tab, setTab] = useState<'lessons' | 'schedules' | 'payments' | 'activities' | 'sheets'>(initialTab);
 
   // Online Activities states
   const [studentActivities, setStudentActivities] = useState<StudentActivity[]>([]);
@@ -71,8 +73,30 @@ export default function StudentDetailPage() {
   const [templates, setTemplates] = useState<TemplateActivity[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
   const [assigning, setAssigning] = useState(false);
-  const [reviewModalOpen, setReviewModalOpen] = useState(false);
-  const [reviewActivity, setReviewActivity] = useState<StudentActivity | null>(null);
+
+
+  // Assignment filtering states
+  const [assignSubjectId, setAssignSubjectId] = useState('');
+  const [assignLevelId, setAssignLevelId] = useState('');
+  const [assignSearchText, setAssignSearchText] = useState('');
+
+  // Correction states
+  const [correctionModalOpen, setCorrectionModalOpen] = useState(false);
+  const [activityToCorrect, setActivityToCorrect] = useState<StudentActivity | null>(null);
+  const [correctionScores, setCorrectionScores] = useState<{ [answerId: string]: string }>({});
+  const [correctionNotes, setCorrectionNotes] = useState<{ [answerId: string]: string }>({});
+  const [savingCorrection, setSavingCorrection] = useState(false);
+
+  // Lançamento Manual (Prova/Exercício) Modal states
+  const [manualModalOpen, setManualModalOpen] = useState(false);
+  const [selectedManualId, setSelectedManualId] = useState<string | null>(null);
+  const [manualType, setManualType] = useState<'exam' | 'exercise'>('exam');
+  const [manualTitle, setManualTitle] = useState('');
+  const [manualDate, setManualDate] = useState('');
+  const [manualNotes, setManualNotes] = useState('');
+  const [manualGrade, setManualGrade] = useState('');
+  const [manualMaxGrade, setManualMaxGrade] = useState('10');
+  const [savingManual, setSavingManual] = useState(false);
 
   // Year filter for payments
   const [paymentYear, setPaymentYear] = useState(new Date().getFullYear());
@@ -91,11 +115,13 @@ export default function StudentDetailPage() {
   const [lessonStartTime, setLessonStartTime] = useState('');
   const [lessonEndTime, setLessonEndTime] = useState('');
   const [savingLesson, setSavingLesson] = useState(false);
-  const [lessonSortOrder, setLessonSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [lessonSortOrder, setLessonSortOrder] = useState<'asc' | 'desc'>('asc');
 
   // Schedule Modal state
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState<ScheduleEntry | null>(null);
+  const [scheduleStep, setScheduleStep] = useState<1 | 2>(1);
+  const [scheduleFrequency, setScheduleFrequency] = useState<'weekly' | 'biweekly' | 'monthly'>('weekly');
   const [dayOfWeek, setDayOfWeek] = useState(1);
   const [startTime, setStartTime] = useState('07:00');
   const [endTime, setEndTime] = useState('08:00');
@@ -103,28 +129,26 @@ export default function StudentDetailPage() {
   const [validUntil, setValidUntil] = useState('');
   const [savingSchedule, setSavingSchedule] = useState(false);
 
+  // End Schedule states
+  const [endScheduleModalOpen, setEndScheduleModalOpen] = useState(false);
+  const [scheduleToEndId, setScheduleToEndId] = useState<string | null>(null);
+  const [endScheduleDate, setEndScheduleDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [endingSchedule, setEndingSchedule] = useState(false);
+
+  // Fichas (ClassSheets) states
+  const [levelClassSheets, setLevelClassSheets] = useState<ClassSheet[]>([]);
+  const [releasedSheetIds, setReleasedSheetIds] = useState<string[]>([]);
+  const [releasedSheets, setReleasedSheets] = useState<ClassSheet[]>([]);
+  const [loadingSheets, setLoadingSheets] = useState(false);
+  const [allSubjectSheets, setAllSubjectSheets] = useState<ClassSheet[]>([]);
+  const [allLevels, setAllLevels] = useState<Level[]>([]);
+  const [expandedLevelIds, setExpandedLevelIds] = useState<string[]>([]);
+  const [teacherActivityFilter, setTeacherActivityFilter] = useState<'all' | 'exam' | 'exercise'>('all');
+
   // Expandable Info Card state
   const [showFullDetails, setShowFullDetails] = useState(false);
 
-  // Exam Modal state
-  const [examModalOpen, setExamModalOpen] = useState(false);
-  const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
-  const [examTitle, setExamTitle] = useState('');
-  const [examDate, setExamDate] = useState('');
-  const [examNotes, setExamNotes] = useState('');
-  const [examGrade, setExamGrade] = useState('');
-  const [examMaxGrade, setExamMaxGrade] = useState('10');
-  const [savingExam, setSavingExam] = useState(false);
 
-  // Exercise Modal state
-  const [exerciseModalOpen, setExerciseModalOpen] = useState(false);
-  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
-  const [exerciseTitle, setExerciseTitle] = useState('');
-  const [exerciseDate, setExerciseDate] = useState('');
-  const [exerciseNotes, setExerciseNotes] = useState('');
-  const [exerciseGrade, setExerciseGrade] = useState('');
-  const [exerciseMaxGrade, setExerciseMaxGrade] = useState('10');
-  const [savingExercise, setSavingExercise] = useState(false);
 
   // Lessons Month & Year Filter states
   const [selectedMonth, setSelectedMonth] = useState<string>(format(new Date(), 'MM'));
@@ -220,9 +244,63 @@ export default function StudentDetailPage() {
       setSchedules(scheduleRes.data);
       setSubjectsList(subjectRes.data);
       setStudentActivities(activityRes.data);
+      
+      // Carrega as fichas pedagógicas liberadas de forma paralela e resiliente
+      classSheetService.getReleased(id)
+        .then(releasedRes => {
+          if (releasedRes && releasedRes.data) {
+            setReleasedSheets(releasedRes.data);
+            setReleasedSheetIds(releasedRes.data.map((cs: ClassSheet) => cs.id));
+          }
+        })
+        .catch(err => {
+          console.error('Erro ao carregar fichas liberadas do aluno:', err);
+        });
     }).catch(() => navigate('/students'))
       .finally(() => setLoading(false));
   };
+
+  const loadSheetsData = async () => {
+    if (!student) return;
+    setLoadingSheets(true);
+    try {
+      const releasedRes = await classSheetService.getReleased(student.id);
+      setReleasedSheets(releasedRes.data || []);
+      const releasedIds = (releasedRes.data || []).map((cs: ClassSheet) => cs.id);
+      setReleasedSheetIds(releasedIds);
+
+      const levelSheetsRes = await classSheetService.getByLevel(student.levelId);
+      setLevelClassSheets(levelSheetsRes.data || []);
+
+      const levelsRes = await levelService.getBySubject(student.subjectId);
+      setAllLevels(levelsRes.data || []);
+
+      const allSheetsList: ClassSheet[] = [];
+      for (const lvl of (levelsRes.data || [])) {
+        const res = await classSheetService.getByLevel(lvl.id);
+        allSheetsList.push(...(res.data || []));
+      }
+      setAllSubjectSheets(allSheetsList);
+    } catch {
+      toast.error('Erro ao carregar fichas pedagógicas.');
+    } finally {
+      setLoadingSheets(false);
+    }
+  };
+
+  const toggleLevelExpand = (levelId: string) => {
+    if (expandedLevelIds.includes(levelId)) {
+      setExpandedLevelIds(expandedLevelIds.filter(id => id !== levelId));
+    } else {
+      setExpandedLevelIds([...expandedLevelIds, levelId]);
+    }
+  };
+
+  useEffect(() => {
+    if (tab === 'sheets' && student) {
+      loadSheetsData();
+    }
+  }, [tab, student]);
 
   const handleEditStudentSubjectChange = async (subjectId: string) => {
     setEditStudentForm(prev => ({ ...prev, subjectId, levelId: '' }));
@@ -250,8 +328,12 @@ export default function StudentDetailPage() {
     });
 
     if (student.subjectId) {
-      const res = await levelService.getBySubject(student.subjectId);
-      setFormLevelsList(res.data);
+      try {
+        const res = await levelService.getBySubject(student.subjectId);
+        setFormLevelsList(res.data || []);
+      } catch {
+        setFormLevelsList([]);
+      }
     } else {
       setFormLevelsList([]);
     }
@@ -262,27 +344,31 @@ export default function StudentDetailPage() {
     e.preventDefault();
     if (!student) return;
     setSavingStudent(true);
+    const effectiveLastClassDate = editStudentForm.isActive === 'false'
+      ? (editStudentForm.lastClassDate || new Date().toISOString().split('T')[0])
+      : editStudentForm.lastClassDate;
     const body = {
       name: editStudentForm.name,
-      birthDate: editStudentForm.birthDate || null,
-      phone: editStudentForm.phone || null,
-      guardianName: editStudentForm.guardianName || null,
-      guardianPhone: editStudentForm.guardianPhone || null,
-      subjectId: editStudentForm.subjectId,
-      levelId: editStudentForm.levelId,
-      observation: editStudentForm.observation || null,
+      birthDate: editStudentForm.birthDate ? `${editStudentForm.birthDate}T00:00:00` : undefined,
+      phone: editStudentForm.phone || undefined,
+      guardianName: editStudentForm.guardianName || undefined,
+      guardianPhone: editStudentForm.guardianPhone || undefined,
+      subjectId: editStudentForm.subjectId || undefined,
+      levelId: editStudentForm.levelId || undefined,
+      observation: editStudentForm.observation || undefined,
       monthlyPrice: parseFloat(editStudentForm.monthlyPrice || '0'),
       isActive: editStudentForm.isActive === 'true',
-      firstClassDate: editStudentForm.firstClassDate ? editStudentForm.firstClassDate : null,
-      lastClassDate: editStudentForm.isActive === 'false' && editStudentForm.lastClassDate ? editStudentForm.lastClassDate : null
+      firstClassDate: editStudentForm.firstClassDate ? `${editStudentForm.firstClassDate}T00:00:00` : undefined,
+      lastClassDate: editStudentForm.isActive === 'false' && effectiveLastClassDate ? `${effectiveLastClassDate}T00:00:00` : undefined
     };
     try {
       await studentService.update(student.id, body as any);
       toast.success('Dados do aluno atualizados!');
       setEditStudentModalOpen(false);
       loadData();
-    } catch {
-      toast.error('Erro ao atualizar aluno.');
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.response?.data?.error || 'Erro ao atualizar aluno.';
+      toast.error(msg);
     }
     setSavingStudent(false);
   };
@@ -303,18 +389,54 @@ export default function StudentDetailPage() {
     loadData();
   }, [id]);
 
+  useEffect(() => {
+    if (correctionModalOpen && activityToCorrect) {
+      setTimeout(() => {
+        activityToCorrect.answers.forEach(q => {
+          if (q.questionType === 'writing') {
+            const editor = document.getElementById(`notes-editor-${q.id}`);
+            if (editor) {
+              editor.innerHTML = sanitizeHtml(q.evaluationNotes);
+            }
+          }
+        });
+      }, 80);
+    }
+  }, [correctionModalOpen, activityToCorrect]);
+
   if (loading) return <div className="page-loading"><span className="loading-spinner" /></div>;
   if (!student) return null;
 
-  // Calculate Attendance Rate
-  const completedCount = student.lessons.filter(l => l.status === 'completed').length;
-  const cancelledCount = student.lessons.filter(l => l.status === 'cancelled').length;
+  try {
+
+  const lastClassCutoffStr = (!student.isActive && student.lastClassDate)
+    ? student.lastClassDate.split('T')[0]
+    : null;
+
+  const visibleStudentLessons = lastClassCutoffStr
+    ? student.lessons.filter(l => l.scheduledAt.split('T')[0] <= lastClassCutoffStr)
+    : student.lessons;
+
+  // Calculate Attendance Rate (Total & Current Month)
+  const completedCount = visibleStudentLessons.filter(l => l.status === 'completed').length;
+  const cancelledCount = visibleStudentLessons.filter(l => l.status === 'cancelled').length;
   const totalAtts = completedCount + cancelledCount;
   const attendanceRate = totalAtts > 0 ? Math.round((completedCount / totalAtts) * 100) : 100;
 
-  // Calculate Past Class Hours Rate (Only for classes that have already occurred)
   const now = new Date();
-  const pastLessons = student.lessons.filter(l => 
+  const currentMonthLessons = visibleStudentLessons.filter(l => {
+    const d = new Date(l.scheduledAt);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  });
+  const monthlyCompletedCount = currentMonthLessons.filter(l => l.status === 'completed').length;
+  const monthlyCancelledCount = currentMonthLessons.filter(l => l.status === 'cancelled').length;
+  const monthlyTotalAtts = monthlyCompletedCount + monthlyCancelledCount;
+  const monthlyAttendanceRate = monthlyTotalAtts > 0
+    ? Math.round((monthlyCompletedCount / monthlyTotalAtts) * 100)
+    : attendanceRate;
+
+  // Calculate Past Class Hours Rate (Only for classes that have already occurred)
+  const pastLessons = visibleStudentLessons.filter(l => 
     (l.status === 'completed' || l.status === 'cancelled') && new Date(l.scheduledAt) <= now
   );
   const completedPastLessons = pastLessons.filter(l => l.status === 'completed');
@@ -327,9 +449,47 @@ export default function StudentDetailPage() {
   const hoursAttendanceRate = totalPastMinutes > 0 ? Math.round((completedMinutes / totalPastMinutes) * 100) : 100;
 
   // First and Last Class dates
-  const sortedLessons = [...student.lessons].sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
+  const sortedLessons = [...visibleStudentLessons].sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
   const firstClassDate = sortedLessons.length > 0 ? sortedLessons[0].scheduledAt : null;
   const lastClassDate = student.lastClassDate || (sortedLessons.length > 0 ? sortedLessons[sortedLessons.length - 1].scheduledAt : null);
+
+  // Active Student Tenure (Years / Months / Days counter)
+  const activeStartDateRaw = student.firstClassDate || firstClassDate || student.createdAt;
+  const activeStartDate = activeStartDateRaw ? new Date(activeStartDateRaw) : now;
+  const activeEndDate = (!student.isActive && student.lastClassDate) ? new Date(student.lastClassDate) : now;
+  const diffMs = Math.max(0, activeEndDate.getTime() - activeStartDate.getTime());
+  const totalActiveDays = Math.max(1, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+  const activeYears = Math.floor(totalActiveDays / 365);
+  const activeMonths = Math.floor((totalActiveDays % 365) / 30);
+  const activeRemDays = totalActiveDays % 30;
+
+  const activeTenureShort = activeYears > 0
+    ? (activeMonths > 0 ? `${activeYears}a ${activeMonths}m` : `${activeYears}a`)
+    : activeMonths > 0
+      ? `${activeMonths} ${activeMonths === 1 ? 'mês' : 'meses'}`
+      : `${totalActiveDays}d`;
+
+  const activeTenureFull = activeYears > 0
+    ? `${activeYears} ${activeYears === 1 ? 'ano' : 'anos'}${activeMonths > 0 ? ` e ${activeMonths} ${activeMonths === 1 ? 'mês' : 'meses'}` : ''}`
+    : activeMonths > 0
+      ? `${activeMonths} ${activeMonths === 1 ? 'mês' : 'meses'}${activeRemDays > 0 ? ` e ${activeRemDays} ${activeRemDays === 1 ? 'dia' : 'dias'}` : ''}`
+      : `${totalActiveDays} ${totalActiveDays === 1 ? 'dia' : 'dias'}`;
+
+  // Average Grade across Online Activities, Exams, and Exercises (normalized 0-10)
+  const gradedOnline = studentActivities
+    .filter(a => a.status === 'completed' && a.grade !== null && a.grade !== undefined)
+    .map(a => ((a.grade || 0) / (a.maxGrade || 10)) * 10);
+  const gradedExams = (student.exams || [])
+    .filter(e => e.grade !== null && e.grade !== undefined)
+    .map(e => ((e.grade || 0) / (e.maxGrade || 10)) * 10);
+  const gradedExercises = (student.exercises || [])
+    .filter(e => e.grade !== null && e.grade !== undefined)
+    .map(e => ((e.grade || 0) / (e.maxGrade || 10)) * 10);
+  const allNormalizedGrades = [...gradedOnline, ...gradedExams, ...gradedExercises];
+  const averageGradeDisplay = allNormalizedGrades.length > 0
+    ? (allNormalizedGrades.reduce((sum, val) => sum + val, 0) / allNormalizedGrades.length).toFixed(1)
+    : '--';
+  const effectivePhone = student.phone || student.guardianPhone || '';
 
   // Monthly Price update handler
   const handleSaveMonthlyPrice = async () => {
@@ -393,8 +553,11 @@ export default function StudentDetailPage() {
 
   // Schedule handlers
   const openScheduleModal = (schedule?: ScheduleEntry) => {
+    setScheduleStep(1);
     if (schedule) {
       setSelectedSchedule(schedule);
+      const freq = (schedule.frequency || 'weekly').toLowerCase();
+      setScheduleFrequency(freq === 'biweekly' || freq === 'monthly' ? freq : 'weekly');
       setDayOfWeek(schedule.dayOfWeek);
       setStartTime(schedule.startTime.substring(0, 5));
       setEndTime(schedule.endTime.substring(0, 5));
@@ -402,6 +565,7 @@ export default function StudentDetailPage() {
       setValidUntil(schedule.validUntil ? schedule.validUntil.split('T')[0] : '');
     } else {
       setSelectedSchedule(null);
+      setScheduleFrequency('weekly');
       setDayOfWeek(1);
       setStartTime('07:00');
       setEndTime('08:00');
@@ -419,6 +583,7 @@ export default function StudentDetailPage() {
       dayOfWeek,
       startTime: startTime + ':00',
       endTime: endTime + ':00',
+      frequency: scheduleFrequency,
       isRecurring: true,
       validFrom: new Date(validFrom).toISOString(),
       validUntil: validUntil ? new Date(validUntil).toISOString() : null
@@ -447,6 +612,71 @@ export default function StudentDetailPage() {
       loadData();
     } catch {
       toast.error('Erro ao excluir horário.');
+    }
+  };
+
+  const handleEndSchedule = async () => {
+    if (!scheduleToEndId) return;
+    setEndingSchedule(true);
+    try {
+      await scheduleService.endSchedule(scheduleToEndId, endScheduleDate);
+      toast.success('Horário encerrado com sucesso!');
+      setEndScheduleModalOpen(false);
+      setScheduleToEndId(null);
+      loadData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Erro ao encerrar o horário.');
+    } finally {
+      setEndingSchedule(false);
+    }
+  };
+
+  const handleCopyPortalLink = (studentId: string) => {
+    const portalUrl = `${window.location.origin}/student-portal/${studentId}`;
+    navigator.clipboard.writeText(portalUrl);
+    toast.success('Link do portal do aluno copiado!');
+  };
+
+  const handleCopyActivityLink = (actId: string) => {
+    const quizUrl = `${window.location.origin}/quiz/${actId}`;
+    navigator.clipboard.writeText(quizUrl);
+    toast.success('Link da atividade copiado!');
+  };
+
+  const handleShareActivityWhatsApp = (act: StudentActivity) => {
+    const quizUrl = `${window.location.origin}/quiz/${act.id}`;
+    const typeLabel = act.type === 'exam' ? 'prova' : 'atividade';
+    const message = `Olá, ${student?.name || 'aluno(a)'}! Aqui está o link para a sua ${typeLabel} (${act.title}):\n${quizUrl}`;
+    const rawPhone = student?.phone || student?.guardianPhone;
+    const cleanPhone = rawPhone ? rawPhone.replace(/\D/g, '') : '';
+    const encodedMsg = encodeURIComponent(message);
+    const whatsappUrl = cleanPhone 
+      ? `https://wa.me/55${cleanPhone}?text=${encodedMsg}`
+      : `https://api.whatsapp.com/send?text=${encodedMsg}`;
+    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleToggleSheet = async (sheetId: string) => {
+    if (!student) return;
+    const isReleased = releasedSheetIds.includes(sheetId);
+    
+    try {
+      if (isReleased) {
+        await classSheetService.revokeFromStudent(student.id, sheetId);
+        setReleasedSheetIds(releasedSheetIds.filter(id => id !== sheetId));
+        setReleasedSheets(releasedSheets.filter(s => s.id !== sheetId));
+        toast.success('Acesso à ficha revogado!');
+      } else {
+        await classSheetService.releaseToStudent(student.id, sheetId);
+        setReleasedSheetIds([...releasedSheetIds, sheetId]);
+        const sheetObj = allSubjectSheets.find(s => s.id === sheetId) || levelClassSheets.find(s => s.id === sheetId);
+        if (sheetObj && !releasedSheets.some(s => s.id === sheetId)) {
+          setReleasedSheets([...releasedSheets, sheetObj]);
+        }
+        toast.success('Ficha liberada para o aluno!');
+      }
+    } catch {
+      toast.error('Erro ao atualizar liberação da ficha.');
     }
   };
 
@@ -522,129 +752,17 @@ export default function StudentDetailPage() {
     }
   };
 
-  // Exam handlers
-  const openExamModal = (exam?: Exam) => {
-    if (exam) {
-      setSelectedExam(exam);
-      setExamTitle(exam.title);
-      setExamDate(exam.scheduledAt.substring(0, 10));
-      setExamNotes(exam.notes || '');
-      setExamGrade(exam.grade != null ? String(exam.grade) : '');
-      setExamMaxGrade(String(exam.maxGrade));
-    } else {
-      setSelectedExam(null);
-      setExamTitle('');
-      setExamDate(format(new Date(), 'yyyy-MM-dd'));
-      setExamNotes('');
-      setExamGrade('');
-      setExamMaxGrade('10');
-    }
-    setExamModalOpen(true);
-  };
 
-  const handleSaveExam = async (e: FormEvent) => {
-    e.preventDefault();
-    setSavingExam(true);
-    const body = {
-      studentId: student.id,
-      title: examTitle,
-      scheduledAt: `${examDate}T00:00:00`,
-      notes: examNotes,
-      grade: examGrade ? parseFloat(examGrade) : undefined,
-      maxGrade: parseFloat(examMaxGrade)
-    };
-    try {
-      if (selectedExam) {
-        await examService.update(selectedExam.id, body);
-        toast.success('Prova atualizada!');
-      } else {
-        await examService.create(body);
-        toast.success('Prova adicionada!');
-      }
-      setExamModalOpen(false);
-      loadData();
-    } catch {
-      toast.error('Erro ao salvar prova.');
-    }
-    setSavingExam(false);
-  };
-
-  const handleDeleteExam = async (examId: string) => {
-    if (!confirm('Deseja excluir esta prova?')) return;
-    try {
-      await examService.delete(examId);
-      toast.success('Prova excluída!');
-      loadData();
-    } catch {
-      toast.error('Erro ao excluir prova.');
-    }
-  };
-
-  // Exercise handlers
-  const openExerciseModal = (exercise?: Exercise) => {
-    if (exercise) {
-      setSelectedExercise(exercise);
-      setExerciseTitle(exercise.title);
-      setExerciseDate(exercise.scheduledAt.substring(0, 10));
-      setExerciseNotes(exercise.notes || '');
-      setExerciseGrade(exercise.grade != null ? String(exercise.grade) : '');
-      setExerciseMaxGrade(String(exercise.maxGrade));
-    } else {
-      setSelectedExercise(null);
-      setExerciseTitle('');
-      setExerciseDate(format(new Date(), 'yyyy-MM-dd'));
-      setExerciseNotes('');
-      setExerciseGrade('');
-      setExerciseMaxGrade('10');
-    }
-    setExerciseModalOpen(true);
-  };
-
-  const handleSaveExercise = async (e: FormEvent) => {
-    e.preventDefault();
-    setSavingExercise(true);
-    const body = {
-      studentId: student.id,
-      title: exerciseTitle,
-      scheduledAt: `${exerciseDate}T00:00:00`,
-      notes: exerciseNotes,
-      grade: exerciseGrade ? parseFloat(exerciseGrade) : undefined,
-      maxGrade: parseFloat(exerciseMaxGrade)
-    };
-    try {
-      if (selectedExercise) {
-        await exerciseService.update(selectedExercise.id, body);
-        toast.success('Exercício atualizado!');
-      } else {
-        await exerciseService.create(body);
-        toast.success('Exercício adicionado!');
-      }
-      setExerciseModalOpen(false);
-      loadData();
-    } catch {
-      toast.error('Erro ao salvar exercício.');
-    }
-    setSavingExercise(false);
-  };
-
-  const handleDeleteExercise = async (exerciseId: string) => {
-    if (!confirm('Deseja excluir este exercício?')) return;
-    try {
-      await exerciseService.delete(exerciseId);
-      toast.success('Exercício excluído!');
-      loadData();
-    } catch {
-      toast.error('Erro ao excluir exercício.');
-    }
-  };
 
   // Online Activities handlers
   const openAssignModal = async () => {
     try {
       const res = await activityService.getTemplates();
-      // Filter templates matching the student's level or subject (optional, let's keep all templates of this teacher)
       setTemplates(res.data);
       setSelectedTemplateId('');
+      setAssignSubjectId(student?.subjectId || '');
+      setAssignLevelId(student?.levelId || '');
+      setAssignSearchText('');
       setAssignModalOpen(true);
     } catch {
       toast.error('Erro ao buscar modelos de atividades.');
@@ -671,19 +789,160 @@ export default function StudentDetailPage() {
     setAssigning(false);
   };
 
-  const handleCopyActivityLink = (activityId: string) => {
-    const link = `${window.location.origin}/quiz/${activityId}`;
-    navigator.clipboard.writeText(link);
-    toast.success('Link de resolução copiado!');
-  };
 
-  const handleOpenReview = async (activityId: string) => {
+
+  const handleOpenCorrection = async (activityId: string) => {
     try {
       const res = await activityService.getActivityReview(activityId);
-      setReviewActivity(res.data);
-      setReviewModalOpen(true);
+      setActivityToCorrect(res.data);
+      
+      const initialScores: { [answerId: string]: string } = {};
+      const initialNotes: { [answerId: string]: string } = {};
+      res.data.answers.forEach(ans => {
+        if (ans.questionType === 'writing') {
+          initialScores[ans.id] = ans.evaluationScore !== null && ans.evaluationScore !== undefined ? String(ans.evaluationScore) : '';
+          initialNotes[ans.id] = ans.evaluationNotes || '';
+        }
+      });
+      setCorrectionScores(initialScores);
+      setCorrectionNotes(initialNotes);
+      setCorrectionModalOpen(true);
     } catch {
-      toast.error('Erro ao abrir revisão da atividade.');
+      toast.error('Erro ao buscar respostas para correção.');
+    }
+  };
+
+  const handleSaveCorrection = async () => {
+    if (!activityToCorrect) return;
+    setSavingCorrection(true);
+
+    const totalWeight = activityToCorrect.answers.filter(a => a.questionType !== 'text_block').reduce((acc, a) => acc + (a.weight || 1), 0);
+
+    for (const [ansId, scoreStr] of Object.entries(correctionScores)) {
+      const dbAns = activityToCorrect.answers.find(a => a.id === ansId);
+      if (dbAns) {
+        const maxVal = totalWeight > 0 ? ((dbAns.weight || 1) / totalWeight) * activityToCorrect.maxGrade : 0;
+        const score = parseFloat(String(scoreStr).replace(',', '.')) || 0;
+        if (score > maxVal) {
+          toast.error(`A nota atribuída para a questão (${score}) excede o limite máximo permitido (${maxVal.toFixed(2)}).`);
+          setSavingCorrection(false);
+          return;
+        }
+        if (score < 0) {
+          toast.error('A nota não pode ser menor que zero.');
+          setSavingCorrection(false);
+          return;
+        }
+      }
+    }
+
+    try {
+      const corrections = Object.entries(correctionScores).map(([ansId, scoreStr]) => {
+        const score = parseFloat(String(scoreStr).replace(',', '.')) || 0;
+        const editor = document.getElementById(`notes-editor-${ansId}`);
+        const notesHtml = editor ? editor.innerHTML : (correctionNotes[ansId] || '');
+        return {
+          answerId: ansId,
+          score,
+          notes: notesHtml
+        };
+      });
+
+      await activityService.correctActivity(activityToCorrect.id, corrections);
+      toast.success('Atividade corrigida com sucesso!');
+      setCorrectionModalOpen(false);
+      loadData();
+    } catch {
+      toast.error('Erro ao salvar correção.');
+    }
+    setSavingCorrection(false);
+  };
+
+  const handleDeleteStudentActivity = async (id: string) => {
+    const confirmDelete = window.confirm('Tem certeza que deseja excluir esta tentativa de atividade? Todos os dados de respostas e nota serão apagados permanentemente.');
+    if (!confirmDelete) return;
+
+    try {
+      await activityService.deleteStudentActivity(id);
+      toast.success('Tentativa de atividade excluída com sucesso!');
+      loadData();
+    } catch {
+      toast.error('Erro ao excluir atividade.');
+    }
+  };
+
+  // Manual assessment handlers (Prova / Exercício)
+  const openManualModal = (type: 'exam' | 'exercise', item?: any) => {
+    setManualType(type);
+    if (item) {
+      setSelectedManualId(item.id);
+      setManualTitle(item.title);
+      setManualDate(item.scheduledAt.substring(0, 10));
+      setManualNotes(item.notes || '');
+      setManualGrade(item.grade != null ? String(item.grade) : '');
+      setManualMaxGrade(String(item.maxGrade));
+    } else {
+      setSelectedManualId(null);
+      setManualTitle('');
+      setManualDate(format(new Date(), 'yyyy-MM-dd'));
+      setManualNotes('');
+      setManualGrade('');
+      setManualMaxGrade('10');
+    }
+    setManualModalOpen(true);
+  };
+
+  const handleSaveManual = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!student) return;
+    setSavingManual(true);
+    const body = {
+      studentId: student.id,
+      title: manualTitle,
+      scheduledAt: `${manualDate}T00:00:00`,
+      notes: manualNotes,
+      grade: manualGrade ? parseFloat(manualGrade) : null,
+      maxGrade: parseFloat(manualMaxGrade)
+    };
+    try {
+      if (manualType === 'exam') {
+        if (selectedManualId) {
+          await examService.update(selectedManualId, body);
+          toast.success('Prova atualizada!');
+        } else {
+          await examService.create(body);
+          toast.success('Prova adicionada!');
+        }
+      } else {
+        if (selectedManualId) {
+          await exerciseService.update(selectedManualId, body);
+          toast.success('Exercício atualizado!');
+        } else {
+          await exerciseService.create(body);
+          toast.success('Exercício adicionado!');
+        }
+      }
+      setManualModalOpen(false);
+      loadData();
+    } catch {
+      toast.error('Erro ao salvar lançamento.');
+    }
+    setSavingManual(false);
+  };
+
+  const handleDeleteManual = async (type: 'exam' | 'exercise', id: string) => {
+    const label = type === 'exam' ? 'prova' : 'exercício';
+    if (!confirm(`Deseja excluir esta ${label}?`)) return;
+    try {
+      if (type === 'exam') {
+        await examService.delete(id);
+      } else {
+        await exerciseService.delete(id);
+      }
+      toast.success(`${type === 'exam' ? 'Prova' : 'Exercício'} excluído!`);
+      loadData();
+    } catch {
+      toast.error(`Erro ao excluir ${label}.`);
     }
   };
 
@@ -701,62 +960,175 @@ export default function StudentDetailPage() {
   };
 
   const tabs = [
-    { key: 'lessons' as const, icon: <MdCalendarToday />, label: 'Aulas', count: student.lessons.length },
+    { key: 'lessons' as const, icon: <MdCalendarToday />, label: 'Aulas', count: visibleStudentLessons.length },
     { key: 'schedules' as const, icon: <MdSchedule />, label: 'Horários', count: schedules.length },
     { key: 'payments' as const, icon: <MdPayment />, label: 'Mensalidades', count: student.payments.length },
-    { key: 'exams' as const, icon: <MdSchool />, label: 'Provas', count: student.exams.length },
-    { key: 'exercises' as const, icon: <MdAssignment />, label: 'Exercícios', count: student.exercises.length },
-    { key: 'activities' as const, icon: <MdAssignmentTurnedIn />, label: 'Provas & Exercícios Online', count: studentActivities.length },
+    { key: 'activities' as const, icon: <MdAssignmentTurnedIn />, label: 'Provas & Exercícios', count: studentActivities.length + (student.exams?.length || 0) + (student.exercises?.length || 0) },
+    { key: 'sheets' as const, icon: <MdSchool />, label: 'Fichas', count: releasedSheetIds.length },
   ];
 
   return (
     <div className="student-detail animate-fadeIn">
-      <div className="back-bar">
-        <Button variant="ghost" icon={<MdArrowBack />} onClick={() => navigate('/students')}>Voltar</Button>
-      </div>
-
       <div className="profile-grid">
         <Card variant="elevated" className="student-profile animate-slideUp">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)', width: '100%' }}>
             <div className="profile-header-wrap">
-              {/* Square rounded avatar occupying 3 rows height */}
+              {/* Large circular avatar */}
               <div className="profile-avatar-wrap">
-                <Avatar src={student.photoUrl} name={student.name} size="xl" shape="square" />
+                <Avatar src={student.photoUrl} name={student.name} size="xl" shape="circle" />
               </div>
               
-              {/* Right side content divided into 3 rows */}
-              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: 1, minWidth: 0, gap: '6px' }}>
-                {/* Row 1: Larger Student Name + Enquadrados Edit and Delete Action Buttons */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
-                  <h2 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)', margin: 0, wordBreak: 'break-word' }}>
+              <div className="profile-info-content">
+                {/* Row 1: Larger Student Name + Actions */}
+                <div className="profile-info-top">
+                  <h2 className="student-name-title">
                     {student.name}
                   </h2>
-                  <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+                  <div className="student-actions">
+                    <button
+                      className="icon-btn"
+                      onClick={() => setShowFullDetails(!showFullDetails)}
+                      title={showFullDetails ? 'Ocultar Ficha Completa' : 'Ver Ficha Completa do Aluno'}
+                    >
+                      {showFullDetails ? <MdExpandLess /> : <MdExpandMore />}
+                    </button>
+                    <button className="icon-btn icon-btn-warning" onClick={() => handleCopyPortalLink(student.id)} title="Copiar Link do Portal do Aluno"><MdOpenInNew /></button>
                     <button className="icon-btn" onClick={openEditStudentModal} title="Editar Aluno"><MdEdit /></button>
                     <button className="icon-btn icon-btn-danger" onClick={handleDeleteStudent} title="Excluir Aluno"><MdDelete /></button>
                   </div>
                 </div>
 
-                {/* Row 2: Subject - Level - Status */}
-                <div className="profile-tags" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                  {student.subjectName && <Badge variant="primary">{student.subjectName}</Badge>}
-                  {student.levelName && <Badge variant="secondary">{student.levelName}</Badge>}
+                {/* Row 2: Pills - Status, Subject, Level */}
+                <div className="profile-tags-row">
                   <Badge variant={student.isActive ? 'success' : 'danger'}>
                     {student.isActive ? 'Ativo' : 'Arquivado'}
                   </Badge>
+                  {student.subjectName && <Badge variant="primary"><MdMenuBook style={{marginRight: '4px', verticalAlign: 'text-bottom'}}/>{student.subjectName}</Badge>}
+                  {student.levelName && <Badge variant="secondary"><MdSchool style={{marginRight: '4px', verticalAlign: 'text-bottom'}}/>{student.levelName}</Badge>}
                 </div>
 
-                {/* Row 3: + Detalhes Button */}
-                <div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    icon={showFullDetails ? <MdExpandLess /> : <MdExpandMore />}
-                    onClick={() => setShowFullDetails(!showFullDetails)}
-                    style={{ padding: '2px 8px', fontSize: '12px', height: 'auto' }}
-                  >
-                    {showFullDetails ? 'Ocultar Detalhes' : '+ Detalhes'}
-                  </Button>
+                {/* Row 3: Subtitle Metadata (Idade, Responsável, Início) */}
+                <div className="profile-meta-subtitle-row">
+                  {student.birthDate && (
+                    <span className="meta-subtitle-item">
+                      <MdCake /> {calculateAge(student.birthDate)} anos
+                    </span>
+                  )}
+                  {student.guardianName && (
+                    <span className="meta-subtitle-item">
+                      <MdPerson /> Resp.: {student.guardianName}
+                    </span>
+                  )}
+                  {activeStartDate && (
+                    <span className="meta-subtitle-item">
+                      <MdCalendarToday /> Desde {format(activeStartDate, 'dd/MM/yyyy')}
+                    </span>
+                  )}
+                </div>
+
+                {/* Row 4: Sleek Circular Icon Dials + Mostradores + Hover Balloons */}
+                <div className="profile-dials-row">
+                  {/* 1. WhatsApp Dial */}
+                  {effectivePhone ? (
+                    <a
+                      href={getWhatsappUrl(effectivePhone)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="metric-dial-item metric-dial-whatsapp"
+                    >
+                      <div className="metric-dial-circle">
+                        <FaWhatsapp />
+                      </div>
+                      <span className="metric-dial-counter">Whats</span>
+                      <div className="metric-dial-tooltip">
+                        <strong>WhatsApp Direto</strong>
+                        <span>{effectivePhone} • Clique para conversar</span>
+                      </div>
+                    </a>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={openEditStudentModal}
+                      className="metric-dial-item metric-dial-whatsapp is-muted"
+                    >
+                      <div className="metric-dial-circle">
+                        <FaWhatsapp />
+                      </div>
+                      <span className="metric-dial-counter">Sem nº</span>
+                      <div className="metric-dial-tooltip">
+                        <strong>WhatsApp não cadastrado</strong>
+                        <span>Clique para adicionar o telefone do aluno</span>
+                      </div>
+                    </button>
+                  )}
+
+                  {/* 2. Monthly Attendance Rate Dial */}
+                  <div className="metric-dial-item metric-dial-monthly">
+                    <div className="metric-dial-circle">
+                      <MdPercent />
+                    </div>
+                    <span className="metric-dial-counter">{monthlyAttendanceRate}%</span>
+                    <div className="metric-dial-tooltip">
+                      <strong>Porcentagem de Presença (Mês)</strong>
+                      <span>
+                        {monthlyTotalAtts > 0
+                          ? `${monthlyCompletedCount} presenças e ${monthlyCancelledCount} faltas neste mês`
+                          : `Sem aulas finalizadas no mês (Geral: ${attendanceRate}%)`}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* 3. Total Attendance Rate Dial */}
+                  <div className="metric-dial-item metric-dial-total-att">
+                    <div className="metric-dial-circle">
+                      <MdVerified />
+                    </div>
+                    <span className="metric-dial-counter">{attendanceRate}%</span>
+                    <div className="metric-dial-tooltip">
+                      <strong>Total Porcentagem de Presença</strong>
+                      <span>{completedCount} aulas concluídas • {cancelledCount} faltas no histórico</span>
+                    </div>
+                  </div>
+
+                  {/* 4. Total Class Hours Dial */}
+                  <div className="metric-dial-item metric-dial-hours">
+                    <div className="metric-dial-circle">
+                      <MdTimer />
+                    </div>
+                    <span className="metric-dial-counter">{completedHours}h</span>
+                    <div className="metric-dial-tooltip">
+                      <strong>Total de Horas-Aula</strong>
+                      <span>{completedHours}h ministradas de {totalPastHours}h previstas ({hoursAttendanceRate}%)</span>
+                    </div>
+                  </div>
+
+                  {/* 5. Active Student Tenure Counter Dial */}
+                  <div className="metric-dial-item metric-dial-tenure">
+                    <div className="metric-dial-circle">
+                      <MdEventAvailable />
+                    </div>
+                    <span className="metric-dial-counter">{activeTenureShort}</span>
+                    <div className="metric-dial-tooltip">
+                      <strong>Tempo como Aluno {student.isActive ? 'Ativo' : ''}</strong>
+                      <span>{activeTenureFull} (desde {format(activeStartDate, 'dd/MM/yyyy')})</span>
+                    </div>
+                  </div>
+
+                  {/* 6. Average Grade in Activities Dial */}
+                  <div className="metric-dial-item metric-dial-grade">
+                    <div className="metric-dial-circle">
+                      <MdEmojiEvents />
+                    </div>
+                    <span className="metric-dial-counter">{averageGradeDisplay}</span>
+                    <div className="metric-dial-tooltip">
+                      <strong>Média de Notas em Atividades</strong>
+                      <span>
+                        {allNormalizedGrades.length > 0
+                          ? `Nota média ${averageGradeDisplay} / 10 em ${allNormalizedGrades.length} ${allNormalizedGrades.length === 1 ? 'atividade avaliada' : 'atividades avaliadas'}`
+                          : 'Nenhuma prova ou exercício avaliado ainda'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -896,8 +1268,8 @@ export default function StudentDetailPage() {
 
       <div className="detail-tabs">
         {tabs.map(t => (
-          <button key={t.key} className={`tab-btn ${tab === t.key ? 'tab-active' : ''}`} onClick={() => setTab(t.key)}>
-            {t.icon} <span>{t.label}</span> <span className="tab-count">{t.count}</span>
+          <button key={t.key} className={`tab-btn ${tab === t.key ? 'tab-active' : ''}`} onClick={() => setTab(t.key)} title={t.label}>
+            {t.icon} <span className="tab-label">{t.label}</span> <span className="tab-count">{t.count}</span>
           </button>
         ))}
       </div>
@@ -905,7 +1277,7 @@ export default function StudentDetailPage() {
       <div className="tab-content animate-fadeIn">
         {tab === 'lessons' && (() => {
           const availableYears = Array.from(new Set(
-            student.lessons.map(l => format(new Date(l.scheduledAt), 'yyyy'))
+            visibleStudentLessons.map(l => format(new Date(l.scheduledAt), 'yyyy'))
           )).sort().reverse();
 
           const monthsList = [
@@ -923,7 +1295,7 @@ export default function StudentDetailPage() {
             { value: '12', label: 'Dez' },
           ];
 
-          const filteredLessons = student.lessons.filter(l => {
+          const filteredLessons = visibleStudentLessons.filter(l => {
             const lessonDate = new Date(l.scheduledAt);
             const m = format(lessonDate, 'MM');
             const y = format(lessonDate, 'yyyy');
@@ -940,55 +1312,54 @@ export default function StudentDetailPage() {
 
           return (
             <div className="detail-list">
-              <div className="tab-toolbar">
-                <div className="tab-toolbar-actions">
-                  <Button
-                    icon={<MdAdd />}
-                    size="sm"
-                    onClick={openExtraLessonModal}
-                    style={{ height: '36px', padding: '0 12px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', whiteSpace: 'nowrap' }}
-                  >
-                    Aula Extra
-                  </Button>
+              <div className="tab-toolbar" style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '8px', alignItems: 'center', justifyContent: 'flex-start', width: '100%', marginBottom: '8px' }}>
+                <Button
+                  icon={<MdAdd />}
+                  size="sm"
+                  onClick={openExtraLessonModal}
+                  style={{ height: '36px', padding: '0 12px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', whiteSpace: 'nowrap' }}
+                >
+                  Aula Extra
+                </Button>
 
-                  <select
-                    className="input-field"
-                    style={{ height: '36px', padding: '0 8px', fontSize: '13px', width: 'auto', minWidth: '82px', boxSizing: 'border-box' }}
-                    value={selectedMonth}
-                    onChange={e => setSelectedMonth(e.target.value)}
-                  >
-                    <option value="all">Mês</option>
-                    {monthsList.map(m => (
-                      <option key={m.value} value={m.value}>{m.label}</option>
-                    ))}
-                  </select>
+                <select
+                  className="input-field"
+                  style={{ height: '36px', padding: '0 8px', fontSize: '13px', width: 'auto', minWidth: '82px', boxSizing: 'border-box' }}
+                  value={selectedMonth}
+                  onChange={e => setSelectedMonth(e.target.value)}
+                >
+                  <option value="all">Mês</option>
+                  {monthsList.map(m => (
+                    <option key={m.value} value={m.value}>{m.label}</option>
+                  ))}
+                </select>
 
-                  <select
-                    className="input-field"
-                    style={{ height: '36px', padding: '0 8px', fontSize: '13px', width: 'auto', minWidth: '75px', boxSizing: 'border-box' }}
-                    value={selectedYear}
-                    onChange={e => setSelectedYear(e.target.value)}
-                  >
-                    <option value="all">Ano</option>
-                    {availableYears.map(y => (
-                      <option key={y} value={y}>{y}</option>
-                    ))}
-                  </select>
+                <select
+                  className="input-field"
+                  style={{ height: '36px', padding: '0 8px', fontSize: '13px', width: 'auto', minWidth: '75px', boxSizing: 'border-box' }}
+                  value={selectedYear}
+                  onChange={e => setSelectedYear(e.target.value)}
+                >
+                  <option value="all">Ano</option>
+                  {availableYears.map(y => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setLessonSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-                    style={{ height: '36px', padding: '0 12px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px', fontSize: '13px', whiteSpace: 'nowrap' }}
-                    title={lessonSortOrder === 'desc' ? "Exibindo decrescente. Clique para crescente." : "Exibindo crescente. Clique para decrescente."}
-                  >
-                    <MdSwapVert style={{ fontSize: '18px' }} />
-                    <span>{lessonSortOrder === 'desc' ? 'Decrescente' : 'Crescente'}</span>
-                  </Button>
-                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setLessonSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                  style={{ height: '36px', width: '36px', padding: '0', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                  title={lessonSortOrder === 'desc' ? "Exibindo decrescente. Clique para crescente." : "Exibindo crescente. Clique para decrescente."}
+                >
+                  <MdSwapVert style={{ fontSize: '18px' }} />
+                </Button>
+              </div>
 
-                <span className="tab-toolbar-info">
-                  Exibindo {filteredLessons.length} de {student.lessons.length} aula(s)
+              <div style={{ display: 'block', width: '100%', textAlign: 'left', marginBottom: '12px' }}>
+                <span className="tab-toolbar-info" style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 500 }}>
+                  Exibindo {filteredLessons.length} de {visibleStudentLessons.length} aula(s)
                 </span>
               </div>
 
@@ -1050,7 +1421,7 @@ export default function StudentDetailPage() {
         {tab === 'schedules' && (
           <div className="schedules-tab">
             <div className="tab-toolbar">
-              <h3>Horários Semanais</h3>
+              <h3>Horários Recorrentes</h3>
               <Button icon={<MdAdd />} onClick={() => openScheduleModal()}>Adicionar Horário</Button>
             </div>
             <div className="detail-list">
@@ -1058,21 +1429,46 @@ export default function StudentDetailPage() {
                 const dayLabel = DAYS_OF_WEEK.find(d => d.value === s.dayOfWeek)?.label || 'Semana';
                 const validFromDate = s.validFrom ? new Date(s.validFrom) : null;
                 const validUntilDate = s.validUntil ? new Date(s.validUntil) : null;
+                const freqNorm = (s.frequency || 'weekly').toLowerCase();
+                const freqLabel = freqNorm === 'biweekly' ? 'Quinzenal' : freqNorm === 'monthly' ? 'Mensal' : 'Semanal';
+                const freqVariant = freqNorm === 'biweekly' ? 'secondary' : freqNorm === 'monthly' ? 'primary' : 'info';
                 
                 return (
-                  <Card key={s.id} className="detail-item">
-                    <div className="schedule-info">
-                      <MdSchedule className="schedule-icon" />
-                      <div>
-                        <strong>{dayLabel}</strong>
-                        <span className="detail-meta">{s.startTime.substring(0, 5)} até {s.endTime.substring(0, 5)}</span>
-                        <span className="detail-meta" style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                          Vigência: {validFromDate ? format(validFromDate, 'dd/MM/yyyy') : '-'} 
+                  <Card key={s.id} className="schedule-row-card">
+                    <div className="schedule-row-main">
+                      <div className="schedule-row-header-part" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        <MdSchedule className="schedule-icon" />
+                        <strong className="schedule-time-title">
+                          {dayLabel} — {s.startTime.substring(0, 5)} às {s.endTime.substring(0, 5)}
+                        </strong>
+                        <Badge variant={freqVariant as any}>{freqLabel}</Badge>
+                      </div>
+                      
+                      <div className="schedule-row-details-part">
+                        <span className="schedule-validity-text">
+                          Vigência: {validFromDate ? format(validFromDate, 'dd/MM/yyyy') : '-'}
                           {validUntilDate ? ` até ${format(validUntilDate, 'dd/MM/yyyy')}` : ' (Indeterminado)'}
                         </span>
+                        <div className="schedule-status-badge-wrap">
+                          {validUntilDate ? (
+                            <Badge variant="warning">Encerrado</Badge>
+                          ) : (
+                            <Badge variant="success">Ativo</Badge>
+                          )}
+                        </div>
                       </div>
                     </div>
-                    <div style={{ display: 'flex', gap: '8px' }}>
+
+                    <div className="schedule-row-actions">
+                      {!s.validUntil && (
+                        <button className="icon-btn icon-btn-warning" onClick={() => {
+                          setScheduleToEndId(s.id);
+                          setEndScheduleDate(format(new Date(), 'yyyy-MM-dd'));
+                          setEndScheduleModalOpen(true);
+                        }} title="Encerrar horário (concluir ciclo)">
+                          <MdCancel />
+                        </button>
+                      )}
                       <button className="icon-btn icon-btn-primary" onClick={() => openScheduleModal(s)}>
                         <MdEdit />
                       </button>
@@ -1165,174 +1561,628 @@ export default function StudentDetailPage() {
           </div>
         )}
 
-        {tab === 'exams' && (
-          <div className="exams-tab">
-            <div className="tab-toolbar">
-              <h3>Provas Cadastradas</h3>
-              <Button icon={<MdAdd />} onClick={() => openExamModal()}>Adicionar Prova</Button>
-            </div>
-            <div className="detail-list">
-              {student.exams.map(e => (
-                <Card key={e.id} className="detail-item">
-                  <div className="exam-item-body">
-                    <strong>{e.title}</strong>
-                    <span className="detail-meta">
-                      Agendada: {format(new Date(e.scheduledAt), 'dd/MM/yyyy', { locale: ptBR })}
-                    </span>
-                    {e.notes && <p className="lesson-notes-preview">📝 {e.notes}</p>}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    {e.grade != null ? (
-                      <Badge variant="success">Nota: {e.grade}/{e.maxGrade}</Badge>
-                    ) : (
-                      <Badge variant="warning">Sem nota</Badge>
-                    )}
-                    <button className="icon-btn" onClick={() => openExamModal(e)}><MdEdit /></button>
-                    <button className="icon-btn icon-btn-danger" onClick={() => handleDeleteExam(e.id)}><MdDelete /></button>
-                  </div>
-                </Card>
-              ))}
-              {student.exams.length === 0 && <p className="empty-text">Nenhuma prova registrada.</p>}
-            </div>
-          </div>
-        )}
-
-        {tab === 'exercises' && (
-          <div className="exercises-tab">
-            <div className="tab-toolbar">
-              <h3>Exercícios Cadastrados</h3>
-              <Button icon={<MdAdd />} onClick={() => openExerciseModal()}>Adicionar Exercício</Button>
-            </div>
-            <div className="detail-list">
-              {student.exercises.map(e => (
-                <Card key={e.id} className="detail-item">
-                  <div className="exam-item-body">
-                    <strong>{e.title}</strong>
-                    <span className="detail-meta">
-                      Agendado: {format(new Date(e.scheduledAt), 'dd/MM/yyyy', { locale: ptBR })}
-                    </span>
-                    {e.notes && <p className="lesson-notes-preview">📝 {e.notes}</p>}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    {e.grade != null ? (
-                      <Badge variant="success">Nota: {e.grade}/{e.maxGrade}</Badge>
-                    ) : (
-                      <Badge variant="warning">Sem nota</Badge>
-                    )}
-                    <button className="icon-btn" onClick={() => openExerciseModal(e)}><MdEdit /></button>
-                    <button className="icon-btn icon-btn-danger" onClick={() => handleDeleteExercise(e.id)}><MdDelete /></button>
-                  </div>
-                </Card>
-              ))}
-              {student.exercises.length === 0 && <p className="empty-text">Nenhum exercício registrado.</p>}
-            </div>
-          </div>
-        )}
-
         {tab === 'activities' && (
           <div className="activities-tab">
-            <div className="tab-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
-              <h3>Provas & Exercícios Online</h3>
-              <Button icon={<MdAdd />} onClick={openAssignModal}>Atribuir Atividade</Button>
+            {/* Atividades Online */}
+            <div className="tab-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)', gap: '12px' }}>
+              <h3 style={{ margin: 0, fontSize: '16px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Provas & Exercícios Online</h3>
+              <Button icon={<MdAdd />} onClick={openAssignModal} title="Atribuir Atividade Online" style={{ padding: '8px', minWidth: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} />
+            </div>
+
+            {/* Toggle Filtro para o Professor */}
+            <div className="teacher-filter-toggle" style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+              <button 
+                type="button"
+                onClick={() => setTeacherActivityFilter('all')}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-color)',
+                  background: teacherActivityFilter === 'all' ? 'var(--accent-primary)' : 'var(--bg-tertiary)',
+                  color: '#ffffff',
+                  fontWeight: 600,
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  transition: 'all var(--transition-fast)'
+                }}
+              >
+                Todas
+              </button>
+              <button 
+                type="button"
+                onClick={() => setTeacherActivityFilter('exam')}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-color)',
+                  background: teacherActivityFilter === 'exam' ? 'var(--accent-primary)' : 'var(--bg-tertiary)',
+                  color: '#ffffff',
+                  fontWeight: 600,
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  transition: 'all var(--transition-fast)'
+                }}
+              >
+                Provas
+              </button>
+              <button 
+                type="button"
+                onClick={() => setTeacherActivityFilter('exercise')}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-color)',
+                  background: teacherActivityFilter === 'exercise' ? 'var(--accent-primary)' : 'var(--bg-tertiary)',
+                  color: '#ffffff',
+                  fontWeight: 600,
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  transition: 'all var(--transition-fast)'
+                }}
+              >
+                Exercícios
+              </button>
+            </div>
+
+            <div className="detail-list" style={{ marginBottom: 'var(--space-xl)' }}>
+              {(() => {
+                const filtered = studentActivities.filter(act => {
+                  if (teacherActivityFilter === 'all') return true;
+                  return act.type === teacherActivityFilter;
+                });
+
+                if (filtered.length === 0) {
+                  return <p className="empty-text">Nenhuma atividade online atribuída para esta opção.</p>;
+                }
+
+                return filtered.map(act => (
+                  <Card key={act.id} className="detail-item">
+                    <div className="exam-item-body">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '6px' }}>
+                        <Badge variant={act.type === 'exam' ? 'danger' : 'success'}>
+                          {act.type === 'exam' ? 'Prova' : 'Exercício'}
+                        </Badge>
+                        <strong>{act.title}</strong>
+                      </div>
+                      <span className="detail-meta">
+                        Agendado: {format(new Date(act.scheduledAt), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                        {act.completedAt && ` • Entregue em: ${format(new Date(act.completedAt), 'dd/MM/yyyy HH:mm', { locale: ptBR })}`}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {/* Status Icons */}
+                      {act.status === 'completed' ? (
+                        <div title="Atividade Entregue" style={{ display: 'flex', alignItems: 'center' }}>
+                          <MdCheckCircle size={22} style={{ color: 'var(--success)' }} />
+                        </div>
+                      ) : act.status === 'corrigir' ? (
+                        <div title="Entregue, aguardando correção" style={{ display: 'flex', alignItems: 'center' }}>
+                          <MdAssignmentTurnedIn size={22} style={{ color: 'var(--warning)' }} />
+                        </div>
+                      ) : (
+                        <div title="Pendente de resolução" style={{ display: 'flex', alignItems: 'center' }}>
+                          <MdAccessTime size={22} style={{ color: 'var(--text-muted)' }} />
+                        </div>
+                      )}
+
+                      {/* Nota (Apenas se finalizada) */}
+                      {act.status === 'completed' && (
+                        <div title="Nota obtida / Nota máxima" style={{ display: 'inline-flex', marginLeft: '4px' }}>
+                          <Badge variant="success">{(act.grade?.toFixed(1) ?? '10.0')}/{act.maxGrade.toFixed(1)}</Badge>
+                        </div>
+                      )}
+
+                      {/* Ações do Status */}
+                      {act.status === 'completed' && act.answers?.some(a => a.questionType === 'writing') && (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenCorrection(act.id)}
+                          title="Corrigir questões discursivas"
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: 'var(--warning)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '6px',
+                            borderRadius: '4px',
+                            transition: 'background var(--transition-fast)'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = 'var(--warning-light)'}
+                          onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                        >
+                          <MdEdit size={18} />
+                        </button>
+                      )}
+
+                      {act.status === 'corrigir' && (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenCorrection(act.id)}
+                          title="Corrigir respostas do aluno"
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: 'var(--warning)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '6px',
+                            borderRadius: '4px',
+                            transition: 'background var(--transition-fast)'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = 'var(--warning-light)'}
+                          onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                        >
+                          <MdEdit size={18} />
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => handleCopyActivityLink(act.id)}
+                        title="Copiar link da atividade"
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--text-secondary)',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '6px',
+                          borderRadius: '4px',
+                          transition: 'background var(--transition-fast), color var(--transition-fast)'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'var(--bg-tertiary)';
+                          e.currentTarget.style.color = 'var(--accent-primary)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'none';
+                          e.currentTarget.style.color = 'var(--text-secondary)';
+                        }}
+                      >
+                        <MdShare size={18} />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleShareActivityWhatsApp(act)}
+                        title="Compartilhar atividade via WhatsApp"
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#25D366',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '6px',
+                          borderRadius: '4px',
+                          transition: 'background var(--transition-fast), transform var(--transition-fast)'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'rgba(37, 211, 102, 0.15)';
+                          e.currentTarget.style.transform = 'scale(1.1)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'none';
+                          e.currentTarget.style.transform = 'none';
+                        }}
+                      >
+                        <FaWhatsapp size={18} />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => window.open(`${window.location.origin}/quiz/${act.id}`, '_blank')}
+                        title="Abrir prova em nova aba"
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--text-secondary)',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '6px',
+                          borderRadius: '4px',
+                          transition: 'background var(--transition-fast), color var(--transition-fast)'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'var(--bg-tertiary)';
+                          e.currentTarget.style.color = 'var(--accent-primary)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'none';
+                          e.currentTarget.style.color = 'var(--text-secondary)';
+                        }}
+                      >
+                        <MdOpenInNew size={18} />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteStudentActivity(act.id)}
+                        title="Excluir tentativa de atividade"
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--danger)',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '6px',
+                          borderRadius: '4px',
+                          transition: 'background var(--transition-fast)'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--danger-light)'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                      >
+                        <MdDelete size={18} />
+                      </button>
+                    </div>
+                  </Card>
+                ));
+              })()}
+            </div>
+
+            {/* Provas e Exercícios Presenciais (Lançados Manualmente) */}
+            <div className="tab-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'var(--space-lg)', marginBottom: 'var(--space-md)', gap: '12px' }}>
+              <h3 style={{ margin: 0, fontSize: '16px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Lançamentos</h3>
+              <Button variant="outline" icon={<MdAdd />} onClick={() => openManualModal('exam')} title="Novo Lançamento" style={{ padding: '8px', minWidth: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} />
             </div>
 
             <div className="detail-list">
-              {studentActivities.map(act => (
-                <Card key={act.id} className="detail-item">
-                  <div className="exam-item-body">
-                    <strong>{act.title}</strong>
-                    <span className="detail-meta">
-                      Matéria: {act.type === 'exam' ? 'Prova' : 'Exercício'} • Agendado: {format(new Date(act.scheduledAt), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
-                      {act.completedAt && ` • Concluído em: ${format(new Date(act.completedAt), 'dd/MM/yyyy HH:mm', { locale: ptBR })}`}
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    {act.status === 'completed' ? (
-                      <>
-                        <Badge variant="success">Nota: {act.grade?.toFixed(1) ?? '10.0'}/{act.maxGrade.toFixed(1)}</Badge>
-                        <Button variant="outline" size="sm" onClick={() => handleOpenReview(act.id)}>
-                          Revisar
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <Badge variant="warning">Pendente</Badge>
-                        <Button variant="outline" size="sm" icon={<MdContentCopy />} onClick={() => handleCopyActivityLink(act.id)}>
-                          Copiar Link
-                        </Button>
-                      </>
+              {(() => {
+                const combined = [
+                  ...(student.exams || []).map(ex => ({ ...ex, assessmentType: 'exam' as const })),
+                  ...(student.exercises || []).map(exe => ({ ...exe, assessmentType: 'exercise' as const }))
+                ].sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime());
+
+                return combined.map(item => (
+                  <Card key={`${item.assessmentType}-${item.id}`} className="detail-item">
+                    <div className="exam-item-body">
+                      <strong>{item.title} <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 'normal' }}>({item.assessmentType === 'exam' ? 'Prova' : 'Exercício'})</span></strong>
+                      <span className="detail-meta">
+                        Data: {format(new Date(item.scheduledAt), 'dd/MM/yyyy')}
+                        {item.notes && ` • Obs: ${item.notes}`}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      {item.grade !== null && item.grade !== undefined ? (
+                        <Badge variant="success">Nota: {item.grade.toFixed(1)} / {item.maxGrade.toFixed(1)}</Badge>
+                      ) : (
+                        <Badge variant="warning">Sem Nota</Badge>
+                      )}
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        <button className="icon-btn" onClick={() => openManualModal(item.assessmentType, item)} title="Editar"><MdEdit /></button>
+                        <button className="icon-btn icon-btn-danger" onClick={() => handleDeleteManual(item.assessmentType, item.id)} title="Excluir"><MdDelete /></button>
+                      </div>
+                    </div>
+                  </Card>
+                ));
+              })()}
+
+              {((student.exams?.length || 0) === 0 && (student.exercises?.length || 0) === 0) && (
+                <p className="empty-text">Nenhuma nota ou lançamento registrado.</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {tab === 'sheets' && (
+          <div className="sheets-tab animate-fadeIn">
+            <div className="tab-toolbar">
+              <h3>Fichas Pedagógicas do Aluno</h3>
+              <p className="tab-toolbar-info">
+                Fichas liberadas para visualização no portal público do aluno
+              </p>
+            </div>
+
+            {loadingSheets ? (
+              <div className="tab-loading-spinner" style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
+                <div className="spinner"></div>
+              </div>
+            ) : (
+              <>
+                {/* Agrupamento de Fichas por Nível */}
+                <div className="sheets-levels-grouped animate-fadeIn" style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '24px' }}>
+                  <h4 style={{ fontSize: '14px', marginBottom: '4px', color: 'var(--text-secondary)' }}>
+                    Fichas por Nível da Matéria:
+                  </h4>
+                  {allLevels.map((level: Level) => {
+                    const isExpanded = expandedLevelIds.includes(level.id);
+                    const levelSheets = allSubjectSheets.filter((s: ClassSheet) => s.levelId === level.id);
+                    
+                    return (
+                      <Card key={level.id} style={{ padding: '0px', overflow: 'hidden' }}>
+                        {/* Cabeçalho do Nível clicável para expandir/colapsar */}
+                        <div 
+                          onClick={() => toggleLevelExpand(level.id)} 
+                          style={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            alignItems: 'center', 
+                            padding: '14px 16px', 
+                            background: 'var(--bg-glass)', 
+                            cursor: 'pointer',
+                            userSelect: 'none'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <strong style={{ fontSize: '14px', color: 'var(--text-primary)' }}>{level.name}</strong>
+                            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>({levelSheets.length} ficha(s))</span>
+                          </div>
+                          <div style={{ color: 'var(--text-muted)' }}>
+                            {isExpanded ? <MdExpandLess size={20} /> : <MdExpandMore size={20} />}
+                          </div>
+                        </div>
+
+                        {/* Lista das fichas do nível (exibida apenas se expandido) */}
+                        {isExpanded && (
+                          <div style={{ padding: '12px 16px', background: 'rgba(0,0,0,0.1)', borderTop: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {levelSheets.map((sheet: ClassSheet) => {
+                              const isReleased = releasedSheetIds.includes(sheet.id);
+                              return (
+                                <div key={sheet.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <input
+                                      type="checkbox"
+                                      checked={isReleased}
+                                      onChange={() => handleToggleSheet(sheet.id)}
+                                      style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                                    />
+                                    <span style={{ fontSize: '13px', fontWeight: 600 }}>{sheet.title}</span>
+                                  </div>
+                                  <Badge variant={isReleased ? 'success' : 'secondary'}>
+                                    {isReleased ? 'Liberada' : 'Não Liberada'}
+                                  </Badge>
+                                </div>
+                              );
+                            })}
+                            {levelSheets.length === 0 && (
+                              <p className="empty-text" style={{ fontSize: '12px', textAlign: 'center', margin: '8px 0' }}>Nenhuma ficha cadastrada neste nível.</p>
+                            )}
+                          </div>
+                        )}
+                      </Card>
+                    );
+                  })}
+                  {allLevels.length === 0 && (
+                    <p className="empty-text">Nenhum nível cadastrado nesta matéria.</p>
+                  )}
+                </div>
+
+                {/* Lista Padrão de Fichas Liberadas do Aluno */}
+                <div className="sheets-default-list animate-fadeIn" style={{ marginTop: '24px' }}>
+                  <h4 style={{ fontSize: '14px', marginBottom: '12px', color: 'var(--text-secondary)' }}>
+                    Fichas Liberadas para o Aluno ({releasedSheets.length}):
+                  </h4>
+                  <div className="detail-list">
+                    {releasedSheets.map((sheet: ClassSheet) => {
+                      const levelName = allLevels.find((l: Level) => l.id === sheet.levelId)?.name || (sheet.levelId === student.levelId ? student.levelName : 'Outro Nível');
+                      return (
+                        <Card key={sheet.id} className="detail-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px var(--space-md)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <input
+                              type="checkbox"
+                              checked={true}
+                              onChange={() => handleToggleSheet(sheet.id)}
+                              style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                            />
+                            <div>
+                              <strong>{sheet.title}</strong>
+                              <span className="detail-meta" style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)' }}>
+                                Nível: {levelName}
+                              </span>
+                            </div>
+                          </div>
+                          <Badge variant="success">
+                            Liberada
+                          </Badge>
+                        </Card>
+                      );
+                    })}
+                    {releasedSheets.length === 0 && (
+                      <p className="empty-text">Nenhuma ficha pedagógica liberada para este aluno ainda. Expanda os níveis acima para liberar fichas!</p>
                     )}
                   </div>
-                </Card>
-              ))}
-
-              {studentActivities.length === 0 && <p className="empty-text">Nenhuma atividade atribuída.</p>}
-            </div>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>
 
-      {/* Schedule Modal */}
+      {/* Schedule Modal (2 Fases: 1. Frequência -> 2. Dia, Horário e Vigência) */}
       <Modal
         isOpen={scheduleModalOpen}
         onClose={() => setScheduleModalOpen(false)}
-        title={selectedSchedule ? "Editar Horário Semanal" : "Adicionar Horário Semanal"}
+        title={
+          scheduleStep === 1
+            ? (selectedSchedule ? 'Editar Horário — Etapa 1 de 2' : 'Agendar Horário — Etapa 1 de 2')
+            : (selectedSchedule ? 'Editar Horário — Etapa 2 de 2' : 'Agendar Horário — Etapa 2 de 2')
+        }
         size="sm"
         footer={
-          <>
-            <Button variant="ghost" onClick={() => setScheduleModalOpen(false)}>Cancelar</Button>
-            <Button isLoading={savingSchedule} onClick={handleSaveSchedule}>Salvar</Button>
-          </>
+          scheduleStep === 1 ? (
+            <>
+              <Button variant="ghost" onClick={() => setScheduleModalOpen(false)}>Cancelar</Button>
+              <Button variant="primary" onClick={() => setScheduleStep(2)}>
+                Próxima Etapa →
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="outline" onClick={() => setScheduleStep(1)}>
+                ← Voltar
+              </Button>
+              <Button variant="ghost" onClick={() => setScheduleModalOpen(false)}>Cancelar</Button>
+              <Button isLoading={savingSchedule} onClick={handleSaveSchedule}>Salvar Horário</Button>
+            </>
+          )
         }
       >
-        <form onSubmit={handleSaveSchedule} className="modal-form">
-          <div className="input-group">
-            <label className="input-label">Dia da Semana</label>
-            <select
-              className="input-field"
-              value={dayOfWeek}
-              onChange={e => setDayOfWeek(Number(e.target.value))}
-              required
+        {scheduleStep === 1 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '0 0 4px 0', lineHeight: 1.45 }}>
+              Escolha a frequência com que as aulas deste aluno acontecerão:
+            </p>
+
+            {[
+              {
+                key: 'weekly' as const,
+                title: 'Semanal',
+                subtitle: 'Toda semana no mesmo dia e horário (4 a 5 aulas por mês)',
+              },
+              {
+                key: 'biweekly' as const,
+                title: 'Quinzenal',
+                subtitle: 'A cada 15 dias / semanas alternadas (2 aulas por mês)',
+              },
+              {
+                key: 'monthly' as const,
+                title: 'Mensal',
+                subtitle: 'Uma vez por mês no dia da semana escolhido (1 aula por mês)',
+              },
+            ].map(opt => {
+              const isSelected = scheduleFrequency === opt.key;
+              return (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => setScheduleFrequency(opt.key)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '12px',
+                    width: '100%',
+                    padding: '14px 16px',
+                    borderRadius: 'var(--radius-md)',
+                    border: isSelected ? '2px solid var(--accent-primary)' : '1px solid var(--border-color)',
+                    background: isSelected ? 'var(--accent-primary-light)' : 'var(--bg-tertiary)',
+                    color: 'var(--text-primary)',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <strong style={{ fontSize: '14px', color: isSelected ? 'var(--accent-primary)' : 'var(--text-primary)' }}>
+                      {opt.title}
+                    </strong>
+                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+                      {opt.subtitle}
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      width: '20px',
+                      height: '20px',
+                      borderRadius: '50%',
+                      border: isSelected ? '6px solid var(--accent-primary)' : '2px solid var(--border-color)',
+                      background: '#fff',
+                      flexShrink: 0,
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <form onSubmit={handleSaveSchedule} className="modal-form">
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '10px 14px',
+                borderRadius: 'var(--radius-md)',
+                background: 'var(--bg-tertiary)',
+                border: '1px solid var(--border-color)',
+                marginBottom: '4px',
+                fontSize: '12.5px',
+              }}
             >
-              {DAYS_OF_WEEK.map(d => (
-                <option key={d.value} value={d.value}>{d.label}</option>
-              ))}
-            </select>
-          </div>
+              <span style={{ color: 'var(--text-secondary)' }}>
+                Frequência selecionada:{' '}
+                <strong style={{ color: 'var(--accent-primary)' }}>
+                  {scheduleFrequency === 'biweekly' ? 'Quinzenal (a cada 15 dias)' : scheduleFrequency === 'monthly' ? 'Mensal (1x por mês)' : 'Semanal (toda semana)'}
+                </strong>
+              </span>
+              <button
+                type="button"
+                onClick={() => setScheduleStep(1)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--accent-primary)',
+                  fontWeight: 700,
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                }}
+              >
+                Alterar
+              </button>
+            </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-            <Input
-              type="time"
-              label="Início"
-              value={startTime}
-              onChange={e => setStartTime(e.target.value)}
-              required
-            />
-            <Input
-              type="time"
-              label="Término"
-              value={endTime}
-              onChange={e => setEndTime(e.target.value)}
-              required
-            />
-          </div>
+            <div className="input-group">
+              <label className="input-label">Dia da Semana</label>
+              <select
+                className="input-field"
+                value={dayOfWeek}
+                onChange={e => setDayOfWeek(Number(e.target.value))}
+                required
+              >
+                {DAYS_OF_WEEK.map(d => (
+                  <option key={d.value} value={d.value}>{d.label}</option>
+                ))}
+              </select>
+            </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '12px' }}>
-            <Input
-              type="date"
-              label="Primeira Aula"
-              value={validFrom}
-              onChange={e => setValidFrom(e.target.value)}
-              required
-            />
-            <Input
-              type="date"
-              label="Última Aula (Opcional)"
-              value={validUntil}
-              onChange={e => setValidUntil(e.target.value)}
-            />
-          </div>
-        </form>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <Input
+                type="time"
+                label="Início"
+                value={startTime}
+                onChange={e => setStartTime(e.target.value)}
+                required
+              />
+              <Input
+                type="time"
+                label="Término"
+                value={endTime}
+                onChange={e => setEndTime(e.target.value)}
+                required
+              />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '12px' }}>
+              <Input
+                type="date"
+                label="Primeira Aula"
+                value={validFrom}
+                onChange={e => setValidFrom(e.target.value)}
+                required
+              />
+              <Input
+                type="date"
+                label="Última Aula (Opcional)"
+                value={validUntil}
+                onChange={e => setValidUntil(e.target.value)}
+              />
+            </div>
+          </form>
+        )}
       </Modal>
 
       {/* Extra Lesson Modal */}
@@ -1484,119 +2334,7 @@ export default function StudentDetailPage() {
         </Modal>
       )}
 
-      {/* Exam CRUD Modal */}
-      <Modal
-        isOpen={examModalOpen}
-        onClose={() => setExamModalOpen(false)}
-        title={selectedExam ? 'Editar Prova' : 'Adicionar Prova'}
-        size="sm"
-        footer={
-          <>
-            <Button variant="ghost" onClick={() => setExamModalOpen(false)}>Cancelar</Button>
-            <Button isLoading={savingExam} onClick={handleSaveExam}>Salvar</Button>
-          </>
-        }
-      >
-        <form onSubmit={handleSaveExam} className="modal-form">
-          <Input
-            label="Título da Prova"
-            placeholder="Ex: Prova de Álgebra"
-            value={examTitle}
-            onChange={e => setExamTitle(e.target.value)}
-            required
-          />
-          <Input
-            type="date"
-            label="Data"
-            value={examDate}
-            onChange={e => setExamDate(e.target.value)}
-            required
-          />
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-            <Input
-              type="number"
-              label="Nota Obtida"
-              placeholder="Ex: 8.5 (Vazio se pendente)"
-              value={examGrade}
-              onChange={e => setExamGrade(e.target.value)}
-            />
-            <Input
-              type="number"
-              label="Nota Máxima"
-              value={examMaxGrade}
-              onChange={e => setExamMaxGrade(e.target.value)}
-              required
-            />
-          </div>
-          <div className="input-group">
-            <label className="input-label">Observações</label>
-            <textarea
-              className="input-field textarea-field"
-              placeholder="Conteúdo cobrado, pendências..."
-              value={examNotes}
-              onChange={e => setExamNotes(e.target.value)}
-              rows={3}
-            />
-          </div>
-        </form>
-      </Modal>
 
-      {/* Exercise CRUD Modal */}
-      <Modal
-        isOpen={exerciseModalOpen}
-        onClose={() => setExerciseModalOpen(false)}
-        title={selectedExercise ? 'Editar Exercício' : 'Adicionar Exercício'}
-        size="sm"
-        footer={
-          <>
-            <Button variant="ghost" onClick={() => setExerciseModalOpen(false)}>Cancelar</Button>
-            <Button isLoading={savingExercise} onClick={handleSaveExercise}>Salvar</Button>
-          </>
-        }
-      >
-        <form onSubmit={handleSaveExercise} className="modal-form">
-          <Input
-            label="Título do Exercício"
-            placeholder="Ex: Lista de Equações de 2º Grau"
-            value={exerciseTitle}
-            onChange={e => setExerciseTitle(e.target.value)}
-            required
-          />
-          <Input
-            type="date"
-            label="Data Limite"
-            value={exerciseDate}
-            onChange={e => setExerciseDate(e.target.value)}
-            required
-          />
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-            <Input
-              type="number"
-              label="Nota Obtida"
-              placeholder="Ex: 10"
-              value={exerciseGrade}
-              onChange={e => setExerciseGrade(e.target.value)}
-            />
-            <Input
-              type="number"
-              label="Nota Máxima"
-              value={exerciseMaxGrade}
-              onChange={e => setExerciseMaxGrade(e.target.value)}
-              required
-            />
-          </div>
-          <div className="input-group">
-            <label className="input-label">Observações</label>
-            <textarea
-              className="input-field textarea-field"
-              placeholder="Exercícios específicos, dificuldades..."
-              value={exerciseNotes}
-              onChange={e => setExerciseNotes(e.target.value)}
-              rows={3}
-            />
-          </div>
-        </form>
-      </Modal>
 
       {/* Edit Student Modal */}
       <Modal
@@ -1681,9 +2419,11 @@ export default function StudentDetailPage() {
                 className="input-field"
                 value={editStudentForm.subjectId}
                 onChange={e => handleEditStudentSubjectChange(e.target.value)}
-                required
               >
                 <option value="">Selecione...</option>
+                {student?.subjectId && !subjectsList.some(s => s.id === student.subjectId) && (
+                  <option value={student.subjectId}>{student.subjectName || 'Matéria Atual'}</option>
+                )}
                 {subjectsList.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </div>
@@ -1693,9 +2433,11 @@ export default function StudentDetailPage() {
                 className="input-field"
                 value={editStudentForm.levelId}
                 onChange={e => setEditStudentForm({ ...editStudentForm, levelId: e.target.value })}
-                required
               >
                 <option value="">Selecione...</option>
+                {student?.levelId && !formLevelsList.some(l => l.id === student.levelId) && (
+                  <option value={student.levelId}>{student.levelName || 'Nível Atual'}</option>
+                )}
                 {formLevelsList.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
               </select>
             </div>
@@ -1706,7 +2448,16 @@ export default function StudentDetailPage() {
             <select
               className="input-field"
               value={editStudentForm.isActive}
-              onChange={e => setEditStudentForm({ ...editStudentForm, isActive: e.target.value })}
+              onChange={e => {
+                const nextActive = e.target.value;
+                setEditStudentForm({
+                  ...editStudentForm,
+                  isActive: nextActive,
+                  lastClassDate: nextActive === 'false' && !editStudentForm.lastClassDate
+                    ? new Date().toISOString().split('T')[0]
+                    : editStudentForm.lastClassDate
+                });
+              }}
               required
             >
               <option value="true">Ativo</option>
@@ -1753,136 +2504,426 @@ export default function StudentDetailPage() {
           </>
         }
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-            Selecione uma das provas ou exercícios criados no seu banco de modelos para atribuir a este aluno. O sistema irá gerar um link público único para ele responder.
-          </p>
-          <div className="input-group" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label className="input-label" style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)' }}>Modelo de Atividade</label>
-            <select
-              className="select-field"
-              style={{
-                height: '40px',
-                background: 'var(--bg-tertiary)',
-                color: 'var(--text-primary)',
-                border: '1px solid var(--border-color)',
-                borderRadius: 'var(--radius-md)',
-                padding: '0 12px',
-                outline: 'none'
-              }}
-              value={selectedTemplateId}
-              onChange={e => setSelectedTemplateId(e.target.value)}
-            >
-              <option value="">Selecione um modelo...</option>
-              {templates.map(t => (
-                <option key={t.id} value={t.id}>{t.title} ({t.type === 'exam' ? 'Prova' : 'Exercício'})</option>
-              ))}
-            </select>
-          </div>
-        </div>
+        {(() => {
+          const assignLevels = subjectsList.find(s => s.id === assignSubjectId)?.levels || [];
+          const filteredTemplates = templates.filter(t => {
+            const matchesSubject = !assignSubjectId || t.subjectId === assignSubjectId;
+            const matchesLevel = !assignLevelId || t.levelId === assignLevelId;
+            const matchesSearch = !assignSearchText || t.title.toLowerCase().includes(assignSearchText.toLowerCase());
+            return matchesSubject && matchesLevel && matchesSearch;
+          });
+
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                Selecione uma das provas ou exercícios criados no seu banco de modelos para atribuir a este aluno. O sistema irá gerar um link público único para ele responder.
+              </p>
+              
+              {/* Filtros de Pesquisa por Matéria, Nível e Busca */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', background: 'var(--bg-tertiary)', padding: '12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+                <div className="input-group" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <label className="input-label" style={{ fontSize: '11px', margin: 0 }}>Matéria</label>
+                  <select
+                    className="select-field"
+                    style={{ height: '34px', fontSize: '12px', padding: '0 8px', background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)' }}
+                    value={assignSubjectId}
+                    onChange={e => {
+                      setAssignSubjectId(e.target.value);
+                      setAssignLevelId('');
+                    }}
+                  >
+                    <option value="">Todas as Matérias</option>
+                    {subjectsList.map(s => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="input-group" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <label className="input-label" style={{ fontSize: '11px', margin: 0 }}>Nível</label>
+                  <select
+                    className="select-field"
+                    style={{ height: '34px', fontSize: '12px', padding: '0 8px', background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)' }}
+                    value={assignLevelId}
+                    onChange={e => setAssignLevelId(e.target.value)}
+                    disabled={!assignSubjectId}
+                  >
+                    <option value="">Todos os Níveis</option>
+                    {assignLevels.map(l => (
+                      <option key={l.id} value={l.id}>{l.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="input-group" style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: 'span 2' }}>
+                  <label className="input-label" style={{ fontSize: '11px', margin: 0 }}>Buscar por Título</label>
+                  <input
+                    type="text"
+                    placeholder="Pesquise pelo nome do modelo..."
+                    value={assignSearchText}
+                    onChange={e => setAssignSearchText(e.target.value)}
+                    className="input-field"
+                    style={{ height: '34px', fontSize: '12px', padding: '0 8px', background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', boxSizing: 'border-box' }}
+                  />
+                </div>
+              </div>
+
+              <div className="input-group" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <label className="input-label" style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)' }}>Modelo de Atividade</label>
+                <select
+                  className="select-field"
+                  style={{
+                    height: '40px',
+                    background: 'var(--bg-tertiary)',
+                    color: 'var(--text-primary)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: 'var(--radius-md)',
+                    padding: '0 12px',
+                    outline: 'none'
+                  }}
+                  value={selectedTemplateId}
+                  onChange={e => setSelectedTemplateId(e.target.value)}
+                >
+                  <option value="">Selecione um modelo...</option>
+                  {filteredTemplates.map(t => (
+                    <option key={t.id} value={t.id}>{t.title} ({t.type === 'exam' ? 'Prova' : 'Exercício'})</option>
+                  ))}
+                </select>
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                  Mostrando {filteredTemplates.length} de {templates.length} modelos de atividades.
+                </span>
+              </div>
+            </div>
+          );
+        })()}
       </Modal>
 
-      {/* Modal de Revisão da Atividade */}
+
+
+      {/* Modal de Correção pelo Professor (para questões discursivas) */}
       <Modal
-        isOpen={reviewModalOpen}
-        onClose={() => setReviewModalOpen(false)}
-        title={reviewActivity ? `Revisão: ${reviewActivity.title}` : 'Revisão da Atividade'}
+        isOpen={correctionModalOpen}
+        onClose={() => setCorrectionModalOpen(false)}
+        title={activityToCorrect ? `Corrigir: ${activityToCorrect.title}` : 'Corrigir Atividade'}
         size="md"
-        footer={<Button onClick={() => setReviewModalOpen(false)}>Fechar Revisão</Button>}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setCorrectionModalOpen(false)}>Cancelar</Button>
+            <Button isLoading={savingCorrection} onClick={handleSaveCorrection}>Salvar Correção</Button>
+          </>
+        }
       >
-        {reviewActivity && (
+        {activityToCorrect && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxHeight: '70vh', overflowY: 'auto', paddingRight: '4px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-tertiary)', padding: '12px 16px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-              <div>
-                <strong style={{ display: 'block', fontSize: '14px', color: 'var(--text-primary)' }}>Aluno: {reviewActivity.studentName}</strong>
-                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Status: Concluída em {reviewActivity.completedAt && format(new Date(reviewActivity.completedAt), 'dd/MM/yyyy HH:mm')}</span>
-              </div>
-              <Badge variant="success">
-                Nota: {reviewActivity.grade?.toFixed(1)} / {reviewActivity.maxGrade.toFixed(1)}
-              </Badge>
+            <div style={{ background: 'var(--bg-tertiary)', padding: '12px 16px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Corrigindo respostas de:</span>
+              <strong style={{ display: 'block', fontSize: '14px', color: 'var(--text-primary)', marginTop: '2px' }}>{activityToCorrect.studentName}</strong>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {reviewActivity.answers.map((q, idx) => (
-                <div key={q.id} style={{ border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)', padding: '16px', background: 'var(--bg-secondary)' }}>
-                  <h5 style={{ color: 'var(--accent-secondary)', fontSize: '12px', textTransform: 'uppercase', marginBottom: '4px' }}>Questão {idx + 1}</h5>
-                  <p style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-primary)', marginBottom: '16px' }}>{q.questionText}</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {(() => {
+                let writingIdx = 0;
+                const totalWeight = activityToCorrect.answers.filter(a => a.questionType !== 'text_block').reduce((acc, a) => acc + (a.weight || 1), 0);
+                return activityToCorrect.answers.map((q) => {
+                  if (q.questionType !== 'writing') return null;
+                  writingIdx++;
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {[
-                      { key: 'A', text: q.optionA },
-                      { key: 'B', text: q.optionB },
-                      { key: 'C', text: q.optionC },
-                      { key: 'D', text: q.optionD }
-                    ].map(opt => {
-                      const isCorrect = q.correctOption === opt.key;
-                      const isSelected = q.selectedOption === opt.key;
-
-                      let itemStyle: React.CSSProperties = {
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px',
-                        padding: '10px 14px',
-                        borderRadius: 'var(--radius-md)',
-                        border: '1px solid var(--border-color)',
-                        background: 'var(--bg-tertiary)',
-                        fontSize: '13px',
-                        color: 'var(--text-primary)'
-                      };
-
-                      if (isSelected) {
-                        if (isCorrect) {
-                          itemStyle.border = '1px solid var(--success)';
-                          itemStyle.background = 'var(--success-light)';
-                          itemStyle.color = 'var(--success)';
-                        } else {
-                          itemStyle.border = '1px solid var(--danger)';
-                          itemStyle.background = 'var(--danger-light)';
-                          itemStyle.color = 'var(--danger)';
-                        }
-                      } else if (isCorrect) {
-                        itemStyle.border = '1px dashed var(--success)';
-                        itemStyle.background = 'rgba(16, 185, 129, 0.05)';
-                      }
-
-                      return (
-                        <div key={opt.key} style={itemStyle}>
-                          <span style={{
-                            width: '24px',
-                            height: '24px',
-                            borderRadius: '50%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontWeight: 700,
-                            fontSize: '11px',
-                            background: isSelected ? (isCorrect ? 'var(--success)' : 'var(--danger)') : 'var(--bg-primary)',
-                            color: isSelected ? 'white' : 'var(--text-primary)',
-                            border: '1px solid var(--border-color)'
-                          }}>
-                            {opt.key}
+                  const maxQuestionValue = totalWeight > 0 ? ((q.weight || 1) / totalWeight) * activityToCorrect.maxGrade : 0;
+                  return (
+                    <div key={q.id} style={{ border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)', padding: '16px', background: 'var(--bg-secondary)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <h5 style={{ color: 'var(--accent-primary)', fontSize: '12px', textTransform: 'uppercase', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span>Questão Aberta {writingIdx}</span>
+                          <span style={{ display: 'inline-flex', fontSize: '10px' }}>
+                            <Badge variant="primary">
+                              Vale {maxQuestionValue.toFixed(1)} pts
+                            </Badge>
                           </span>
-                          <span style={{ flex: 1 }}>{opt.text}</span>
-                          {isSelected && (
-                            <span style={{ fontWeight: 700, fontSize: '11px' }}>
-                              {isCorrect ? '✓ Correta' : '✗ Marcada'}
-                            </span>
-                          )}
-                          {!isSelected && isCorrect && (
-                            <span style={{ fontWeight: 600, fontSize: '11px', color: 'var(--success)' }}>
-                              Gabarito
-                            </span>
-                          )}
+                        </h5>
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600 }}>
+                          Peso: {q.weight}x
+                        </span>
+                      </div>
+                      <p style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-primary)', marginBottom: '12px' }}>{q.questionText}</p>
+
+                      <div style={{ background: 'var(--bg-tertiary)', padding: '12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', marginBottom: '14px' }}>
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Resposta escrita pelo aluno:</span>
+                        <p style={{ fontSize: '13px', color: 'var(--text-primary)', whiteSpace: 'pre-wrap', fontStyle: 'italic' }}>
+                          "{q.writtenAnswer || 'O estudante não respondeu.'}"
+                        </p>
+                      </div>
+
+                      {(() => {
+                        const scoreVal = parseFloat(String(correctionScores[q.id] || '').replace(',', '.')) || 0;
+                        const isOverLimit = scoreVal > maxQuestionValue;
+
+                        return (
+                          <div className="input-group">
+                            <label className="input-label" style={{ marginBottom: '6px', fontSize: '12px', display: 'flex', justifyContent: 'space-between' }}>
+                              <span>Nota Atribuída (Máximo: <strong>{maxQuestionValue.toFixed(2)}</strong> pontos) *</span>
+                            </label>
+                            <input
+                              type="text"
+                              className="input-field"
+                              placeholder={`Ex: 1.5, 2.0 (máx ${maxQuestionValue.toFixed(2)})`}
+                              value={correctionScores[q.id] || ''}
+                              onChange={e => {
+                                setCorrectionScores({
+                                  ...correctionScores,
+                                  [q.id]: e.target.value
+                                });
+                              }}
+                              style={{
+                                height: '38px',
+                                padding: '0 12px',
+                                fontSize: '13px',
+                                background: 'var(--bg-tertiary)',
+                                color: 'var(--text-primary)',
+                                border: isOverLimit ? '1px solid var(--danger)' : '1px solid var(--border-color)',
+                                borderRadius: 'var(--radius-md)',
+                                outline: 'none'
+                              }}
+                            />
+                            {isOverLimit && (
+                              <span style={{ fontSize: '11px', color: 'var(--danger)', marginTop: '4px', display: 'block', fontWeight: 600 }}>
+                                ⚠️ A nota digitada ({scoreVal}) excede o limite máximo permitido ({maxQuestionValue.toFixed(2)}).
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })()}
+
+                      {/* Observações com formatação rich text em tempo real */}
+                      <div className="input-group" style={{ marginTop: '14px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                          <label className="input-label" style={{ margin: 0, fontSize: '12px' }}>Observações do Professor</label>
+                          
+                          {/* Formatting Toolbar */}
+                          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                            <button
+                              type="button"
+                              title="Negrito"
+                              onClick={() => {
+                                document.execCommand('bold', false);
+                              }}
+                              style={{ padding: '2px 8px', fontSize: '11px', fontWeight: 800, background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '4px', cursor: 'pointer', color: 'var(--text-primary)' }}
+                            >
+                              B
+                            </button>
+                            <button
+                              type="button"
+                              title="Sublinhado"
+                              onClick={() => {
+                                document.execCommand('underline', false);
+                              }}
+                              style={{ padding: '2px 8px', fontSize: '11px', textDecoration: 'underline', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '4px', cursor: 'pointer', color: 'var(--text-primary)' }}
+                            >
+                              U
+                            </button>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '4px', padding: '0 4px', height: '23px' }}>
+                              <span style={{ fontSize: '9px', color: 'var(--text-secondary)' }}>Cor:</span>
+                              <input
+                                type="color"
+                                defaultValue="#EF4444"
+                                onChange={(e) => {
+                                  document.execCommand('foreColor', false, e.target.value);
+                                }}
+                                style={{ width: '18px', height: '18px', border: 'none', padding: 0, background: 'none', cursor: 'pointer' }}
+                                title="Cor do texto"
+                              />
+                            </div>
+                          </div>
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
+
+                        <div
+                          id={`notes-editor-${q.id}`}
+                          contentEditable
+                          suppressContentEditableWarning
+                          className="input-field textarea-field rich-editor"
+                          data-placeholder="Adicione observações da resposta (use B, U ou Cor acima para formatar o texto em tempo real)..."
+                          style={{
+                            fontFamily: 'inherit',
+                            fontSize: '13px',
+                            padding: '10px',
+                            background: 'var(--bg-tertiary)',
+                            color: 'var(--text-primary)',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: 'var(--radius-md)',
+                            minHeight: '80px',
+                            maxHeight: '200px',
+                            overflowY: 'auto',
+                            outline: 'none',
+                            whiteSpace: 'pre-wrap',
+                            lineHeight: '1.5'
+                          }}
+                        />
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
             </div>
           </div>
         )}
       </Modal>
+
+      {/* Modal de Lançamento Manual (Prova/Exercício) */}
+      <Modal
+        isOpen={manualModalOpen}
+        onClose={() => setManualModalOpen(false)}
+        title={selectedManualId ? (manualType === 'exam' ? "Editar Prova" : "Editar Exercício") : "Novo Lançamento"}
+        size="sm"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setManualModalOpen(false)}>Cancelar</Button>
+            <Button isLoading={savingManual} onClick={handleSaveManual}>Salvar</Button>
+          </>
+        }
+      >
+        <form onSubmit={handleSaveManual} className="modal-form">
+          {/* Toggle de Tipo (só ativo se for criação) */}
+          {!selectedManualId && (
+            <div className="input-group" style={{ marginBottom: '16px' }}>
+              <label className="input-label" style={{ marginBottom: '6px', fontSize: '12px' }}>Tipo de Lançamento</label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => setManualType('exam')}
+                  style={{
+                    flex: 1,
+                    padding: '8px 12px',
+                    borderRadius: 'var(--radius-md)',
+                    border: manualType === 'exam' ? '1px solid var(--accent-primary)' : '1px solid var(--border-color)',
+                    background: manualType === 'exam' ? 'var(--accent-primary-light)' : 'var(--bg-tertiary)',
+                    color: manualType === 'exam' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                    fontWeight: 600,
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    transition: 'all var(--transition-fast)'
+                  }}
+                >
+                  Prova
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setManualType('exercise')}
+                  style={{
+                    flex: 1,
+                    padding: '8px 12px',
+                    borderRadius: 'var(--radius-md)',
+                    border: manualType === 'exercise' ? '1px solid var(--accent-primary)' : '1px solid var(--border-color)',
+                    background: manualType === 'exercise' ? 'var(--accent-primary-light)' : 'var(--bg-tertiary)',
+                    color: manualType === 'exercise' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                    fontWeight: 600,
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    transition: 'all var(--transition-fast)'
+                  }}
+                >
+                  Exercício
+                </button>
+              </div>
+            </div>
+          )}
+
+          <Input
+            label={manualType === 'exam' ? "Título da Prova" : "Título do Exercício"}
+            placeholder={manualType === 'exam' ? "Ex: Prova 1º Bimestre" : "Ex: Exercício Frações"}
+            value={manualTitle}
+            onChange={e => setManualTitle(e.target.value)}
+            required
+          />
+          <Input
+            type="date"
+            label="Data"
+            value={manualDate}
+            onChange={e => setManualDate(e.target.value)}
+            required
+          />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <Input
+              type="number"
+              step="0.1"
+              min="0"
+              label="Nota Obtida"
+              placeholder="Ex: 8.5 (vazio se pendente)"
+              value={manualGrade}
+              onChange={e => setManualGrade(e.target.value)}
+            />
+            <Input
+              type="number"
+              step="0.1"
+              min="0.1"
+              label="Nota Máxima"
+              value={manualMaxGrade}
+              onChange={e => setManualMaxGrade(e.target.value)}
+              required
+            />
+          </div>
+          <Input
+            label="Observações"
+            placeholder={manualType === 'exam' ? "Ex: Teve dificuldade com geometria" : "Ex: Fez tudo com atenção"}
+            value={manualNotes}
+            onChange={e => setManualNotes(e.target.value)}
+          />
+        </form>
+      </Modal>
+
+      {/* Modal de Encerramento de Ciclo de Horário */}
+      <Modal
+        isOpen={endScheduleModalOpen}
+        onClose={() => {
+          setEndScheduleModalOpen(false);
+          setScheduleToEndId(null);
+        }}
+        title="Encerrar Ciclo de Horário"
+        size="sm"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => {
+              setEndScheduleModalOpen(false);
+              setScheduleToEndId(null);
+            }}>Cancelar</Button>
+            <Button variant="primary" isLoading={endingSchedule} onClick={handleEndSchedule}>
+              Confirmar Encerramento
+            </Button>
+          </>
+        }
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+            Defina a data da <strong>última aula</strong> ou encerramento deste ciclo de horário.
+          </p>
+          <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+            ⚠️ Todas as aulas agendadas (no status "Agendada") para este horário a partir desta data serão <strong>excluídas permanentemente</strong>. As aulas anteriores serão mantidas como histórico.
+          </p>
+          <div className="input-group">
+            <label className="input-label" style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '8px' }}>Data de Encerramento</label>
+            <Input
+              type="date"
+              value={endScheduleDate}
+              onChange={e => setEndScheduleDate(e.target.value)}
+              required
+            />
+          </div>
+        </div>
+      </Modal>
     </div>
   );
+  } catch (renderError: any) {
+    return (
+      <div style={{ padding: '40px', color: 'var(--danger)', background: 'var(--bg-secondary)', borderRadius: '12px', margin: '20px' }}>
+        <h2>Erro de Renderização (Painel do Professor)</h2>
+        <p>Ocorreu um erro ao carregar os componentes visuais deste aluno:</p>
+        <pre style={{ background: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: '6px', overflowX: 'auto', color: 'var(--danger)' }}>
+          {renderError?.message || String(renderError)}
+        </pre>
+        <pre style={{ background: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: '6px', overflowX: 'auto', fontSize: '11px', color: 'var(--text-secondary)' }}>
+          {renderError?.stack}
+        </pre>
+        <Button onClick={() => window.location.reload()}>Recarregar Página</Button>
+      </div>
+    );
+  }
 }
