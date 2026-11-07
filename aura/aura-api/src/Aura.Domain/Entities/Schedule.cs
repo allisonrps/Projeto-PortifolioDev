@@ -7,6 +7,7 @@ public class Schedule : BaseEntity
     public int DayOfWeek { get; set; }
     public TimeSpan StartTime { get; set; }
     public TimeSpan EndTime { get; set; }
+    public string Frequency { get; set; } = "weekly";
     public bool IsRecurring { get; set; } = true;
     public DateTime ValidFrom { get; set; }
     public DateTime? ValidUntil { get; set; }

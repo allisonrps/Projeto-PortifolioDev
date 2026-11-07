@@ -12,6 +12,9 @@ public class Student : BaseEntity
     public string? PhotoUrl { get; set; }
     public string? GuardianName { get; set; }
     public string? GuardianPhone { get; set; }
+    public string? City { get; set; }
+    public string? State { get; set; }
+    public string? Country { get; set; }
     public decimal MonthlyPrice { get; set; } = 0;
     public bool IsActive { get; set; } = true;
     public DateTime? FirstClassDate { get; set; }
@@ -24,4 +27,5 @@ public class Student : BaseEntity
     public virtual ICollection<MonthlyPayment> MonthlyPayments { get; set; } = new List<MonthlyPayment>();
     public virtual ICollection<Exam> Exams { get; set; } = new List<Exam>();
     public virtual ICollection<Exercise> Exercises { get; set; } = new List<Exercise>();
+    public virtual ICollection<ClassSheetStudent> ClassSheetStudents { get; set; } = new List<ClassSheetStudent>();
 }

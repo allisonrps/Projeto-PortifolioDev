@@ -20,6 +20,37 @@ public class DashboardDto
     public List<LessonStatusStatDto> YearlyLessonStatusStats { get; set; } = new();
     public int MonthlyEffectivenessRate { get; set; } = 100;
     public int YearlyEffectivenessRate { get; set; } = 100;
+    public List<LessonResponseDto> PendingPreviousLessons { get; set; } = new();
+    public List<PendingCorrectionDto> PendingCorrections { get; set; } = new();
+    public List<CompletedActivityDto> CompletedActivities { get; set; } = new();
+    public List<PendingPaymentDto> PendingPayments { get; set; } = new();
+}
+
+public class CompletedActivityDto
+{
+    public Guid StudentActivityId { get; set; }
+    public Guid StudentId { get; set; }
+    public string StudentName { get; set; } = string.Empty;
+    public string ActivityTitle { get; set; } = string.Empty;
+    public DateTime? CompletedAt { get; set; }
+    public decimal? Grade { get; set; }
+    public decimal MaxGrade { get; set; }
+}
+
+public class PendingPaymentDto
+{
+    public Guid StudentId { get; set; }
+    public string StudentName { get; set; } = string.Empty;
+    public decimal MonthlyPrice { get; set; }
+}
+
+public class PendingCorrectionDto
+{
+    public Guid StudentActivityId { get; set; }
+    public Guid StudentId { get; set; }
+    public string StudentName { get; set; } = string.Empty;
+    public string ActivityTitle { get; set; } = string.Empty;
+    public DateTime? SubmittedAt { get; set; }
 }
 
 public class LessonStatusStatDto
@@ -54,6 +85,7 @@ public class FinanceDto
     public List<MonthlyRevenueDto> RevenueProgression { get; set; } = new();
     public List<SubjectRevenueDto> RevenueBySubject { get; set; } = new();
     public List<StudentPaymentStatusDto> StudentPaymentStatuses { get; set; } = new();
+    public List<ManualFinanceEntryDto> ManualEntries { get; set; } = new();
 }
 
 public class MonthlyRevenueDto
@@ -80,4 +112,23 @@ public class StudentPaymentStatusDto
     public decimal MonthlyPrice { get; set; }
     public bool IsPaid { get; set; }
     public decimal AmountPaid { get; set; }
+}
+
+public class ManualFinanceEntryDto
+{
+    public Guid Id { get; set; }
+    public decimal Amount { get; set; }
+    public DateTime Date { get; set; }
+    public int Month { get; set; }
+    public int Year { get; set; }
+    public string Description { get; set; } = string.Empty;
+}
+
+public class CreateManualFinanceEntryDto
+{
+    public decimal Amount { get; set; }
+    public DateTime Date { get; set; }
+    public int? Month { get; set; }
+    public int? Year { get; set; }
+    public string Description { get; set; } = string.Empty;
 }

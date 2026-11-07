@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Aura.Application.Mappings;
@@ -16,7 +17,8 @@ public static class DependencyInjection
     {
         // Database
         services.AddDbContext<AuraDbContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"))
+                   .ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning)));
 
         // Repositories
         services.AddScoped<IProfessorRepository, ProfessorRepository>();
@@ -30,6 +32,7 @@ public static class DependencyInjection
         services.AddScoped<IScheduleRepository, ScheduleRepository>();
         services.AddScoped<IHolidayRepository, HolidayRepository>();
         services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
+        services.AddScoped<IClassSheetRepository, ClassSheetRepository>();
 
         // Services
         services.AddScoped<IAuthService, AuthService>();
@@ -45,6 +48,10 @@ public static class DependencyInjection
         services.AddScoped<IHolidayService, HolidayService>();
         services.AddScoped<IFinanceService, FinanceService>();
         services.AddScoped<IActivityService, ActivityService>();
+        services.AddScoped<IBackupService, BackupService>();
+        services.AddScoped<IClassSheetService, ClassSheetService>();
+        services.AddScoped<ISubscriptionService, SubscriptionService>();
+        services.AddScoped<IAdminService, AdminService>();
 
         // AutoMapper
         services.AddAutoMapper(cfg =>

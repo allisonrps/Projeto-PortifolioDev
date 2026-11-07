@@ -65,4 +65,11 @@ public interface IHolidayRepository : IGenericRepository<Holiday>
 public interface ISubscriptionRepository : IGenericRepository<Subscription>
 {
     Task<Subscription?> GetActiveByProfessorIdAsync(Guid professorId);
+    Task<IEnumerable<Subscription>> GetByProfessorIdAsync(Guid professorId);
+    Task<Subscription?> GetByGatewayIdAsync(string gatewayId);
+}
+
+public interface IClassSheetRepository : IGenericRepository<ClassSheet>
+{
+    Task<IEnumerable<ClassSheet>> GetByLevelIdAsync(Guid levelId);
 }

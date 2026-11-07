@@ -187,7 +187,8 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-tertiary);
+  border-bottom: 1.5px solid var(--border-color);
   white-space: nowrap;
 }
 
@@ -200,7 +201,7 @@
 }
 
 .payments-table tbody tr:hover td {
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(var(--accent-primary-rgb), 0.04);
 }
 
 .empty-table-row {

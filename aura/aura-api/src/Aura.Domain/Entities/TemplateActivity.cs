@@ -7,6 +7,7 @@ public class TemplateActivity : BaseEntity
     public Guid LevelId { get; set; }
     public string Title { get; set; } = string.Empty;
     public string Type { get; set; } = "exercise"; // "exam" or "exercise"
+    public decimal MaxGrade { get; set; } = 10.0m;
 
     public virtual Professor Professor { get; set; } = null!;
     public virtual Subject Subject { get; set; } = null!;

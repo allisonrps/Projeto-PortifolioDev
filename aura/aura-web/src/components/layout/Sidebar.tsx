@@ -1,5 +1,9 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { MdDashboard, MdPeople, MdMenuBook, MdCalendarMonth, MdSettings, MdLogout, MdAttachMoney, MdClose, MdAssignment } from 'react-icons/md';
+import {
+  MdDashboard, MdPeople, MdMenuBook, MdCalendarMonth, MdSettings,
+  MdLogout, MdAttachMoney, MdClose, MdAssignment, MdPieChart,
+  MdAdminPanelSettings
+} from 'react-icons/md';
 import { useAuth } from '../../contexts/AuthContext';
 import Avatar from '../ui/Avatar';
 import Logo from '../ui/Logo';
@@ -14,6 +18,7 @@ const navItems = [
   { to: '/schedule', icon: <MdCalendarMonth />, label: 'Agenda' },
   { to: '/activities', icon: <MdAssignment />, label: 'Atividades Online' },
   { to: '/finance', icon: <MdAttachMoney />, label: 'Financeiro' },
+  { to: '/statistics', icon: <MdPieChart />, label: 'Estatísticas' },
   { to: '/settings', icon: <MdSettings />, label: 'Configurações' },
 ];
 
@@ -30,7 +35,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       <aside className={`sidebar ${isOpen ? 'sidebar-open' : ''}`}>
         <div className="sidebar-logo">
           <Logo size="sm" href="https://aura-teacher.vercel.app" />
-          <button className="sidebar-close-btn mobile-only" onClick={onClose} title="Fechar menu">
+          <button className="sidebar-close-btn" onClick={onClose} title="Fechar menu">
             <MdClose />
           </button>
         </div>
@@ -41,6 +46,17 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               <span className="nav-label">{item.label}</span>
             </NavLink>
           ))}
+          {professor?.isAdmin && (
+            <NavLink
+              to="/admin"
+              className={({ isActive }) => `nav-item ${isActive ? 'nav-active' : ''}`}
+              onClick={onClose}
+              style={{ marginTop: '4px', borderTop: '1px dashed var(--border-color)', paddingTop: '12px' }}
+            >
+              <span className="nav-icon"><MdAdminPanelSettings /></span>
+              <span className="nav-label">Painel Admin</span>
+            </NavLink>
+          )}
         </nav>
         <div className="sidebar-footer">
           <div className="sidebar-user">
@@ -51,6 +67,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <span className="nav-icon"><MdLogout /></span>
             <span className="nav-label">Sair</span>
           </button>
+          <div style={{ textAlign: 'center', padding: '10px 0 0 0', fontSize: '10px', color: 'var(--text-muted)', borderTop: '1px solid var(--border-color)', marginTop: '8px', opacity: 0.7 }}>
+            Desenvolvido por <strong style={{ color: 'var(--accent-primary)' }}>Allison Rodrigues</strong>
+          </div>
         </div>
       </aside>
     </>

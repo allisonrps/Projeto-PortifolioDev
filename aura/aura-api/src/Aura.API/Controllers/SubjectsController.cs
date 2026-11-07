@@ -47,23 +47,23 @@ public class LevelsController : BaseApiController
 
     [HttpGet("by-subject/{subjectId}")]
     public async Task<ActionResult> GetBySubject(Guid subjectId)
-        => Ok(await _levelService.GetBySubjectIdAsync(subjectId));
+        => Ok(await _levelService.GetBySubjectIdAsync(subjectId, GetProfessorId()));
 
     [HttpPost]
     public async Task<ActionResult> Create([FromBody] CreateLevelDto dto)
     {
-        var result = await _levelService.CreateAsync(dto);
+        var result = await _levelService.CreateAsync(GetProfessorId(), dto);
         return Created($"/api/levels/{result.Id}", result);
     }
 
     [HttpPut("{id}")]
     public async Task<ActionResult> Update(Guid id, [FromBody] UpdateLevelDto dto)
-        => Ok(await _levelService.UpdateAsync(id, dto));
+        => Ok(await _levelService.UpdateAsync(id, GetProfessorId(), dto));
 
     [HttpDelete("{id}")]
     public async Task<ActionResult> Delete(Guid id)
     {
-        await _levelService.DeleteAsync(id);
+        await _levelService.DeleteAsync(id, GetProfessorId());
         return NoContent();
     }
 }

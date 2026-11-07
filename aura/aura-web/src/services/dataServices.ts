@@ -1,5 +1,5 @@
 import api from './api';
-import type { Subject, Level, DashboardData, Lesson, MonthlyPayment, Exam, Exercise, ScheduleEntry, Holiday } from '../types';
+import type { Subject, Level, DashboardData, Lesson, MonthlyPayment, Exam, Exercise, ScheduleEntry, Holiday, ClassSheet } from '../types';
 
 export const subjectService = {
   getAll: () => api.get<Subject[]>('/subjects'),
@@ -64,6 +64,7 @@ export const scheduleService = {
   update: (id: string, data: Partial<ScheduleEntry>) => api.put<ScheduleEntry>(`/schedule/${id}`, data),
   delete: (id: string) => api.delete(`/schedule/${id}`),
   replicateWeek: (data: { startDate: string; endDate: string }) => api.post('/schedule/replicate-week', data),
+  endSchedule: (id: string, endDate: string) => api.post(`/schedule/${id}/end`, { endDate }),
 };
 
 export const holidayService = {
@@ -78,4 +79,30 @@ export const financeService = {
     const params = month && year ? `?month=${month}&year=${year}` : '';
     return api.get<any>(`/finance${params}`);
   },
+  createManualEntry: (data: { amount: number; date: string; month?: number; year?: number; description: string }) =>
+    api.post<any>('/finance/manual', data),
+  deleteManualEntry: (id: string) =>
+    api.delete(`/finance/manual/${id}`),
+  _unused: () => {}, _dummy: () => {
+  },
+};
+
+export const classSheetService = {
+  getByLevel: (levelId: string) => api.get<ClassSheet[]>(`/class-sheets/by-level/${levelId}`),
+  getById: (id: string) => api.get<ClassSheet>(`/class-sheets/${id}`),
+  getPublic: (id: string) => api.get<ClassSheet>(`/class-sheets/public/${id}`),
+  create: (data: { levelId: string; title: string; content: string }) => api.post<ClassSheet>('/class-sheets', data),
+  update: (id: string, data: { title: string; content: string }) => api.put<ClassSheet>(`/class-sheets/${id}`, data),
+  delete: (id: string) => api.delete(`/class-sheets/${id}`),
+  getReleased: (studentId: string) => api.get<ClassSheet[]>(`/class-sheets/released-to-student/${studentId}`),
+  releaseToStudent: (studentId: string, classSheetId: string) => api.post('/class-sheets/release-to-student', { studentId, classSheetId }),
+  revokeFromStudent: (studentId: string, classSheetId: string) => api.post('/class-sheets/revoke-from-student', { studentId, classSheetId }),
+};
+
+export const publicStudentService = {
+  getProfile: (studentId: string) => api.get<any>(`/public/student/${studentId}`),
+  getExamsAndExercises: (studentId: string) => api.get<any[]>(`/public/student/${studentId}/exams-exercises`),
+  getClassSheets: (studentId: string) => api.get<ClassSheet[]>(`/public/student/${studentId}/class-sheets`),
+  getClassSheetDetail: (id: string) => api.get<ClassSheet>(`/public/student/class-sheets/${id}`),
+  uploadPhoto: (studentId: string, imageBase64: string) => api.post<{ message: string; photoUrl: string }>(`/public/student/${studentId}/photo`, { imageBase64 }),
 };

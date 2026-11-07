@@ -7,6 +7,9 @@ public class CreateStudentDto
     public string? Phone { get; set; }
     public string? GuardianName { get; set; }
     public string? GuardianPhone { get; set; }
+    public string? City { get; set; }
+    public string? State { get; set; }
+    public string? Country { get; set; }
     public Guid SubjectId { get; set; }
     public Guid LevelId { get; set; }
     public string? Observation { get; set; }
@@ -23,6 +26,9 @@ public class UpdateStudentDto
     public string? Phone { get; set; }
     public string? GuardianName { get; set; }
     public string? GuardianPhone { get; set; }
+    public string? City { get; set; }
+    public string? State { get; set; }
+    public string? Country { get; set; }
     public Guid? SubjectId { get; set; }
     public Guid? LevelId { get; set; }
     public string? Observation { get; set; }
@@ -43,6 +49,9 @@ public class StudentResponseDto
     public string? Phone { get; set; }
     public string? GuardianName { get; set; }
     public string? GuardianPhone { get; set; }
+    public string? City { get; set; }
+    public string? State { get; set; }
+    public string? Country { get; set; }
     public string? Observation { get; set; }
     public string? PhotoUrl { get; set; }
     public string? SubjectName { get; set; }

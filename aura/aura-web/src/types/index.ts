@@ -3,11 +3,117 @@ export interface Professor {
   email: string;
   name: string;
   phone?: string;
+  cpfCnpj?: string;
   photoUrl?: string;
   theme: 'light' | 'dark';
   primaryColor: string;
   secondaryColor: string;
   planType: string;
+  subscriptionStatus?: 'trial' | 'active' | 'expired' | 'overdue' | 'canceled' | 'blocked';
+  trialEndsAt?: string | null;
+  subscriptionExpiresAt?: string | null;
+  daysRemaining?: number;
+  isWriteAllowed?: boolean;
+  isAdmin?: boolean;
+  visualTheme?: 'classic' | 'retro-comic' | 'cyber-grid';
+}
+
+export interface AdminProfessorItem {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string | null;
+  cpfCnpj?: string | null;
+  isAdmin: boolean;
+  planType: 'trial' | 'monthly' | 'annual' | 'lifetime' | string;
+  subscriptionStatus: 'trial' | 'active' | 'expired' | 'blocked' | string;
+  trialEndsAt?: string | null;
+  subscriptionExpiresAt?: string | null;
+  daysRemaining: number;
+  isWriteAllowed: boolean;
+  studentsCount: number;
+  activeStudentsCount: number;
+  lessonsCount: number;
+  activitiesCount: number;
+  totalPaidAmount: number;
+  createdAt: string;
+}
+
+export interface AdminSubscriptionItem {
+  id: string;
+  professorId: string;
+  professorName: string;
+  professorEmail: string;
+  planType: string;
+  price: number;
+  status: string;
+  billingType: string;
+  startDate: string;
+  endDate?: string | null;
+  paymentGatewayId?: string | null;
+  invoiceUrl?: string | null;
+  createdAt: string;
+}
+
+export interface AdminDashboardData {
+  totalProfessors: number;
+  activeSubscribersCount: number;
+  monthlySubscribersCount: number;
+  annualSubscribersCount: number;
+  lifetimeSubscribersCount: number;
+  trialProfessorsCount: number;
+  expiredOrBlockedCount: number;
+  mrr: number;
+  arr: number;
+  totalPlatformRevenue: number;
+  totalPlatformStudents: number;
+  totalPlatformLessons: number;
+  totalPlatformActivities: number;
+  gatewayConfigured?: boolean;
+  gatewayEnvironment?: 'production' | 'sandbox' | 'none' | string;
+  maskedGatewayKey?: string | null;
+  professors: AdminProfessorItem[];
+  recentSubscriptions: AdminSubscriptionItem[];
+}
+
+export interface SubscriptionHistoryItem {
+  id: string;
+  planType: 'monthly' | 'annual' | string;
+  price: number;
+  status: 'pending' | 'active' | 'overdue' | 'canceled' | string;
+  billingType: string;
+  startDate: string;
+  endDate?: string | null;
+  invoiceUrl?: string | null;
+  pixQrCodeImage?: string | null;
+  pixCopyPaste?: string | null;
+  createdAt: string;
+}
+
+export interface SubscriptionSummary {
+  planType: string;
+  subscriptionStatus: 'trial' | 'active' | 'expired' | 'overdue' | 'canceled';
+  trialEndsAt?: string | null;
+  subscriptionExpiresAt?: string | null;
+  daysRemaining: number;
+  isWriteAllowed: boolean;
+  cpfCnpj?: string | null;
+  gatewayConfigured: boolean;
+  history: SubscriptionHistoryItem[];
+}
+
+export interface SubscriptionCheckoutResponse {
+  subscriptionId: string;
+  planType: 'monthly' | 'annual';
+  price: number;
+  status: string;
+  billingType: string;
+  paymentGatewayId?: string | null;
+  invoiceUrl?: string | null;
+  pixQrCodeImage?: string | null;
+  pixCopyPaste?: string | null;
+  isSandboxOrDemo: boolean;
+  gatewayMessage?: string | null;
 }
 
 export interface Student {
@@ -20,6 +126,9 @@ export interface Student {
   phone?: string;
   guardianName?: string;
   guardianPhone?: string;
+  city?: string | null;
+  state?: string | null;
+  country?: string | null;
   observation?: string;
   monthlyPrice: number;
   isActive: boolean;
@@ -51,6 +160,17 @@ export interface Level {
   subjectId: string;
   name: string;
   studentCount: number;
+  classSheets?: ClassSheet[];
+}
+
+export interface ClassSheet {
+  id: string;
+  levelId: string;
+  levelName?: string;
+  title: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Lesson {
@@ -65,6 +185,9 @@ export interface Lesson {
   studentName?: string;
   subjectName?: string;
   levelName?: string;
+  lastLessonDate?: string;
+  lastLessonTitle?: string;
+  lastLessonNotes?: string;
   createdAt: string;
 }
 
@@ -85,7 +208,7 @@ export interface Exam {
   title: string;
   scheduledAt: string;
   notes?: string;
-  grade?: number;
+  grade?: number | null;
   maxGrade: number;
   studentName?: string;
   createdAt: string;
@@ -97,7 +220,7 @@ export interface Exercise {
   title: string;
   scheduledAt: string;
   notes?: string;
-  grade?: number;
+  grade?: number | null;
   maxGrade: number;
   studentName?: string;
   createdAt: string;
@@ -110,6 +233,7 @@ export interface ScheduleEntry {
   dayOfWeek: number;
   startTime: string;
   endTime: string;
+  frequency?: 'weekly' | 'biweekly' | 'monthly' | string;
   isRecurring: boolean;
   validFrom: string;
   validUntil?: string | null;
@@ -150,6 +274,34 @@ export interface DashboardData {
   yearlyLessonStatusStats: LessonStatusStat[];
   monthlyEffectivenessRate: number;
   yearlyEffectivenessRate: number;
+  pendingPreviousLessons: Lesson[];
+  pendingCorrections: PendingCorrection[];
+  completedActivities: CompletedActivity[];
+  pendingPayments: PendingPayment[];
+}
+
+export interface CompletedActivity {
+  studentActivityId: string;
+  studentId: string;
+  studentName: string;
+  activityTitle: string;
+  completedAt?: string;
+  grade?: number | null;
+  maxGrade: number;
+}
+
+export interface PendingPayment {
+  studentId: string;
+  studentName: string;
+  monthlyPrice: number;
+}
+
+export interface PendingCorrection {
+  studentActivityId: string;
+  studentId: string;
+  studentName: string;
+  activityTitle: string;
+  submittedAt?: string;
 }
 
 export interface BirthdayStudent {
@@ -183,6 +335,14 @@ export interface FinanceData {
     isPaid: boolean;
     amountPaid: number;
   }[];
+  manualEntries?: {
+    id: string;
+    amount: number;
+    date: string;
+    month: number;
+    year: number;
+    description: string;
+  }[];
 }
 
 export interface SubjectStat {
@@ -199,11 +359,14 @@ export interface AuthResponse {
 export interface TemplateQuestion {
   id: string;
   questionText: string;
-  optionA: string;
-  optionB: string;
-  optionC: string;
-  optionD: string;
-  correctOption: string;
+  questionType: 'multiple_choice' | 'writing' | 'text_block';
+  optionA?: string | null;
+  optionB?: string | null;
+  optionC?: string | null;
+  optionD?: string | null;
+  correctOption?: string | null;
+  weight: number;
+  createdAt?: string;
 }
 
 export interface TemplateActivity {
@@ -215,18 +378,26 @@ export interface TemplateActivity {
   levelName: string;
   type: 'exam' | 'exercise';
   createdAt: string;
+  maxGrade: number;
   questions: TemplateQuestion[];
 }
 
 export interface StudentAnswer {
   id: string;
   questionText: string;
-  optionA: string;
-  optionB: string;
-  optionC: string;
-  optionD: string;
-  correctOption: string;
+  questionType: 'multiple_choice' | 'writing' | 'text_block';
+  optionA?: string | null;
+  optionB?: string | null;
+  optionC?: string | null;
+  optionD?: string | null;
+  correctOption?: string | null;
   selectedOption?: string | null;
+  writtenAnswer?: string | null;
+  evaluationMention?: string | null;
+  evaluationScore?: number | null;
+  weight: number;
+  evaluationNotes?: string | null;
+  createdAt?: string;
 }
 
 export interface StudentActivity {
@@ -240,6 +411,6 @@ export interface StudentActivity {
   completedAt?: string | null;
   grade?: number | null;
   maxGrade: number;
-  status: 'pending' | 'completed';
+  status: 'pending' | 'completed' | 'corrigir';
   answers: StudentAnswer[];
 }

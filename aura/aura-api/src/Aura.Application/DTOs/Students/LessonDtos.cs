@@ -14,6 +14,9 @@ public class LessonResponseDto
     public string? SubjectName { get; set; }
     public string? LevelName { get; set; }
     public DateTime CreatedAt { get; set; }
+    public DateTime? LastLessonDate { get; set; }
+    public string? LastLessonTitle { get; set; }
+    public string? LastLessonNotes { get; set; }
 }
 
 public class CreateLessonDto

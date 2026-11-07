@@ -8,6 +8,7 @@ namespace Aura.API.Controllers;
 public class StudentsController : BaseApiController
 {
     private readonly IStudentService _studentService;
+    private const long MaxPhotoFileSizeBytes = 5 * 1024 * 1024; // 5 MB
 
     public StudentsController(IStudentService studentService) => _studentService = studentService;
 
@@ -47,9 +48,15 @@ public class StudentsController : BaseApiController
     }
 
     [HttpPost("{id}/photo")]
+    [RequestSizeLimit(MaxPhotoFileSizeBytes)]
     public async Task<ActionResult> UploadPhoto(Guid id, IFormFile file)
     {
-        if (file == null || file.Length == 0) return BadRequest("Nenhum arquivo enviado.");
+        if (file == null || file.Length == 0)
+            return BadRequest("Nenhum arquivo enviado.");
+
+        if (file.Length > MaxPhotoFileSizeBytes)
+            return BadRequest("A imagem deve ter no máximo 5 MB.");
+
         var url = await _studentService.UploadPhotoAsync(id, GetProfessorId(), file.OpenReadStream(), file.FileName);
         return Ok(new { photoUrl = url });
     }

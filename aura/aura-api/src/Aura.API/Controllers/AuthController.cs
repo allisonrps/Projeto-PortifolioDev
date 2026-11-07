@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Aura.Application.DTOs.Auth;
 using Aura.Application.Services;
 
@@ -14,6 +15,7 @@ public class AuthController : BaseApiController
 
     [HttpPost("login")]
     [AllowAnonymous]
+    [EnableRateLimiting("auth")]
     public async Task<ActionResult<AuthResponseDto>> Login([FromBody] LoginRequestDto dto)
     {
         var result = await _authService.LoginAsync(dto);
@@ -22,6 +24,7 @@ public class AuthController : BaseApiController
 
     [HttpPost("register")]
     [AllowAnonymous]
+    [EnableRateLimiting("auth")]
     public async Task<ActionResult<AuthResponseDto>> Register([FromBody] RegisterRequestDto dto)
     {
         var result = await _authService.RegisterAsync(dto);
@@ -43,6 +46,7 @@ public class AuthController : BaseApiController
     }
 
     [HttpPost("change-password")]
+    [EnableRateLimiting("auth")]
     public async Task<ActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
     {
         await _authService.ChangePasswordAsync(GetProfessorId(), dto);

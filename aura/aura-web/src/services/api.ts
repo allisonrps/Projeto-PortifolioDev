@@ -1,4 +1,5 @@
 import axios from 'axios';
+import toast from 'react-hot-toast';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL 
   ? `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/api`
@@ -22,6 +23,9 @@ api.interceptors.response.use(
       localStorage.removeItem('aura_token');
       localStorage.removeItem('aura_professor');
       window.location.href = '/login';
+    } else if (error.response?.status === 402) {
+      const msg = error.response?.data?.message || 'Seu período de teste ou assinatura expirou. Ative seu plano em Configurações para criar ou editar registros.';
+      toast.error(msg, { id: 'subscription-expired-toast', duration: 6000 });
     }
     return Promise.reject(error);
   }

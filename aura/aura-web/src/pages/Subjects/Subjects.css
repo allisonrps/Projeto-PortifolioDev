@@ -9,8 +9,53 @@
 .levels-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-sm); }
 .levels-header h4 { font-size: 14px; font-weight: 600; color: var(--text-secondary); }
 .level-item {
-  display: flex; align-items: center; gap: var(--space-md); padding: var(--space-sm) var(--space-md);
-  background: var(--bg-tertiary); border-radius: var(--radius-md); border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: 10px 8px;
+  background: none !important;
+  border: none !important;
+  border-radius: 0px !important;
+  box-shadow: none !important;
+  transition: all var(--transition-fast);
 }
-.level-item span:first-child { flex: 1; font-weight: 500; font-size: 14px; }
+.level-item:hover {
+  background: var(--bg-tertiary) !important;
+}
+.level-item span:first-child { flex: 1; font-weight: 600; font-size: 14px; }
 .level-actions { display: flex; gap: 4px; }
+
+/* Editor Rico e Fichas de Aula */
+#sheet-rich-editor[data-placeholder]:empty:before {
+  content: attr(data-placeholder);
+  color: var(--text-muted);
+  cursor: text;
+}
+
+.toolbar-btn:hover {
+  background: var(--border-color) !important;
+  color: var(--accent-primary) !important;
+}
+
+.emoji-btn-item:hover {
+  background: var(--border-color) !important;
+  transform: scale(1.15);
+}
+
+.sheet-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: none !important;
+  border: none !important;
+  border-bottom: 1px dashed var(--border-color) !important;
+  border-radius: 0px !important;
+  box-shadow: none !important;
+  transition: all var(--transition-fast);
+}
+
+.sheet-list-item:hover {
+  border-bottom-color: var(--accent-primary) !important;
+  background: var(--bg-tertiary) !important;
+}

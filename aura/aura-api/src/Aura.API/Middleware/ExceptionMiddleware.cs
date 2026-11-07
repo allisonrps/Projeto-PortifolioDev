@@ -23,7 +23,7 @@ public class ExceptionMiddleware
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "An unhandled exception occurred.");
+            _logger.LogError(ex, "An unhandled exception occurred while processing {Method} {Path}.", context.Request.Method, context.Request.Path);
             await HandleExceptionAsync(context, ex);
         }
     }
@@ -34,12 +34,12 @@ public class ExceptionMiddleware
 
         var (statusCode, message) = exception switch
         {
-            UnauthorizedAccessException => (HttpStatusCode.Unauthorized, exception.Message),
+            UnauthorizedAccessException => (HttpStatusCode.Unauthorized, string.IsNullOrWhiteSpace(exception.Message) ? "Acesso não autorizado." : exception.Message),
             KeyNotFoundException => (HttpStatusCode.NotFound, exception.Message),
             ArgumentException => (HttpStatusCode.BadRequest, exception.Message),
             InvalidOperationException => (HttpStatusCode.BadRequest, exception.Message),
-            DbUpdateException dbEx => (HttpStatusCode.BadRequest, dbEx.InnerException?.Message ?? "Erro ao salvar os dados."),
-            _ => (HttpStatusCode.InternalServerError, exception.InnerException?.Message ?? "Ocorreu um erro interno no servidor.")
+            DbUpdateException => (HttpStatusCode.BadRequest, "Não foi possível salvar os dados. Verifique as informações preenchidas."),
+            _ => (HttpStatusCode.InternalServerError, "Ocorreu um erro interno no servidor.")
         };
 
         context.Response.StatusCode = (int)statusCode;

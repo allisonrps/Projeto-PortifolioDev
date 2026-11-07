@@ -8,6 +8,7 @@ public class ScheduleResponseDto
     public int DayOfWeek { get; set; }
     public string StartTime { get; set; } = string.Empty;
     public string EndTime { get; set; } = string.Empty;
+    public string Frequency { get; set; } = "weekly";
     public bool IsRecurring { get; set; }
     public DateTime ValidFrom { get; set; }
     public DateTime? ValidUntil { get; set; }
@@ -20,6 +21,7 @@ public class CreateScheduleDto
     public int DayOfWeek { get; set; }
     public string StartTime { get; set; } = string.Empty;
     public string EndTime { get; set; } = string.Empty;
+    public string Frequency { get; set; } = "weekly";
     public bool IsRecurring { get; set; } = true;
     public DateTime ValidFrom { get; set; }
     public DateTime? ValidUntil { get; set; }
@@ -31,6 +33,7 @@ public class UpdateScheduleDto
     public int? DayOfWeek { get; set; }
     public string? StartTime { get; set; }
     public string? EndTime { get; set; }
+    public string? Frequency { get; set; }
     public bool? IsRecurring { get; set; }
     public DateTime? ValidFrom { get; set; }
     public DateTime? ValidUntil { get; set; }
@@ -68,4 +71,9 @@ public class UpdateHolidayDto
     public bool? IsVacationPeriod { get; set; }
     public DateTime? VacationStart { get; set; }
     public DateTime? VacationEnd { get; set; }
+}
+
+public class EndScheduleDto
+{
+    public DateTime EndDate { get; set; }
 }

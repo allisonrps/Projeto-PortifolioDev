@@ -22,6 +22,10 @@ public class AuraDbContext : DbContext
     public DbSet<TemplateQuestion> TemplateQuestions => Set<TemplateQuestion>();
     public DbSet<StudentActivity> StudentActivities => Set<StudentActivity>();
     public DbSet<StudentAnswer> StudentAnswers => Set<StudentAnswer>();
+    public DbSet<ClassSheet> ClassSheets => Set<ClassSheet>();
+    public DbSet<ClassSheetStudent> ClassSheetStudents => Set<ClassSheetStudent>();
+    public DbSet<ManualFinanceEntry> ManualFinanceEntries => Set<ManualFinanceEntry>();
+    public DbSet<PlatformSetting> PlatformSettings => Set<PlatformSetting>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -46,6 +50,8 @@ public class AuraDbContext : DbContext
         modelBuilder.Entity<TemplateQuestion>().HasQueryFilter(e => !e.IsDeleted);
         modelBuilder.Entity<StudentActivity>().HasQueryFilter(e => !e.IsDeleted);
         modelBuilder.Entity<StudentAnswer>().HasQueryFilter(e => !e.IsDeleted);
+        modelBuilder.Entity<ClassSheet>().HasQueryFilter(e => !e.IsDeleted);
+        modelBuilder.Entity<ManualFinanceEntry>().HasQueryFilter(e => !e.IsDeleted);
 
         // Professor
         modelBuilder.Entity<Professor>(e =>
@@ -54,16 +60,21 @@ public class AuraDbContext : DbContext
             e.Property(p => p.Email).HasMaxLength(256).IsRequired();
             e.Property(p => p.PasswordHash).IsRequired();
             e.Property(p => p.Name).HasMaxLength(200).IsRequired();
+            e.Property(p => p.CpfCnpj).HasMaxLength(25);
             e.Property(p => p.Theme).HasMaxLength(10).HasDefaultValue("dark");
             e.Property(p => p.PrimaryColor).HasMaxLength(20).HasDefaultValue("#7C3AED");
             e.Property(p => p.SecondaryColor).HasMaxLength(20).HasDefaultValue("#06B6D4");
-            e.Property(p => p.PlanType).HasMaxLength(20).HasDefaultValue("free");
+            e.Property(p => p.PlanType).HasMaxLength(20).HasDefaultValue("trial");
+            e.Property(p => p.SubscriptionStatus).HasMaxLength(20).HasDefaultValue("trial");
+            e.Property(p => p.AsaasCustomerId).HasMaxLength(100);
+            e.Property(p => p.VisualTheme).HasMaxLength(50).HasDefaultValue("classic");
         });
 
         // Subject
         modelBuilder.Entity<Subject>(e =>
         {
             e.Property(s => s.Name).HasMaxLength(200).IsRequired();
+            e.HasIndex(s => new { s.ProfessorId, s.IsDeleted });
             e.HasOne(s => s.Professor).WithMany(p => p.Subjects).HasForeignKey(s => s.ProfessorId).OnDelete(DeleteBehavior.Cascade);
         });
 
@@ -71,7 +82,32 @@ public class AuraDbContext : DbContext
         modelBuilder.Entity<Level>(e =>
         {
             e.Property(l => l.Name).HasMaxLength(200).IsRequired();
+            e.HasIndex(l => new { l.SubjectId, l.IsDeleted });
             e.HasOne(l => l.Subject).WithMany(s => s.Levels).HasForeignKey(l => l.SubjectId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ClassSheet
+        modelBuilder.Entity<ClassSheet>(e =>
+        {
+            e.Property(cs => cs.Title).HasMaxLength(200).IsRequired();
+            e.Property(cs => cs.Content).IsRequired();
+            e.HasIndex(cs => new { cs.LevelId, cs.IsDeleted });
+            e.HasOne(cs => cs.Level).WithMany(l => l.ClassSheets).HasForeignKey(cs => cs.LevelId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ClassSheetStudent
+        modelBuilder.Entity<ClassSheetStudent>(e =>
+        {
+            e.HasKey(cs => new { cs.StudentId, cs.ClassSheetId });
+            e.HasIndex(cs => cs.ClassSheetId);
+            e.HasOne(cs => cs.Student)
+                .WithMany(s => s.ClassSheetStudents)
+                .HasForeignKey(cs => cs.StudentId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(cs => cs.ClassSheet)
+                .WithMany()
+                .HasForeignKey(cs => cs.ClassSheetId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         // Student
@@ -82,6 +118,7 @@ public class AuraDbContext : DbContext
             e.Property(s => s.Phone).HasMaxLength(30);
             e.Property(s => s.MonthlyPrice).HasPrecision(18, 2).HasDefaultValue(0m);
             e.Property(s => s.IsActive).HasDefaultValue(true);
+            e.HasIndex(s => new { s.ProfessorId, s.IsDeleted, s.IsActive });
             e.HasOne(s => s.Professor).WithMany(p => p.Students).HasForeignKey(s => s.ProfessorId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(s => s.Subject).WithMany(s => s.Students).HasForeignKey(s => s.SubjectId).OnDelete(DeleteBehavior.Restrict);
             e.HasOne(s => s.Level).WithMany(l => l.Students).HasForeignKey(s => s.LevelId).OnDelete(DeleteBehavior.Restrict);
@@ -92,6 +129,8 @@ public class AuraDbContext : DbContext
         {
             e.Property(l => l.Status).HasMaxLength(20).HasDefaultValue("scheduled");
             e.Property(l => l.Title).HasMaxLength(200);
+            e.HasIndex(l => new { l.ProfessorId, l.IsDeleted, l.ScheduledAt, l.Status });
+            e.HasIndex(l => new { l.StudentId, l.IsDeleted, l.ScheduledAt });
             e.HasOne(l => l.Student).WithMany(s => s.Lessons).HasForeignKey(l => l.StudentId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(l => l.Professor).WithMany(p => p.Lessons).HasForeignKey(l => l.ProfessorId).OnDelete(DeleteBehavior.Restrict);
         });
@@ -100,7 +139,17 @@ public class AuraDbContext : DbContext
         modelBuilder.Entity<MonthlyPayment>(e =>
         {
             e.Property(p => p.Amount).HasPrecision(18, 2);
+            e.HasIndex(p => new { p.StudentId, p.IsDeleted, p.Year, p.Month, p.IsPaid });
             e.HasOne(p => p.Student).WithMany(s => s.MonthlyPayments).HasForeignKey(p => p.StudentId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ManualFinanceEntry
+        modelBuilder.Entity<ManualFinanceEntry>(e =>
+        {
+            e.Property(m => m.Amount).HasPrecision(18, 2);
+            e.Property(m => m.Description).HasMaxLength(500).IsRequired();
+            e.HasIndex(m => new { m.ProfessorId, m.IsDeleted, m.Year, m.Month });
+            e.HasOne(m => m.Professor).WithMany().HasForeignKey(m => m.ProfessorId).OnDelete(DeleteBehavior.Cascade);
         });
 
         // Exam
@@ -109,6 +158,7 @@ public class AuraDbContext : DbContext
             e.Property(ex => ex.Title).HasMaxLength(200).IsRequired();
             e.Property(ex => ex.Grade).HasPrecision(5, 2);
             e.Property(ex => ex.MaxGrade).HasPrecision(5, 2).HasDefaultValue(10m);
+            e.HasIndex(ex => new { ex.StudentId, ex.IsDeleted, ex.ScheduledAt });
             e.HasOne(ex => ex.Student).WithMany(s => s.Exams).HasForeignKey(ex => ex.StudentId).OnDelete(DeleteBehavior.Cascade);
         });
 
@@ -118,12 +168,16 @@ public class AuraDbContext : DbContext
             e.Property(ex => ex.Title).HasMaxLength(200).IsRequired();
             e.Property(ex => ex.Grade).HasPrecision(5, 2);
             e.Property(ex => ex.MaxGrade).HasPrecision(5, 2).HasDefaultValue(10m);
+            e.HasIndex(ex => new { ex.StudentId, ex.IsDeleted, ex.ScheduledAt });
             e.HasOne(ex => ex.Student).WithMany(s => s.Exercises).HasForeignKey(ex => ex.StudentId).OnDelete(DeleteBehavior.Cascade);
         });
 
         // Schedule
         modelBuilder.Entity<Schedule>(e =>
         {
+            e.Property(s => s.Frequency).HasMaxLength(20).HasDefaultValue("weekly");
+            e.HasIndex(s => new { s.ProfessorId, s.IsDeleted, s.DayOfWeek, s.IsRecurring });
+            e.HasIndex(s => new { s.StudentId, s.IsDeleted });
             e.HasOne(s => s.Professor).WithMany(p => p.Schedules).HasForeignKey(s => s.ProfessorId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(s => s.Student).WithMany().HasForeignKey(s => s.StudentId).OnDelete(DeleteBehavior.Restrict);
         });
@@ -132,6 +186,7 @@ public class AuraDbContext : DbContext
         modelBuilder.Entity<Holiday>(e =>
         {
             e.Property(h => h.Name).HasMaxLength(200).IsRequired();
+            e.HasIndex(h => new { h.ProfessorId, h.IsDeleted, h.Date });
             e.HasOne(h => h.Professor).WithMany(p => p.Holidays).HasForeignKey(h => h.ProfessorId).OnDelete(DeleteBehavior.Cascade);
         });
 
@@ -140,7 +195,12 @@ public class AuraDbContext : DbContext
         {
             e.Property(s => s.PlanType).HasMaxLength(20).IsRequired();
             e.Property(s => s.Price).HasPrecision(18, 2);
-            e.Property(s => s.Status).HasMaxLength(20).HasDefaultValue("active");
+            e.Property(s => s.Status).HasMaxLength(20).HasDefaultValue("pending");
+            e.Property(s => s.BillingType).HasMaxLength(30).HasDefaultValue("UNDEFINED");
+            e.Property(s => s.PaymentGatewayId).HasMaxLength(120);
+            e.Property(s => s.InvoiceUrl).HasMaxLength(500);
+            e.HasIndex(s => new { s.ProfessorId, s.Status });
+            e.HasIndex(s => s.PaymentGatewayId);
             e.HasOne(s => s.Professor).WithMany(p => p.Subscriptions).HasForeignKey(s => s.ProfessorId).OnDelete(DeleteBehavior.Cascade);
         });
 
@@ -149,6 +209,8 @@ public class AuraDbContext : DbContext
         {
             e.Property(ta => ta.Title).HasMaxLength(200).IsRequired();
             e.Property(ta => ta.Type).HasMaxLength(20).HasDefaultValue("exercise");
+            e.Property(ta => ta.MaxGrade).HasPrecision(5, 2).HasDefaultValue(10m);
+            e.HasIndex(ta => new { ta.ProfessorId, ta.IsDeleted, ta.CreatedAt });
             e.HasOne(ta => ta.Professor).WithMany().HasForeignKey(ta => ta.ProfessorId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(ta => ta.Subject).WithMany().HasForeignKey(ta => ta.SubjectId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(ta => ta.Level).WithMany().HasForeignKey(ta => ta.LevelId).OnDelete(DeleteBehavior.Cascade);
@@ -158,11 +220,12 @@ public class AuraDbContext : DbContext
         modelBuilder.Entity<TemplateQuestion>(e =>
         {
             e.Property(q => q.QuestionText).IsRequired();
-            e.Property(q => q.OptionA).IsRequired();
-            e.Property(q => q.OptionB).IsRequired();
-            e.Property(q => q.OptionC).IsRequired();
-            e.Property(q => q.OptionD).IsRequired();
-            e.Property(q => q.CorrectOption).IsRequired();
+            e.Property(q => q.OptionA).IsRequired(false);
+            e.Property(q => q.OptionB).IsRequired(false);
+            e.Property(q => q.OptionC).IsRequired(false);
+            e.Property(q => q.OptionD).IsRequired(false);
+            e.Property(q => q.CorrectOption).IsRequired(false);
+            e.HasIndex(q => new { q.TemplateActivityId, q.IsDeleted });
             e.HasOne(q => q.TemplateActivity).WithMany(ta => ta.Questions).HasForeignKey(q => q.TemplateActivityId).OnDelete(DeleteBehavior.Cascade);
         });
 
@@ -172,6 +235,8 @@ public class AuraDbContext : DbContext
             e.Property(sa => sa.Status).HasMaxLength(20).HasDefaultValue("pending");
             e.Property(sa => sa.Grade).HasPrecision(5, 2);
             e.Property(sa => sa.MaxGrade).HasPrecision(5, 2).HasDefaultValue(10);
+            e.HasIndex(sa => new { sa.StudentId, sa.IsDeleted, sa.Status, sa.ScheduledAt });
+            e.HasIndex(sa => new { sa.Status, sa.IsDeleted, sa.CompletedAt });
             e.HasOne(sa => sa.Student).WithMany().HasForeignKey(sa => sa.StudentId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(sa => sa.TemplateActivity).WithMany().HasForeignKey(sa => sa.TemplateActivityId).OnDelete(DeleteBehavior.Cascade);
         });
@@ -180,12 +245,21 @@ public class AuraDbContext : DbContext
         modelBuilder.Entity<StudentAnswer>(e =>
         {
             e.Property(a => a.QuestionText).IsRequired();
-            e.Property(a => a.OptionA).IsRequired();
-            e.Property(a => a.OptionB).IsRequired();
-            e.Property(a => a.OptionC).IsRequired();
-            e.Property(a => a.OptionD).IsRequired();
-            e.Property(a => a.CorrectOption).IsRequired();
+            e.Property(a => a.OptionA).IsRequired(false);
+            e.Property(a => a.OptionB).IsRequired(false);
+            e.Property(a => a.OptionC).IsRequired(false);
+            e.Property(a => a.OptionD).IsRequired(false);
+            e.Property(a => a.CorrectOption).IsRequired(false);
+            e.HasIndex(a => new { a.StudentActivityId, a.IsDeleted });
             e.HasOne(a => a.StudentActivity).WithMany(sa => sa.Answers).HasForeignKey(a => a.StudentActivityId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // PlatformSetting
+        modelBuilder.Entity<PlatformSetting>(e =>
+        {
+            e.HasKey(ps => ps.Key);
+            e.Property(ps => ps.Key).HasMaxLength(100).IsRequired();
+            e.Property(ps => ps.Value).IsRequired();
         });
     }
 

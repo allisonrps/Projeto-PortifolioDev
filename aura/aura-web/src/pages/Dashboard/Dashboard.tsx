@@ -205,20 +205,61 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* 1. Seção: Aulas de Hoje / Próxima Aula (Cards Individuais) */}
+      {/* 1. Seção: Aulas de Hoje / Próxima Aula */}
       <div className="dashboard-lessons-section animate-slideUp stagger-1" style={{ marginBottom: 'var(--space-xl)' }}>
-        <div className="card-section-header" style={{ marginBottom: '12px' }}>
-          <MdAccessTime /> <h3>{todayTitle}</h3>
+        {/* Texto do dia diretamente acima dos cards, sem tabela ou card ao redor */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+          <MdAccessTime style={{ fontSize: '18px', color: 'var(--accent-primary)' }} />
+          <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', margin: 0, textTransform: 'capitalize' }}>
+            {todayTitle}
+          </h3>
         </div>
 
         <div className="lesson-list">
           {data?.todayLessons.length === 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
-              <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', margin: 0 }}>
-                Nenhuma aula agendada para hoje!!
-              </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', width: '100%' }}>
+              {/* Card no topo avisando que não tem aula agendada hoje */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '16px 20px',
+                  background: 'var(--bg-card)',
+                  border: '1px dashed var(--border-color)',
+                  borderRadius: 'var(--radius-md)',
+                  backdropFilter: 'blur(12px)',
+                  boxShadow: 'var(--shadow-sm)'
+                }}
+              >
+                <div
+                  style={{
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '50%',
+                    background: 'rgba(124, 58, 237, 0.12)',
+                    color: 'var(--accent-primary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '20px',
+                    flexShrink: 0
+                  }}
+                >
+                  <MdAccessTime />
+                </div>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    Nenhuma aula agendada para hoje
+                  </h4>
+                  <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                    Aproveite o tempo livre ou confira as próximas aulas abaixo.
+                  </p>
+                </div>
+              </div>
+
               {data?.nextUpcomingLesson && (
-                <div style={{ width: '100%', textAlign: 'left', marginTop: '4px' }}>
+                <div style={{ width: '100%', textAlign: 'left' }}>
                   <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '10px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <MdSchedule style={{ color: 'var(--warning)' }} /> Próxima aula agendada:
                   </div>

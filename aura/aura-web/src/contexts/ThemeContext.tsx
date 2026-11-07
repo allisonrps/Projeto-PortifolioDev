@@ -5,9 +5,11 @@ interface ThemeContextType {
   theme: 'light' | 'dark';
   primaryColor: string;
   secondaryColor: string;
+  visualTheme: 'classic' | 'retro-comic' | 'cyber-grid';
   toggleTheme: () => void;
   setPrimaryColor: (color: string) => void;
   setSecondaryColor: (color: string) => void;
+  setVisualTheme: (theme: 'classic' | 'retro-comic' | 'cyber-grid') => void;
 }
 
 const ThemeContext = createContext<ThemeContextType>({} as ThemeContextType);
@@ -48,12 +50,20 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [secondaryColor, setSecondary] = useState(
     () => localStorage.getItem('aura_secondary') || '#06B6D4'
   );
+  const [visualTheme, setVisual] = useState<'classic' | 'retro-comic' | 'cyber-grid'>(() => {
+    const stored = localStorage.getItem('aura_visual_theme');
+    return stored === 'cyber-grid' || stored === 'retro-comic' ? stored : 'classic';
+  });
 
   useEffect(() => {
     if (professor) {
       setTheme((professor.theme as 'light' | 'dark') || 'dark');
       setPrimary(professor.primaryColor || '#7C3AED');
       setSecondary(professor.secondaryColor || '#06B6D4');
+      if (professor.visualTheme) {
+        const vt = professor.visualTheme as string;
+        setVisual(vt === 'cyber-grid' || vt === 'retro-comic' ? vt : 'classic');
+      }
     }
   }, [professor]);
 
@@ -72,12 +82,20 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('aura_secondary', secondaryColor);
   }, [secondaryColor]);
 
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.remove('visual-theme-classic', 'visual-theme-retro-comic', 'visual-theme-cyber-grid', 'visual-theme-minimal-manga');
+    root.classList.add(`visual-theme-${visualTheme}`);
+    localStorage.setItem('aura_visual_theme', visualTheme);
+  }, [visualTheme]);
+
   const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark');
   const setPrimaryColor = (c: string) => setPrimary(c);
   const setSecondaryColor = (c: string) => setSecondary(c);
+  const setVisualTheme = (theme: 'classic' | 'retro-comic' | 'cyber-grid') => setVisual(theme);
 
   return (
-    <ThemeContext.Provider value={{ theme, primaryColor, secondaryColor, toggleTheme, setPrimaryColor, setSecondaryColor }}>
+    <ThemeContext.Provider value={{ theme, primaryColor, secondaryColor, visualTheme, toggleTheme, setPrimaryColor, setSecondaryColor, setVisualTheme }}>
       {children}
     </ThemeContext.Provider>
   );

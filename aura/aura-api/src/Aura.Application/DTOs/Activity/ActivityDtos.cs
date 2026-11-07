@@ -18,6 +18,9 @@ public class CreateTemplateDto
     public string Type { get; set; } = "exercise"; // "exam" or "exercise"
 
     [Required]
+    public decimal MaxGrade { get; set; } = 10.0m;
+
+    [Required]
     [MinLength(1, ErrorMessage = "A atividade deve ter pelo menos 1 questão.")]
     public List<CreateQuestionDto> Questions { get; set; } = new();
 }
@@ -27,20 +30,16 @@ public class CreateQuestionDto
     [Required(ErrorMessage = "O texto da pergunta é obrigatório.")]
     public string QuestionText { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "A opção A é obrigatória.")]
-    public string OptionA { get; set; } = string.Empty;
+    public string QuestionType { get; set; } = "multiple_choice"; // "multiple_choice" or "writing"
 
-    [Required(ErrorMessage = "A opção B é obrigatória.")]
-    public string OptionB { get; set; } = string.Empty;
+    public string? OptionA { get; set; }
+    public string? OptionB { get; set; }
 
-    [Required(ErrorMessage = "A opção C é obrigatória.")]
-    public string OptionC { get; set; } = string.Empty;
+    public string? OptionC { get; set; }
+    public string? OptionD { get; set; }
 
-    [Required(ErrorMessage = "A opção D é obrigatória.")]
-    public string OptionD { get; set; } = string.Empty;
-
-    [Required]
-    public char CorrectOption { get; set; } // 'A', 'B', 'C', 'D'
+    public char? CorrectOption { get; set; } // 'A', 'B', 'C', 'D'
+    public decimal Weight { get; set; } = 1.0m;
 }
 
 public class TemplateResponseDto
@@ -52,6 +51,7 @@ public class TemplateResponseDto
     public Guid LevelId { get; set; }
     public string LevelName { get; set; } = string.Empty;
     public string Type { get; set; } = string.Empty;
+    public decimal MaxGrade { get; set; }
     public DateTime CreatedAt { get; set; }
     public List<QuestionResponseDto> Questions { get; set; } = new();
 }
@@ -60,11 +60,13 @@ public class QuestionResponseDto
 {
     public Guid Id { get; set; }
     public string QuestionText { get; set; } = string.Empty;
-    public string OptionA { get; set; } = string.Empty;
-    public string OptionB { get; set; } = string.Empty;
-    public string OptionC { get; set; } = string.Empty;
-    public string OptionD { get; set; } = string.Empty;
-    public char CorrectOption { get; set; }
+    public string QuestionType { get; set; } = "multiple_choice";
+    public string? OptionA { get; set; }
+    public string? OptionB { get; set; }
+    public string? OptionC { get; set; }
+    public string? OptionD { get; set; }
+    public char? CorrectOption { get; set; }
+    public decimal Weight { get; set; } = 1.0m;
 }
 
 public class AssignActivityDto
@@ -96,12 +98,18 @@ public class StudentAnswerResponseDto
 {
     public Guid Id { get; set; }
     public string QuestionText { get; set; } = string.Empty;
-    public string OptionA { get; set; } = string.Empty;
-    public string OptionB { get; set; } = string.Empty;
-    public string OptionC { get; set; } = string.Empty;
-    public string OptionD { get; set; } = string.Empty;
-    public char CorrectOption { get; set; }
+    public string QuestionType { get; set; } = "multiple_choice";
+    public string? OptionA { get; set; }
+    public string? OptionB { get; set; }
+    public string? OptionC { get; set; }
+    public string? OptionD { get; set; }
+    public char? CorrectOption { get; set; }
     public char? SelectedOption { get; set; }
+    public string? WrittenAnswer { get; set; }
+    public string? EvaluationMention { get; set; }
+    public decimal? EvaluationScore { get; set; }
+    public decimal Weight { get; set; } = 1.0m;
+    public string? EvaluationNotes { get; set; }
 }
 
 public class SubmitActivityDto
@@ -115,6 +123,23 @@ public class SubmitAnswerDto
     [Required]
     public Guid QuestionId { get; set; }
 
+    public char? SelectedOption { get; set; } // 'A', 'B', 'C', 'D' (nulo se discursiva)
+    public string? WrittenAnswer { get; set; } // preenchido se discursiva
+}
+
+public class CorrectActivityDto
+{
     [Required]
-    public char SelectedOption { get; set; } // 'A', 'B', 'C', 'D'
+    public List<QuestionCorrectionDto> Corrections { get; set; } = new();
+}
+
+public class QuestionCorrectionDto
+{
+    [Required]
+    public Guid AnswerId { get; set; }
+
+    [Required]
+    public decimal Score { get; set; } // Nota direta atribuída pelo professor
+
+    public string? Notes { get; set; } // Observações do professor para a questão discursiva
 }

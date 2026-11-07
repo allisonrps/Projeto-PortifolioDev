@@ -7,4 +7,5 @@ public class Level : BaseEntity
 
     public virtual Subject Subject { get; set; } = null!;
     public virtual ICollection<Student> Students { get; set; } = new List<Student>();
+    public virtual ICollection<ClassSheet> ClassSheets { get; set; } = new List<ClassSheet>();
 }

@@ -3,9 +3,9 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   MdSchool, MdPayment, MdCalendarToday,
   MdSchedule, MdDelete, MdAdd, MdEdit, MdCheckCircle, MdCancel, MdPercent, MdAttachMoney,
-  MdExpandMore, MdExpandLess, MdTimer, MdPhone, MdCake, MdEventAvailable, MdEventBusy, MdPerson, MdSwapVert,
+  MdExpandMore, MdExpandLess, MdTimer, MdCake, MdEventAvailable, MdPerson, MdSwapVert,
   MdAssignmentTurnedIn, MdOpenInNew, MdAccessTime, MdShare, MdMenuBook,
-  MdEmojiEvents, MdVerified
+  MdEmojiEvents, MdLocationOn
 } from 'react-icons/md';
 import { FaWhatsapp } from 'react-icons/fa';
 import Card from '../../components/ui/Card';
@@ -145,9 +145,6 @@ export default function StudentDetailPage() {
   const [expandedLevelIds, setExpandedLevelIds] = useState<string[]>([]);
   const [teacherActivityFilter, setTeacherActivityFilter] = useState<'all' | 'exam' | 'exercise'>('all');
 
-  // Expandable Info Card state
-  const [showFullDetails, setShowFullDetails] = useState(false);
-
 
 
   // Lessons Month & Year Filter states
@@ -226,7 +223,9 @@ export default function StudentDetailPage() {
   const [subjectsList, setSubjectsList] = useState<Subject[]>([]);
   const [formLevelsList, setFormLevelsList] = useState<Level[]>([]);
   const [editStudentForm, setEditStudentForm] = useState({
-    name: '', birthDate: '', phone: '', guardianName: '', guardianPhone: '', subjectId: '', levelId: '',
+    name: '', birthDate: '', phone: '', guardianName: '', guardianPhone: '',
+    city: '', state: '', country: 'Brasil',
+    subjectId: '', levelId: '',
     observation: '', monthlyPrice: '', isActive: 'true', firstClassDate: '', lastClassDate: ''
   });
 
@@ -318,6 +317,9 @@ export default function StudentDetailPage() {
       phone: student.phone || '',
       guardianName: student.guardianName || '',
       guardianPhone: student.guardianPhone || '',
+      city: student.city || '',
+      state: student.state || '',
+      country: student.country || 'Brasil',
       subjectId: student.subjectId || '',
       levelId: student.levelId || '',
       observation: student.observation || '',
@@ -353,6 +355,9 @@ export default function StudentDetailPage() {
       phone: editStudentForm.phone || undefined,
       guardianName: editStudentForm.guardianName || undefined,
       guardianPhone: editStudentForm.guardianPhone || undefined,
+      city: editStudentForm.city,
+      state: editStudentForm.state,
+      country: editStudentForm.country,
       subjectId: editStudentForm.subjectId || undefined,
       levelId: editStudentForm.levelId || undefined,
       observation: editStudentForm.observation || undefined,
@@ -417,23 +422,13 @@ export default function StudentDetailPage() {
     ? student.lessons.filter(l => l.scheduledAt.split('T')[0] <= lastClassCutoffStr)
     : student.lessons;
 
-  // Calculate Attendance Rate (Total & Current Month)
+  // Calculate Total Attendance Rate (All lessons across all months and years)
   const completedCount = visibleStudentLessons.filter(l => l.status === 'completed').length;
   const cancelledCount = visibleStudentLessons.filter(l => l.status === 'cancelled').length;
   const totalAtts = completedCount + cancelledCount;
   const attendanceRate = totalAtts > 0 ? Math.round((completedCount / totalAtts) * 100) : 100;
 
   const now = new Date();
-  const currentMonthLessons = visibleStudentLessons.filter(l => {
-    const d = new Date(l.scheduledAt);
-    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-  });
-  const monthlyCompletedCount = currentMonthLessons.filter(l => l.status === 'completed').length;
-  const monthlyCancelledCount = currentMonthLessons.filter(l => l.status === 'cancelled').length;
-  const monthlyTotalAtts = monthlyCompletedCount + monthlyCancelledCount;
-  const monthlyAttendanceRate = monthlyTotalAtts > 0
-    ? Math.round((monthlyCompletedCount / monthlyTotalAtts) * 100)
-    : attendanceRate;
 
   // Calculate Past Class Hours Rate (Only for classes that have already occurred)
   const pastLessons = visibleStudentLessons.filter(l => 
@@ -451,7 +446,6 @@ export default function StudentDetailPage() {
   // First and Last Class dates
   const sortedLessons = [...visibleStudentLessons].sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
   const firstClassDate = sortedLessons.length > 0 ? sortedLessons[0].scheduledAt : null;
-  const lastClassDate = student.lastClassDate || (sortedLessons.length > 0 ? sortedLessons[sortedLessons.length - 1].scheduledAt : null);
 
   // Active Student Tenure (Years / Months / Days counter)
   const activeStartDateRaw = student.firstClassDate || firstClassDate || student.createdAt;
@@ -486,10 +480,41 @@ export default function StudentDetailPage() {
     .filter(e => e.grade !== null && e.grade !== undefined)
     .map(e => ((e.grade || 0) / (e.maxGrade || 10)) * 10);
   const allNormalizedGrades = [...gradedOnline, ...gradedExams, ...gradedExercises];
-  const averageGradeDisplay = allNormalizedGrades.length > 0
-    ? (allNormalizedGrades.reduce((sum, val) => sum + val, 0) / allNormalizedGrades.length).toFixed(1)
-    : '--';
+  const averageGradeNum = allNormalizedGrades.length > 0
+    ? allNormalizedGrades.reduce((sum, val) => sum + val, 0) / allNormalizedGrades.length
+    : null;
+  const averageGradeDisplay = averageGradeNum !== null ? averageGradeNum.toFixed(1) : '--';
+  const gradePerfTier = averageGradeNum === null
+    ? 'grade-perf-none'
+    : averageGradeNum >= 8
+      ? 'grade-perf-green'
+      : averageGradeNum >= 6
+        ? 'grade-perf-yellow'
+        : averageGradeNum >= 4
+          ? 'grade-perf-orange'
+          : 'grade-perf-red';
+  const gradePerfLabel = averageGradeNum === null
+    ? 'Sem avaliações'
+    : averageGradeNum >= 8
+      ? 'Excelente desempenho'
+      : averageGradeNum >= 6
+        ? 'Bom desempenho'
+        : averageGradeNum >= 4
+          ? 'Atenção necessária'
+          : 'Desempenho crítico';
+
+  const getItemGradePerfClass = (grade?: number | null, maxGrade: number = 10) => {
+    if (grade === null || grade === undefined) return 'grade-pill-none';
+    const norm = (grade / (maxGrade || 10)) * 10;
+    if (norm >= 8) return 'grade-pill-green';
+    if (norm >= 6) return 'grade-pill-yellow';
+    if (norm >= 4) return 'grade-pill-orange';
+    return 'grade-pill-red';
+  };
+
   const effectivePhone = student.phone || student.guardianPhone || '';
+  const locationParts = [student.city?.trim(), student.state?.trim(), student.country?.trim()].filter(Boolean);
+  const locationLabel = locationParts.join(', ');
 
   // Monthly Price update handler
   const handleSaveMonthlyPrice = async () => {
@@ -973,26 +998,25 @@ export default function StudentDetailPage() {
         <Card variant="elevated" className="student-profile animate-slideUp">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)', width: '100%' }}>
             <div className="profile-header-wrap">
-              {/* Large circular avatar */}
-              <div className="profile-avatar-wrap">
-                <Avatar src={student.photoUrl} name={student.name} size="xl" shape="circle" />
+              {/* Large circular avatar with mobile action buttons alongside */}
+              <div className="profile-avatar-container">
+                <div className="profile-avatar-wrap">
+                  <Avatar src={student.photoUrl} name={student.name} size="xl" shape="circle" />
+                </div>
+                {/* Mobile action buttons on the right of the avatar */}
+                <div className="student-actions-mobile">
+                  <button className="icon-btn" onClick={openEditStudentModal} title="Editar Aluno"><MdEdit /></button>
+                  <button className="icon-btn icon-btn-danger" onClick={handleDeleteStudent} title="Excluir Aluno"><MdDelete /></button>
+                </div>
               </div>
               
               <div className="profile-info-content">
-                {/* Row 1: Larger Student Name + Actions */}
+                {/* Row 1: Larger Student Name + Actions (Desktop) */}
                 <div className="profile-info-top">
                   <h2 className="student-name-title">
                     {student.name}
                   </h2>
-                  <div className="student-actions">
-                    <button
-                      className="icon-btn"
-                      onClick={() => setShowFullDetails(!showFullDetails)}
-                      title={showFullDetails ? 'Ocultar Ficha Completa' : 'Ver Ficha Completa do Aluno'}
-                    >
-                      {showFullDetails ? <MdExpandLess /> : <MdExpandMore />}
-                    </button>
-                    <button className="icon-btn icon-btn-warning" onClick={() => handleCopyPortalLink(student.id)} title="Copiar Link do Portal do Aluno"><MdOpenInNew /></button>
+                  <div className="student-actions student-actions-desktop">
                     <button className="icon-btn" onClick={openEditStudentModal} title="Editar Aluno"><MdEdit /></button>
                     <button className="icon-btn icon-btn-danger" onClick={handleDeleteStudent} title="Excluir Aluno"><MdDelete /></button>
                   </div>
@@ -1007,24 +1031,26 @@ export default function StudentDetailPage() {
                   {student.levelName && <Badge variant="secondary"><MdSchool style={{marginRight: '4px', verticalAlign: 'text-bottom'}}/>{student.levelName}</Badge>}
                 </div>
 
-                {/* Row 3: Subtitle Metadata (Idade, Responsável, Início) */}
-                <div className="profile-meta-subtitle-row">
-                  {student.birthDate && (
-                    <span className="meta-subtitle-item">
-                      <MdCake /> {calculateAge(student.birthDate)} anos
-                    </span>
-                  )}
-                  {student.guardianName && (
-                    <span className="meta-subtitle-item">
-                      <MdPerson /> Resp.: {student.guardianName}
-                    </span>
-                  )}
-                  {activeStartDate && (
-                    <span className="meta-subtitle-item">
-                      <MdCalendarToday /> Desde {format(activeStartDate, 'dd/MM/yyyy')}
-                    </span>
-                  )}
-                </div>
+                {/* Row 3: Subtitle Metadata (Cidade, UF, País + Idade + Responsável) */}
+                {(locationLabel || student.birthDate || student.guardianName) && (
+                  <div className="profile-meta-subtitle-row">
+                    {locationLabel && (
+                      <span className="meta-subtitle-item">
+                        <MdLocationOn /> {locationLabel}
+                      </span>
+                    )}
+                    {student.birthDate && (
+                      <span className="meta-subtitle-item">
+                        <MdCake /> {calculateAge(student.birthDate)} anos
+                      </span>
+                    )}
+                    {student.guardianName && (
+                      <span className="meta-subtitle-item">
+                        <MdPerson /> Resp.: {student.guardianName}
+                      </span>
+                    )}
+                  </div>
+                )}
 
                 {/* Row 4: Sleek Circular Icon Dials + Mostradores + Hover Balloons */}
                 <div className="profile-dials-row">
@@ -1062,31 +1088,32 @@ export default function StudentDetailPage() {
                     </button>
                   )}
 
-                  {/* 2. Monthly Attendance Rate Dial */}
-                  <div className="metric-dial-item metric-dial-monthly">
+                  {/* 2. Student Portal Dial (Opens in new tab) */}
+                  <a
+                    href={`${window.location.origin}/student-portal/${student.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="metric-dial-item metric-dial-portal"
+                  >
+                    <div className="metric-dial-circle">
+                      <MdOpenInNew />
+                    </div>
+                    <span className="metric-dial-counter">Portal</span>
+                    <div className="metric-dial-tooltip">
+                      <strong>Portal do Aluno</strong>
+                      <span>Clique para abrir o portal do aluno em nova aba</span>
+                    </div>
+                  </a>
+
+                  {/* 3. Total Attendance Rate Dial (All months & years) */}
+                  <div className="metric-dial-item metric-dial-total-att">
                     <div className="metric-dial-circle">
                       <MdPercent />
                     </div>
-                    <span className="metric-dial-counter">{monthlyAttendanceRate}%</span>
-                    <div className="metric-dial-tooltip">
-                      <strong>Porcentagem de Presença (Mês)</strong>
-                      <span>
-                        {monthlyTotalAtts > 0
-                          ? `${monthlyCompletedCount} presenças e ${monthlyCancelledCount} faltas neste mês`
-                          : `Sem aulas finalizadas no mês (Geral: ${attendanceRate}%)`}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* 3. Total Attendance Rate Dial */}
-                  <div className="metric-dial-item metric-dial-total-att">
-                    <div className="metric-dial-circle">
-                      <MdVerified />
-                    </div>
                     <span className="metric-dial-counter">{attendanceRate}%</span>
                     <div className="metric-dial-tooltip">
-                      <strong>Total Porcentagem de Presença</strong>
-                      <span>{completedCount} aulas concluídas • {cancelledCount} faltas no histórico</span>
+                      <strong>Porcentagem de Presença Geral</strong>
+                      <span>{completedCount} aulas concluídas • {cancelledCount} faltas em todo o histórico</span>
                     </div>
                   </div>
 
@@ -1114,14 +1141,14 @@ export default function StudentDetailPage() {
                     </div>
                   </div>
 
-                  {/* 6. Average Grade in Activities Dial */}
-                  <div className="metric-dial-item metric-dial-grade">
+                  {/* 6. Average Grade in Activities Dial (Performance Color Scale) */}
+                  <div className={`metric-dial-item metric-dial-grade ${gradePerfTier}`}>
                     <div className="metric-dial-circle">
                       <MdEmojiEvents />
                     </div>
                     <span className="metric-dial-counter">{averageGradeDisplay}</span>
                     <div className="metric-dial-tooltip">
-                      <strong>Média de Notas em Atividades</strong>
+                      <strong>Média de Notas ({gradePerfLabel})</strong>
                       <span>
                         {allNormalizedGrades.length > 0
                           ? `Nota média ${averageGradeDisplay} / 10 em ${allNormalizedGrades.length} ${allNormalizedGrades.length === 1 ? 'atividade avaliada' : 'atividades avaliadas'}`
@@ -1133,145 +1160,24 @@ export default function StudentDetailPage() {
               </div>
             </div>
 
-            {/* Expandable Details Panel */}
-            {showFullDetails && (
-              <div className="expandable-details-panel animate-fadeIn" style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '16px',
-                paddingTop: '16px',
-                borderTop: '1px solid var(--border-color)',
-                marginTop: '4px'
-              }}>
-                {/* Stats Cards incorporados em linha/grid */}
-                <div className="embedded-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
-                  <div className="embedded-stat-card" style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--bg-tertiary)', padding: '12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-                    <div className="rate-icon" style={{ width: '40px', height: '40px', fontSize: '20px', borderRadius: '50%', background: 'var(--accent-primary-light)', color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <MdPercent />
-                    </div>
-                    <div className="rate-content">
-                      <h3 style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)', margin: 0, fontWeight: 700 }}>Presença</h3>
-                      <div className="rate-number" style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.2 }}>{attendanceRate}%</div>
-                      <p className="rate-meta" style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>
-                        {completedCount} ok, {cancelledCount} faltas
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="embedded-stat-card" style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--bg-tertiary)', padding: '12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-                    <div className="rate-icon" style={{ width: '40px', height: '40px', fontSize: '20px', borderRadius: '50%', background: 'var(--accent-secondary-light)', color: 'var(--accent-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <MdTimer />
-                    </div>
-                    <div className="rate-content">
-                      <h3 style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)', margin: 0, fontWeight: 700 }}>Horas Aulas</h3>
-                      <div className="rate-number" style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.2 }}>
-                        {completedHours}h <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 500 }}>/ {totalPastHours}h</span>
-                      </div>
-                      <p className="rate-meta" style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>
-                        {hoursAttendanceRate}% cumpridas
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Campos de detalhes em Grid */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
-                  <div className="detail-field">
-                    <span className="field-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-muted)' }}>
-                      <MdCake style={{ color: 'var(--accent-primary)' }} /> Aniversário
-                    </span>
-                    <strong style={{ fontSize: '14px', color: 'var(--text-primary)' }}>
-                      {student.birthDate ? (
-                        <>
-                          {format(new Date(student.birthDate), 'dd/MM/yyyy')}
-                          {calculateAge(student.birthDate) !== null && ` (${calculateAge(student.birthDate)} anos)`}
-                        </>
-                      ) : 'Não informado'}
-                    </strong>
-                  </div>
-
-                  {(student.guardianName || (calculateAge(student.birthDate) !== null && calculateAge(student.birthDate)! < 18)) && (
-                    <div className="detail-field">
-                      <span className="field-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-muted)' }}>
-                        <MdPerson style={{ color: 'var(--accent-primary)' }} /> Responsável
-                      </span>
-                      <strong style={{ fontSize: '14px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                        {student.guardianName || 'Não informado'}
-                        {student.guardianPhone && (
-                          <a
-                            href={getWhatsappUrl(student.guardianPhone)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title="Abrir WhatsApp do responsável"
-                            style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', color: '#25D366', fontWeight: 700, textDecoration: 'none', fontSize: '13px' }}
-                          >
-                            <FaWhatsapp style={{ fontSize: '15px' }} /> ({student.guardianPhone})
-                          </a>
-                        )}
-                      </strong>
-                    </div>
-                  )}
-
-                  <div className="detail-field">
-                    <span className="field-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-muted)' }}>
-                      <MdPhone style={{ color: 'var(--accent-primary)' }} /> Celular
-                    </span>
-                    <strong style={{ fontSize: '14px', color: 'var(--text-primary)' }}>
-                      {student.phone ? (
-                        <a
-                          href={getWhatsappUrl(student.phone)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title="Abrir WhatsApp do aluno"
-                          style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#25D366', fontWeight: 700, textDecoration: 'none' }}
-                        >
-                          <FaWhatsapp style={{ fontSize: '16px' }} /> {student.phone}
-                        </a>
-                      ) : (
-                        <span style={{ color: 'var(--text-muted)' }}>Não informado</span>
-                      )}
-                    </strong>
-                  </div>
-
-                  <div className="detail-field">
-                    <span className="field-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-muted)' }}>
-                      <MdCalendarToday style={{ color: 'var(--accent-primary)' }} /> Data de Cadastro
-                    </span>
-                    <strong style={{ fontSize: '14px', color: 'var(--text-primary)' }}>
-                      {student.createdAt ? format(new Date(student.createdAt), 'dd/MM/yyyy') : '-'}
-                    </strong>
-                  </div>
-
-                  <div className="detail-field">
-                    <span className="field-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-muted)' }}>
-                      <MdEventAvailable style={{ color: 'var(--success)' }} /> Primeira Aula
-                    </span>
-                    <strong style={{ fontSize: '14px', color: 'var(--text-primary)' }}>
-                      {student.firstClassDate ? format(new Date(student.firstClassDate), 'dd/MM/yyyy') : (firstClassDate ? format(new Date(firstClassDate), 'dd/MM/yyyy') : 'Nenhuma aula')}
-                    </strong>
-                  </div>
-
-                  <div className="detail-field">
-                    <span className="field-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-muted)' }}>
-                      <MdEventBusy style={{ color: 'var(--danger)' }} /> Última Aula
-                    </span>
-                    <strong style={{ fontSize: '14px', color: !student.isActive ? 'var(--danger)' : 'var(--text-muted)' }}>
-                      {!student.isActive && lastClassDate ? format(new Date(lastClassDate), 'dd/MM/yyyy') : '--/--/----'}
-                    </strong>
-                  </div>
-                </div>
-              </div>
-            )}
+            {/* Integrated Full-Width Navigation Tabs */}
+            <div className="detail-tabs">
+              {tabs.map(t => (
+                <button
+                  key={t.key}
+                  type="button"
+                  className={`tab-btn ${tab === t.key ? 'tab-active' : ''}`}
+                  onClick={() => setTab(t.key)}
+                  title={t.label}
+                >
+                  <span className="tab-icon">{t.icon}</span>
+                  <span className="tab-label">{t.label}</span>
+                  <span className="tab-count">{t.count}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </Card>
-      </div>
-
-      <div className="detail-tabs">
-        {tabs.map(t => (
-          <button key={t.key} className={`tab-btn ${tab === t.key ? 'tab-active' : ''}`} onClick={() => setTab(t.key)} title={t.label}>
-            {t.icon} <span className="tab-label">{t.label}</span> <span className="tab-count">{t.count}</span>
-          </button>
-        ))}
       </div>
 
       <div className="tab-content animate-fadeIn">
@@ -1668,7 +1574,9 @@ export default function StudentDetailPage() {
                       {/* Nota (Apenas se finalizada) */}
                       {act.status === 'completed' && (
                         <div title="Nota obtida / Nota máxima" style={{ display: 'inline-flex', marginLeft: '4px' }}>
-                          <Badge variant="success">{(act.grade?.toFixed(1) ?? '10.0')}/{act.maxGrade.toFixed(1)}</Badge>
+                          <span className={`grade-performance-pill ${getItemGradePerfClass(act.grade ?? 10, act.maxGrade)}`}>
+                            {(act.grade?.toFixed(1) ?? '10.0')}/{act.maxGrade.toFixed(1)}
+                          </span>
                         </div>
                       )}
 
@@ -1856,7 +1764,9 @@ export default function StudentDetailPage() {
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       {item.grade !== null && item.grade !== undefined ? (
-                        <Badge variant="success">Nota: {item.grade.toFixed(1)} / {item.maxGrade.toFixed(1)}</Badge>
+                        <span className={`grade-performance-pill ${getItemGradePerfClass(item.grade, item.maxGrade)}`}>
+                          Nota: {item.grade.toFixed(1)} / {item.maxGrade.toFixed(1)}
+                        </span>
                       ) : (
                         <Badge variant="warning">Sem Nota</Badge>
                       )}
@@ -2409,6 +2319,28 @@ export default function StudentDetailPage() {
               placeholder="Ex: 350.00"
               value={editStudentForm.monthlyPrice}
               onChange={e => setEditStudentForm({ ...editStudentForm, monthlyPrice: e.target.value })}
+            />
+          </div>
+
+          <div className="form-row" style={{ gridTemplateColumns: '2fr 1fr 1.5fr' }}>
+            <Input
+              label="Cidade"
+              placeholder="Ex: São Paulo"
+              value={editStudentForm.city}
+              onChange={e => setEditStudentForm({ ...editStudentForm, city: e.target.value })}
+            />
+            <Input
+              label="Estado"
+              placeholder="Ex: SP"
+              maxLength={30}
+              value={editStudentForm.state}
+              onChange={e => setEditStudentForm({ ...editStudentForm, state: e.target.value })}
+            />
+            <Input
+              label="País"
+              placeholder="Ex: Brasil"
+              value={editStudentForm.country}
+              onChange={e => setEditStudentForm({ ...editStudentForm, country: e.target.value })}
             />
           </div>
 

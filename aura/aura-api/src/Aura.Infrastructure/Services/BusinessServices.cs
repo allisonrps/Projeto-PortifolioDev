@@ -7,6 +7,8 @@ using Aura.Application.DTOs.Schedule;
 using Aura.Application.Services;
 using Aura.Domain.Entities;
 using Aura.Domain.Interfaces;
+using Aura.Infrastructure.Data;
+using Aura.Infrastructure.Security;
 
 namespace Aura.Infrastructure.Services;
 
@@ -31,7 +33,7 @@ public class SubjectService : ISubjectService
     {
         var subject = await _subjectRepo.GetWithLevelsAndStudentsAsync(id)
             ?? throw new KeyNotFoundException("Matéria não encontrada.");
-        if (subject.ProfessorId != professorId) throw new UnauthorizedAccessException();
+        if (subject.ProfessorId != professorId) throw new UnauthorizedAccessException("Acesso negado.");
         return _mapper.Map<SubjectResponseDto>(subject);
     }
 
@@ -46,7 +48,7 @@ public class SubjectService : ISubjectService
     {
         var subject = await _subjectRepo.GetByIdAsync(id)
             ?? throw new KeyNotFoundException("Matéria não encontrada.");
-        if (subject.ProfessorId != professorId) throw new UnauthorizedAccessException();
+        if (subject.ProfessorId != professorId) throw new UnauthorizedAccessException("Acesso negado.");
         subject.Name = dto.Name;
         await _subjectRepo.UpdateAsync(subject);
         return _mapper.Map<SubjectResponseDto>(subject);
@@ -56,7 +58,7 @@ public class SubjectService : ISubjectService
     {
         var subject = await _subjectRepo.GetByIdAsync(id)
             ?? throw new KeyNotFoundException("Matéria não encontrada.");
-        if (subject.ProfessorId != professorId) throw new UnauthorizedAccessException();
+        if (subject.ProfessorId != professorId) throw new UnauthorizedAccessException("Acesso negado.");
         await _subjectRepo.DeleteAsync(subject);
     }
 }
@@ -64,40 +66,67 @@ public class SubjectService : ISubjectService
 public class LevelService : ILevelService
 {
     private readonly ILevelRepository _levelRepo;
+    private readonly ISubjectRepository _subjectRepo;
     private readonly IMapper _mapper;
 
-    public LevelService(ILevelRepository levelRepo, IMapper mapper)
+    public LevelService(ILevelRepository levelRepo, ISubjectRepository subjectRepo, IMapper mapper)
     {
         _levelRepo = levelRepo;
+        _subjectRepo = subjectRepo;
         _mapper = mapper;
     }
 
-    public async Task<IEnumerable<LevelResponseDto>> GetBySubjectIdAsync(Guid subjectId)
+    public async Task<IEnumerable<LevelResponseDto>> GetBySubjectIdAsync(Guid subjectId, Guid professorId)
     {
+        var subject = await _subjectRepo.Query()
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(s => s.Id == subjectId);
+        if (subject == null)
+            return Enumerable.Empty<LevelResponseDto>();
+        if (subject.ProfessorId != professorId)
+            throw new UnauthorizedAccessException("Acesso negado.");
+
         var levels = await _levelRepo.GetBySubjectIdAsync(subjectId);
         return _mapper.Map<IEnumerable<LevelResponseDto>>(levels);
     }
 
-    public async Task<LevelResponseDto> CreateAsync(CreateLevelDto dto)
+    public async Task<LevelResponseDto> CreateAsync(Guid professorId, CreateLevelDto dto)
     {
+        var subject = await _subjectRepo.GetByIdAsync(dto.SubjectId)
+            ?? throw new KeyNotFoundException("Matéria não encontrada.");
+        if (subject.ProfessorId != professorId)
+            throw new UnauthorizedAccessException("Acesso negado.");
+
         var level = new Level { SubjectId = dto.SubjectId, Name = dto.Name };
         await _levelRepo.AddAsync(level);
         return _mapper.Map<LevelResponseDto>(level);
     }
 
-    public async Task<LevelResponseDto> UpdateAsync(Guid id, UpdateLevelDto dto)
+    public async Task<LevelResponseDto> UpdateAsync(Guid id, Guid professorId, UpdateLevelDto dto)
     {
-        var level = await _levelRepo.GetByIdAsync(id)
+        var level = await _levelRepo.Query()
+            .Include(l => l.Subject)
+            .FirstOrDefaultAsync(l => l.Id == id)
             ?? throw new KeyNotFoundException("Nível não encontrado.");
+
+        if (level.Subject.ProfessorId != professorId)
+            throw new UnauthorizedAccessException("Acesso negado.");
+
         level.Name = dto.Name;
         await _levelRepo.UpdateAsync(level);
         return _mapper.Map<LevelResponseDto>(level);
     }
 
-    public async Task DeleteAsync(Guid id)
+    public async Task DeleteAsync(Guid id, Guid professorId)
     {
-        var level = await _levelRepo.GetByIdAsync(id)
+        var level = await _levelRepo.Query()
+            .Include(l => l.Subject)
+            .FirstOrDefaultAsync(l => l.Id == id)
             ?? throw new KeyNotFoundException("Nível não encontrado.");
+
+        if (level.Subject.ProfessorId != professorId)
+            throw new UnauthorizedAccessException("Acesso negado.");
+
         await _levelRepo.DeleteAsync(level);
     }
 }
@@ -105,25 +134,36 @@ public class LevelService : ILevelService
 public class LessonService : ILessonService
 {
     private readonly ILessonRepository _lessonRepo;
+    private readonly IStudentRepository _studentRepo;
     private readonly IMapper _mapper;
 
-    public LessonService(ILessonRepository lessonRepo, IMapper mapper)
+    public LessonService(ILessonRepository lessonRepo, IStudentRepository studentRepo, IMapper mapper)
     {
         _lessonRepo = lessonRepo;
+        _studentRepo = studentRepo;
         _mapper = mapper;
     }
 
     public async Task<IEnumerable<LessonResponseDto>> GetByProfessorIdAsync(Guid professorId)
     {
         var lessons = await _lessonRepo.GetByProfessorIdAsync(professorId);
-        var filtered = lessons.Where(l => l.Student.IsActive || (l.Status != "scheduled" && (!l.Student.LastClassDate.HasValue || l.ScheduledAt <= l.Student.LastClassDate.Value)));
+        var filtered = lessons.Where(l =>
+            (!l.Student.LastClassDate.HasValue || l.ScheduledAt.Date <= l.Student.LastClassDate.Value.Date)
+            && (l.Student.IsActive || l.Status != "scheduled"));
         return _mapper.Map<IEnumerable<LessonResponseDto>>(filtered);
     }
 
-    public async Task<IEnumerable<LessonResponseDto>> GetByStudentIdAsync(Guid studentId)
+    public async Task<IEnumerable<LessonResponseDto>> GetByStudentIdAsync(Guid studentId, Guid professorId)
     {
+        var student = await _studentRepo.GetByIdAsync(studentId)
+            ?? throw new KeyNotFoundException("Aluno não encontrado.");
+        if (student.ProfessorId != professorId)
+            throw new UnauthorizedAccessException("Acesso negado.");
+
         var lessons = await _lessonRepo.GetByStudentIdAsync(studentId);
-        return _mapper.Map<IEnumerable<LessonResponseDto>>(lessons);
+        var filtered = lessons.Where(l =>
+            !student.LastClassDate.HasValue || l.ScheduledAt.Date <= student.LastClassDate.Value.Date);
+        return _mapper.Map<IEnumerable<LessonResponseDto>>(filtered);
     }
 
     public async Task<IEnumerable<LessonResponseDto>> GetByProfessorWeekAsync(Guid professorId, DateTime weekDate)
@@ -135,30 +175,41 @@ public class LessonService : ILessonService
         var lessons = await _lessonRepo.GetByProfessorIdAsync(professorId);
         var weekLessons = lessons
             .Where(l => l.ScheduledAt >= monday && l.ScheduledAt < sunday)
-            .Where(l => l.Student.IsActive || (l.Status != "scheduled" && (!l.Student.LastClassDate.HasValue || l.ScheduledAt <= l.Student.LastClassDate.Value)))
+            .Where(l => (!l.Student.LastClassDate.HasValue || l.ScheduledAt.Date <= l.Student.LastClassDate.Value.Date)
+                     && (l.Student.IsActive || l.Status != "scheduled"))
             .OrderBy(l => l.ScheduledAt);
         return _mapper.Map<IEnumerable<LessonResponseDto>>(weekLessons);
     }
 
-    public async Task<LessonResponseDto> GetByIdAsync(Guid id)
+    public async Task<LessonResponseDto> GetByIdAsync(Guid id, Guid professorId)
     {
         var lesson = await _lessonRepo.GetByIdAsync(id)
             ?? throw new KeyNotFoundException("Aula não encontrada.");
+        if (lesson.ProfessorId != professorId)
+            throw new UnauthorizedAccessException("Acesso negado.");
         return _mapper.Map<LessonResponseDto>(lesson);
     }
 
     public async Task<LessonResponseDto> CreateAsync(Guid professorId, CreateLessonDto dto)
     {
+        var student = await _studentRepo.GetByIdAsync(dto.StudentId)
+            ?? throw new KeyNotFoundException("Aluno não encontrado.");
+        if (student.ProfessorId != professorId)
+            throw new UnauthorizedAccessException("Acesso negado.");
+
         var lesson = _mapper.Map<Lesson>(dto);
         lesson.ProfessorId = professorId;
         await _lessonRepo.AddAsync(lesson);
         return _mapper.Map<LessonResponseDto>(lesson);
     }
 
-    public async Task<LessonResponseDto> UpdateAsync(Guid id, UpdateLessonDto dto)
+    public async Task<LessonResponseDto> UpdateAsync(Guid id, Guid professorId, UpdateLessonDto dto)
     {
         var lesson = await _lessonRepo.GetByIdAsync(id)
             ?? throw new KeyNotFoundException("Aula não encontrada.");
+        if (lesson.ProfessorId != professorId)
+            throw new UnauthorizedAccessException("Acesso negado.");
+
         if (dto.Title != null) lesson.Title = dto.Title;
         if (dto.ScheduledAt.HasValue) lesson.ScheduledAt = dto.ScheduledAt.Value;
         if (dto.DurationMinutes.HasValue) lesson.DurationMinutes = dto.DurationMinutes.Value;
@@ -168,10 +219,12 @@ public class LessonService : ILessonService
         return _mapper.Map<LessonResponseDto>(lesson);
     }
 
-    public async Task DeleteAsync(Guid id)
+    public async Task DeleteAsync(Guid id, Guid professorId)
     {
         var lesson = await _lessonRepo.GetByIdAsync(id)
             ?? throw new KeyNotFoundException("Aula não encontrada.");
+        if (lesson.ProfessorId != professorId)
+            throw new UnauthorizedAccessException("Acesso negado.");
         await _lessonRepo.DeleteAsync(lesson);
     }
 }
@@ -183,15 +236,17 @@ public class DashboardService : IDashboardService
     private readonly ILessonRepository _lessonRepo;
     private readonly IMonthlyPaymentRepository _paymentRepo;
     private readonly IMapper _mapper;
+    private readonly AuraDbContext _context;
 
     public DashboardService(IStudentRepository studentRepo, ISubjectRepository subjectRepo,
-        ILessonRepository lessonRepo, IMonthlyPaymentRepository paymentRepo, IMapper mapper)
+        ILessonRepository lessonRepo, IMonthlyPaymentRepository paymentRepo, IMapper mapper, AuraDbContext context)
     {
         _studentRepo = studentRepo;
         _subjectRepo = subjectRepo;
         _lessonRepo = lessonRepo;
         _paymentRepo = paymentRepo;
         _mapper = mapper;
+        _context = context;
     }
 
     public async Task<DashboardDto> GetDashboardAsync(Guid professorId, int? month = null, int? year = null)
@@ -203,8 +258,8 @@ public class DashboardService : IDashboardService
         var todayStart = now.Date;
         var todayEnd = todayStart.AddDays(1).AddTicks(-1);
 
-        // Fetch students and calculate counts
         var students = await _studentRepo.Query()
+            .AsNoTracking()
             .Where(s => s.ProfessorId == professorId && !s.IsDeleted)
             .ToListAsync();
 
@@ -212,32 +267,58 @@ public class DashboardService : IDashboardService
         var activeCount = students.Count(s => s.IsActive);
         var archivedCount = students.Count(s => !s.IsActive);
 
-        // Fetch today's lessons
-        var todayLessons = await _lessonRepo.Query()
+        // Single indexed query for all professor lessons (eliminates 4 extra queries + N+1 loop)
+        var rawProfessorLessons = await _lessonRepo.Query()
+            .AsNoTracking()
             .Include(l => l.Student).ThenInclude(s => s.Subject)
             .Include(l => l.Student).ThenInclude(s => s.Level)
-            .Where(l => l.ProfessorId == professorId && l.ScheduledAt >= todayStart && l.ScheduledAt <= todayEnd && l.Status == "scheduled" && !l.IsDeleted)
-            .OrderBy(l => l.ScheduledAt)
+            .Where(l => l.ProfessorId == professorId && !l.IsDeleted)
             .ToListAsync();
 
-        // Fetch next upcoming lesson if none today
+        var allProfessorLessons = rawProfessorLessons
+            .Where(l => (!l.Student.LastClassDate.HasValue || l.ScheduledAt.Date <= l.Student.LastClassDate.Value.Date)
+                     && (l.Student.IsActive || l.Status != "scheduled"))
+            .ToList();
+
+        var todayLessons = allProfessorLessons
+            .Where(l => l.ScheduledAt >= todayStart && l.ScheduledAt <= todayEnd && l.Status == "scheduled")
+            .OrderBy(l => l.ScheduledAt)
+            .ToList();
+
         Lesson? nextUpcomingLesson = null;
         if (todayLessons.Count == 0)
         {
-            nextUpcomingLesson = await _lessonRepo.Query()
-                .Include(l => l.Student).ThenInclude(s => s.Subject)
-                .Include(l => l.Student).ThenInclude(s => s.Level)
-                .Where(l => l.ProfessorId == professorId && l.ScheduledAt > todayEnd && l.Status == "scheduled" && !l.IsDeleted)
+            nextUpcomingLesson = allProfessorLessons
+                .Where(l => l.ScheduledAt > todayEnd && l.Status == "scheduled")
                 .OrderBy(l => l.ScheduledAt)
-                .FirstOrDefaultAsync();
+                .FirstOrDefault();
         }
 
-        // Calculate birthday students with resilient timezone handling
+        var pendingPreviousLessons = allProfessorLessons
+            .Where(l => l.ScheduledAt < todayStart && l.Status == "scheduled")
+            .OrderBy(l => l.ScheduledAt)
+            .ToList();
+
+        var pendingCorrections = await _context.StudentActivities
+            .AsNoTracking()
+            .Include(sa => sa.Student)
+            .Include(sa => sa.TemplateActivity)
+            .Where(sa => sa.Student.ProfessorId == professorId && sa.Status == "corrigir" && !sa.IsDeleted)
+            .OrderByDescending(sa => sa.UpdatedAt ?? sa.CreatedAt)
+            .Select(sa => new PendingCorrectionDto
+            {
+                StudentActivityId = sa.Id,
+                StudentId = sa.StudentId,
+                StudentName = sa.Student.Name,
+                ActivityTitle = sa.TemplateActivity.Title,
+                SubmittedAt = sa.UpdatedAt ?? sa.CreatedAt
+            })
+            .ToListAsync();
+
         var birthdayStudents = students
             .Where(s => s.BirthDate.HasValue && s.IsActive)
             .Select(s => {
-                var rawDate = s.BirthDate.Value;
-                // If saved at night (e.g. 21:00, 22:00, 23:00) due to UTC-3 shift on previous systems, shift it to next day
+                var rawDate = s.BirthDate!.Value;
                 var adjustedDate = rawDate.Hour >= 21 ? rawDate.AddHours(4) : rawDate;
                 return new {
                     StudentId = s.Id,
@@ -256,10 +337,9 @@ public class DashboardService : IDashboardService
             .OrderBy(b => b.BirthDay)
             .ToList();
 
-        // Calculate overall student attendance rate (completed vs cancelled)
-        var attendanceLessons = await _lessonRepo.Query()
-            .Where(l => l.ProfessorId == professorId && !l.IsDeleted && (l.Status == "completed" || l.Status == "cancelled"))
-            .ToListAsync();
+        var attendanceLessons = allProfessorLessons
+            .Where(l => l.Status == "completed" || l.Status == "cancelled")
+            .ToList();
 
         int completedLessons = attendanceLessons.Count(l => l.Status == "completed");
         int totalAttendanceLessons = attendanceLessons.Count;
@@ -267,19 +347,12 @@ public class DashboardService : IDashboardService
             ? (int)Math.Round((double)completedLessons / totalAttendanceLessons * 100) 
             : 100;
 
-        // Fetch all professor lessons for calculations
-        var allProfessorLessons = await _lessonRepo.Query()
-            .Where(l => l.ProfessorId == professorId && !l.IsDeleted)
-            .ToListAsync();
-
-        // Monthly filter (selectedMonth & selectedYear)
         var startOfMonth = new DateTime(selectedYear, selectedMonth, 1, 0, 0, 0, DateTimeKind.Utc);
         var endOfMonth = startOfMonth.AddMonths(1);
         var monthlyLessons = allProfessorLessons
             .Where(l => l.ScheduledAt >= startOfMonth && l.ScheduledAt < endOfMonth)
             .ToList();
 
-        // Yearly filter (selectedYear)
         var startOfYear = new DateTime(selectedYear, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         var endOfYear = startOfYear.AddYears(1);
         var yearlyLessons = allProfessorLessons
@@ -337,7 +410,6 @@ public class DashboardService : IDashboardService
 
         var subjects = await _subjectRepo.GetByProfessorIdAsync(professorId);
 
-        // Calculate Effectiveness Rate (completed vs (completed + cancelled + holiday + past scheduled))
         var monthlyPastLessons = monthlyLessons
             .Where(l => l.Status != null && (
                 l.Status.Equals("completed", StringComparison.OrdinalIgnoreCase) ||
@@ -362,6 +434,98 @@ public class DashboardService : IDashboardService
         int yearlyTotalPastCount = yearlyPastLessons.Count;
         int yearlyEffectivenessRate = yearlyTotalPastCount > 0 ? (int)Math.Round((double)yearlyCompletedCount / yearlyTotalPastCount * 100) : 100;
 
+        var completedActivities = await _context.StudentActivities
+            .Include(sa => sa.Student)
+            .Include(sa => sa.TemplateActivity)
+            .Where(sa => sa.Student.ProfessorId == professorId && sa.Status == "completed" && sa.CompletedAt != null && !sa.IsDeleted && sa.CompletedAt >= startOfMonth && sa.CompletedAt < endOfMonth)
+            .OrderByDescending(sa => sa.CompletedAt)
+            .Select(sa => new CompletedActivityDto
+            {
+                StudentActivityId = sa.Id,
+                StudentId = sa.StudentId,
+                StudentName = sa.Student.Name,
+                ActivityTitle = sa.TemplateActivity.Title,
+                CompletedAt = sa.CompletedAt,
+                Grade = sa.Grade,
+                MaxGrade = sa.MaxGrade
+            })
+            .ToListAsync();
+
+        var paidStudentIdsThisMonth = await _context.MonthlyPayments
+            .Where(p => p.Student.ProfessorId == professorId && p.Month == selectedMonth && p.Year == selectedYear && p.IsPaid && !p.IsDeleted)
+            .Select(p => p.StudentId)
+            .Distinct()
+            .ToListAsync();
+
+        var paidSet = paidStudentIdsThisMonth.ToHashSet();
+
+        var pendingPayments = new List<PendingPaymentDto>();
+        foreach (var student in students.Where(s => s.IsActive))
+        {
+            var startDate = student.FirstClassDate ?? student.CreatedAt;
+            if (selectedYear < startDate.Year || (selectedYear == startDate.Year && selectedMonth < startDate.Month))
+                continue;
+
+            if (!paidSet.Contains(student.Id) && student.MonthlyPrice > 0)
+            {
+                pendingPayments.Add(new PendingPaymentDto
+                {
+                    StudentId = student.Id,
+                    StudentName = student.Name,
+                    MonthlyPrice = student.MonthlyPrice
+                });
+            }
+        }
+
+        var todayLessonsDtos = _mapper.Map<List<LessonResponseDto>>(todayLessons);
+        foreach (var dto in todayLessonsDtos)
+        {
+            var prevLesson = allProfessorLessons
+                .Where(p => p.StudentId == dto.StudentId && p.ScheduledAt < dto.ScheduledAt && p.Id != dto.Id && p.Status != "cancelled")
+                .OrderByDescending(p => p.ScheduledAt)
+                .FirstOrDefault();
+
+            if (prevLesson != null)
+            {
+                dto.LastLessonDate = prevLesson.ScheduledAt;
+                dto.LastLessonTitle = prevLesson.Title;
+                dto.LastLessonNotes = prevLesson.Notes;
+            }
+            else
+            {
+                var student = students.FirstOrDefault(s => s.Id == dto.StudentId);
+                if (student?.LastClassDate.HasValue == true && student.LastClassDate.Value < dto.ScheduledAt)
+                {
+                    dto.LastLessonDate = student.LastClassDate;
+                }
+            }
+        }
+
+        LessonResponseDto? nextUpcomingLessonDto = null;
+        if (nextUpcomingLesson != null)
+        {
+            nextUpcomingLessonDto = _mapper.Map<LessonResponseDto>(nextUpcomingLesson);
+            var prevLesson = allProfessorLessons
+                .Where(p => p.StudentId == nextUpcomingLessonDto.StudentId && p.ScheduledAt < nextUpcomingLessonDto.ScheduledAt && p.Id != nextUpcomingLessonDto.Id && p.Status != "cancelled")
+                .OrderByDescending(p => p.ScheduledAt)
+                .FirstOrDefault();
+
+            if (prevLesson != null)
+            {
+                nextUpcomingLessonDto.LastLessonDate = prevLesson.ScheduledAt;
+                nextUpcomingLessonDto.LastLessonTitle = prevLesson.Title;
+                nextUpcomingLessonDto.LastLessonNotes = prevLesson.Notes;
+            }
+            else
+            {
+                var student = students.FirstOrDefault(s => s.Id == nextUpcomingLessonDto.StudentId);
+                if (student?.LastClassDate.HasValue == true && student.LastClassDate.Value < nextUpcomingLessonDto.ScheduledAt)
+                {
+                    nextUpcomingLessonDto.LastLessonDate = student.LastClassDate;
+                }
+            }
+        }
+
         return new DashboardDto
         {
             TotalStudents = totalStudents,
@@ -371,15 +535,19 @@ public class DashboardService : IDashboardService
             YearlyLessonsCount = yearlyLessonsCount,
             MonthlyWorkloadHours = monthlyWorkloadHours,
             YearlyWorkloadHours = yearlyWorkloadHours,
-            TodayLessons = _mapper.Map<List<LessonResponseDto>>(todayLessons),
-            NextUpcomingLesson = nextUpcomingLesson != null ? _mapper.Map<LessonResponseDto>(nextUpcomingLesson) : null,
+            TodayLessons = todayLessonsDtos,
+            NextUpcomingLesson = nextUpcomingLessonDto,
             BirthdayStudents = birthdayStudents,
             AverageAttendanceRate = averageAttendance,
             SubjectStats = _mapper.Map<List<SubjectStatDto>>(subjects),
             MonthlyLessonStatusStats = monthlyLessonStatusStats,
             YearlyLessonStatusStats = yearlyLessonStatusStats,
             MonthlyEffectivenessRate = monthlyEffectivenessRate,
-            YearlyEffectivenessRate = yearlyEffectivenessRate
+            YearlyEffectivenessRate = yearlyEffectivenessRate,
+            PendingPreviousLessons = _mapper.Map<List<LessonResponseDto>>(pendingPreviousLessons),
+            PendingCorrections = pendingCorrections,
+            CompletedActivities = completedActivities,
+            PendingPayments = pendingPayments
         };
     }
 
@@ -394,31 +562,49 @@ public class DashboardService : IDashboardService
 public class PaymentService : IPaymentService
 {
     private readonly IMonthlyPaymentRepository _paymentRepo;
+    private readonly IStudentRepository _studentRepo;
     private readonly IMapper _mapper;
 
-    public PaymentService(IMonthlyPaymentRepository paymentRepo, IMapper mapper)
+    public PaymentService(IMonthlyPaymentRepository paymentRepo, IStudentRepository studentRepo, IMapper mapper)
     {
         _paymentRepo = paymentRepo;
+        _studentRepo = studentRepo;
         _mapper = mapper;
     }
 
-    public async Task<IEnumerable<PaymentResponseDto>> GetByStudentIdAsync(Guid studentId)
+    public async Task<IEnumerable<PaymentResponseDto>> GetByStudentIdAsync(Guid studentId, Guid professorId)
     {
+        var student = await _studentRepo.GetByIdAsync(studentId)
+            ?? throw new KeyNotFoundException("Aluno não encontrado.");
+        if (student.ProfessorId != professorId)
+            throw new UnauthorizedAccessException("Acesso negado.");
+
         var payments = await _paymentRepo.GetByStudentIdAsync(studentId);
         return _mapper.Map<IEnumerable<PaymentResponseDto>>(payments);
     }
 
-    public async Task<PaymentResponseDto> CreateAsync(CreatePaymentDto dto)
+    public async Task<PaymentResponseDto> CreateAsync(Guid professorId, CreatePaymentDto dto)
     {
+        var student = await _studentRepo.GetByIdAsync(dto.StudentId)
+            ?? throw new KeyNotFoundException("Aluno não encontrado.");
+        if (student.ProfessorId != professorId)
+            throw new UnauthorizedAccessException("Acesso negado.");
+
         var payment = _mapper.Map<MonthlyPayment>(dto);
         await _paymentRepo.AddAsync(payment);
         return _mapper.Map<PaymentResponseDto>(payment);
     }
 
-    public async Task<PaymentResponseDto> UpdateAsync(Guid id, UpdatePaymentDto dto)
+    public async Task<PaymentResponseDto> UpdateAsync(Guid id, Guid professorId, UpdatePaymentDto dto)
     {
-        var payment = await _paymentRepo.GetByIdAsync(id)
+        var payment = await _paymentRepo.Query()
+            .Include(p => p.Student)
+            .FirstOrDefaultAsync(p => p.Id == id)
             ?? throw new KeyNotFoundException("Pagamento não encontrado.");
+
+        if (payment.Student.ProfessorId != professorId)
+            throw new UnauthorizedAccessException("Acesso negado.");
+
         if (dto.IsPaid.HasValue)
         {
             payment.IsPaid = dto.IsPaid.Value;
@@ -430,10 +616,16 @@ public class PaymentService : IPaymentService
         return _mapper.Map<PaymentResponseDto>(payment);
     }
 
-    public async Task DeleteAsync(Guid id)
+    public async Task DeleteAsync(Guid id, Guid professorId)
     {
-        var payment = await _paymentRepo.GetByIdAsync(id)
+        var payment = await _paymentRepo.Query()
+            .Include(p => p.Student)
+            .FirstOrDefaultAsync(p => p.Id == id)
             ?? throw new KeyNotFoundException("Pagamento não encontrado.");
+
+        if (payment.Student.ProfessorId != professorId)
+            throw new UnauthorizedAccessException("Acesso negado.");
+
         await _paymentRepo.DeleteAsync(payment);
     }
 }
@@ -441,44 +633,68 @@ public class PaymentService : IPaymentService
 public class ExamService : IExamService
 {
     private readonly IExamRepository _examRepo;
+    private readonly IStudentRepository _studentRepo;
     private readonly IMapper _mapper;
 
-    public ExamService(IExamRepository examRepo, IMapper mapper)
+    public ExamService(IExamRepository examRepo, IStudentRepository studentRepo, IMapper mapper)
     {
         _examRepo = examRepo;
+        _studentRepo = studentRepo;
         _mapper = mapper;
     }
 
-    public async Task<IEnumerable<ExamResponseDto>> GetByStudentIdAsync(Guid studentId)
+    public async Task<IEnumerable<ExamResponseDto>> GetByStudentIdAsync(Guid studentId, Guid professorId)
     {
+        var student = await _studentRepo.GetByIdAsync(studentId)
+            ?? throw new KeyNotFoundException("Aluno não encontrado.");
+        if (student.ProfessorId != professorId)
+            throw new UnauthorizedAccessException("Acesso negado.");
+
         var exams = await _examRepo.GetByStudentIdAsync(studentId);
         return _mapper.Map<IEnumerable<ExamResponseDto>>(exams);
     }
 
-    public async Task<ExamResponseDto> CreateAsync(CreateExamDto dto)
+    public async Task<ExamResponseDto> CreateAsync(Guid professorId, CreateExamDto dto)
     {
+        var student = await _studentRepo.GetByIdAsync(dto.StudentId)
+            ?? throw new KeyNotFoundException("Aluno não encontrado.");
+        if (student.ProfessorId != professorId)
+            throw new UnauthorizedAccessException("Acesso negado.");
+
         var exam = _mapper.Map<Exam>(dto);
         await _examRepo.AddAsync(exam);
         return _mapper.Map<ExamResponseDto>(exam);
     }
 
-    public async Task<ExamResponseDto> UpdateAsync(Guid id, UpdateExamDto dto)
+    public async Task<ExamResponseDto> UpdateAsync(Guid id, Guid professorId, UpdateExamDto dto)
     {
-        var exam = await _examRepo.GetByIdAsync(id)
+        var exam = await _examRepo.Query()
+            .Include(e => e.Student)
+            .FirstOrDefaultAsync(e => e.Id == id)
             ?? throw new KeyNotFoundException("Prova não encontrada.");
+
+        if (exam.Student.ProfessorId != professorId)
+            throw new UnauthorizedAccessException("Acesso negado.");
+
         if (dto.Title != null) exam.Title = dto.Title;
         if (dto.ScheduledAt.HasValue) exam.ScheduledAt = dto.ScheduledAt.Value;
-        if (dto.Notes != null) exam.Notes = dto.Notes;
-        if (dto.Grade.HasValue) exam.Grade = dto.Grade;
+        exam.Notes = dto.Notes;
+        exam.Grade = dto.Grade;
         if (dto.MaxGrade.HasValue) exam.MaxGrade = dto.MaxGrade.Value;
         await _examRepo.UpdateAsync(exam);
         return _mapper.Map<ExamResponseDto>(exam);
     }
 
-    public async Task DeleteAsync(Guid id)
+    public async Task DeleteAsync(Guid id, Guid professorId)
     {
-        var exam = await _examRepo.GetByIdAsync(id)
+        var exam = await _examRepo.Query()
+            .Include(e => e.Student)
+            .FirstOrDefaultAsync(e => e.Id == id)
             ?? throw new KeyNotFoundException("Prova não encontrada.");
+
+        if (exam.Student.ProfessorId != professorId)
+            throw new UnauthorizedAccessException("Acesso negado.");
+
         await _examRepo.DeleteAsync(exam);
     }
 }
@@ -486,44 +702,68 @@ public class ExamService : IExamService
 public class ExerciseService : IExerciseService
 {
     private readonly IExerciseRepository _exerciseRepo;
+    private readonly IStudentRepository _studentRepo;
     private readonly IMapper _mapper;
 
-    public ExerciseService(IExerciseRepository exerciseRepo, IMapper mapper)
+    public ExerciseService(IExerciseRepository exerciseRepo, IStudentRepository studentRepo, IMapper mapper)
     {
         _exerciseRepo = exerciseRepo;
+        _studentRepo = studentRepo;
         _mapper = mapper;
     }
 
-    public async Task<IEnumerable<ExerciseResponseDto>> GetByStudentIdAsync(Guid studentId)
+    public async Task<IEnumerable<ExerciseResponseDto>> GetByStudentIdAsync(Guid studentId, Guid professorId)
     {
+        var student = await _studentRepo.GetByIdAsync(studentId)
+            ?? throw new KeyNotFoundException("Aluno não encontrado.");
+        if (student.ProfessorId != professorId)
+            throw new UnauthorizedAccessException("Acesso negado.");
+
         var exercises = await _exerciseRepo.GetByStudentIdAsync(studentId);
         return _mapper.Map<IEnumerable<ExerciseResponseDto>>(exercises);
     }
 
-    public async Task<ExerciseResponseDto> CreateAsync(CreateExerciseDto dto)
+    public async Task<ExerciseResponseDto> CreateAsync(Guid professorId, CreateExerciseDto dto)
     {
+        var student = await _studentRepo.GetByIdAsync(dto.StudentId)
+            ?? throw new KeyNotFoundException("Aluno não encontrado.");
+        if (student.ProfessorId != professorId)
+            throw new UnauthorizedAccessException("Acesso negado.");
+
         var exercise = _mapper.Map<Exercise>(dto);
         await _exerciseRepo.AddAsync(exercise);
         return _mapper.Map<ExerciseResponseDto>(exercise);
     }
 
-    public async Task<ExerciseResponseDto> UpdateAsync(Guid id, UpdateExerciseDto dto)
+    public async Task<ExerciseResponseDto> UpdateAsync(Guid id, Guid professorId, UpdateExerciseDto dto)
     {
-        var exercise = await _exerciseRepo.GetByIdAsync(id)
+        var exercise = await _exerciseRepo.Query()
+            .Include(e => e.Student)
+            .FirstOrDefaultAsync(e => e.Id == id)
             ?? throw new KeyNotFoundException("Exercício não encontrado.");
+
+        if (exercise.Student.ProfessorId != professorId)
+            throw new UnauthorizedAccessException("Acesso negado.");
+
         if (dto.Title != null) exercise.Title = dto.Title;
         if (dto.ScheduledAt.HasValue) exercise.ScheduledAt = dto.ScheduledAt.Value;
-        if (dto.Notes != null) exercise.Notes = dto.Notes;
-        if (dto.Grade.HasValue) exercise.Grade = dto.Grade;
+        exercise.Notes = dto.Notes;
+        exercise.Grade = dto.Grade;
         if (dto.MaxGrade.HasValue) exercise.MaxGrade = dto.MaxGrade.Value;
         await _exerciseRepo.UpdateAsync(exercise);
         return _mapper.Map<ExerciseResponseDto>(exercise);
     }
 
-    public async Task DeleteAsync(Guid id)
+    public async Task DeleteAsync(Guid id, Guid professorId)
     {
-        var exercise = await _exerciseRepo.GetByIdAsync(id)
+        var exercise = await _exerciseRepo.Query()
+            .Include(e => e.Student)
+            .FirstOrDefaultAsync(e => e.Id == id)
             ?? throw new KeyNotFoundException("Exercício não encontrado.");
+
+        if (exercise.Student.ProfessorId != professorId)
+            throw new UnauthorizedAccessException("Acesso negado.");
+
         await _exerciseRepo.DeleteAsync(exercise);
     }
 }
@@ -533,14 +773,16 @@ public class ScheduleService : IScheduleService
     private readonly IScheduleRepository _scheduleRepo;
     private readonly ILessonRepository _lessonRepo;
     private readonly IHolidayRepository _holidayRepo;
+    private readonly IStudentRepository _studentRepo;
     private readonly IMapper _mapper;
 
     public ScheduleService(IScheduleRepository scheduleRepo, ILessonRepository lessonRepo,
-        IHolidayRepository holidayRepo, IMapper mapper)
+        IHolidayRepository holidayRepo, IStudentRepository studentRepo, IMapper mapper)
     {
         _scheduleRepo = scheduleRepo;
         _lessonRepo = lessonRepo;
         _holidayRepo = holidayRepo;
+        _studentRepo = studentRepo;
         _mapper = mapper;
     }
 
@@ -551,14 +793,70 @@ public class ScheduleService : IScheduleService
         return _mapper.Map<IEnumerable<ScheduleResponseDto>>(activeSchedules);
     }
 
-    public async Task<IEnumerable<ScheduleResponseDto>> GetByStudentIdAsync(Guid studentId)
+    public async Task<IEnumerable<ScheduleResponseDto>> GetByStudentIdAsync(Guid studentId, Guid professorId)
     {
+        var student = await _studentRepo.GetByIdAsync(studentId)
+            ?? throw new KeyNotFoundException("Aluno não encontrado.");
+        if (student.ProfessorId != professorId)
+            throw new UnauthorizedAccessException("Acesso negado.");
+
         var schedules = await _scheduleRepo.GetByStudentIdAsync(studentId);
         return _mapper.Map<IEnumerable<ScheduleResponseDto>>(schedules);
     }
 
+    private static string NormalizeFrequency(string? frequency)
+    {
+        var f = (frequency ?? "weekly").Trim().ToLowerInvariant();
+        return f is "biweekly" or "monthly" ? f : "weekly";
+    }
+
+    private static bool MatchesScheduleFrequency(DateTime date, Schedule schedule)
+    {
+        if ((int)date.DayOfWeek != schedule.DayOfWeek)
+            return false;
+
+        if (date.Date < schedule.ValidFrom.Date)
+            return false;
+
+        if (schedule.ValidUntil.HasValue && date.Date > schedule.ValidUntil.Value.Date)
+            return false;
+
+        var freq = NormalizeFrequency(schedule.Frequency);
+        if (freq == "weekly")
+            return true;
+
+        var daysOffset = (schedule.DayOfWeek - (int)schedule.ValidFrom.Date.DayOfWeek + 7) % 7;
+        var firstOccurrence = schedule.ValidFrom.Date.AddDays(daysOffset);
+        if (date.Date < firstOccurrence)
+            return false;
+
+        if (freq == "biweekly")
+        {
+            var diffDays = (int)Math.Round((date.Date - firstOccurrence).TotalDays);
+            return diffDays >= 0 && (diffDays % 14 == 0);
+        }
+
+        if (freq == "monthly")
+        {
+            var targetWeekIndex = (firstOccurrence.Day - 1) / 7;
+            var currentWeekIndex = (date.Day - 1) / 7;
+            if (targetWeekIndex >= 4 && date.AddDays(7).Month != date.Month)
+            {
+                return currentWeekIndex == 3 || currentWeekIndex == 4;
+            }
+            return currentWeekIndex == targetWeekIndex;
+        }
+
+        return true;
+    }
+
     public async Task<ScheduleResponseDto> CreateAsync(Guid professorId, CreateScheduleDto dto)
     {
+        var student = await _studentRepo.GetByIdAsync(dto.StudentId)
+            ?? throw new KeyNotFoundException("Aluno não encontrado.");
+        if (student.ProfessorId != professorId)
+            throw new UnauthorizedAccessException("Acesso negado.");
+
         var schedule = new Schedule
         {
             ProfessorId = professorId,
@@ -566,17 +864,12 @@ public class ScheduleService : IScheduleService
             DayOfWeek = dto.DayOfWeek,
             StartTime = TimeSpan.Parse(dto.StartTime),
             EndTime = TimeSpan.Parse(dto.EndTime),
+            Frequency = NormalizeFrequency(dto.Frequency),
             IsRecurring = dto.IsRecurring,
             ValidFrom = dto.ValidFrom,
             ValidUntil = dto.ValidUntil
         };
         await _scheduleRepo.AddAsync(schedule);
-
-        // Auto-generate lessons for next 4 weeks starting from student registration date
-        var student = await _scheduleRepo.Query()
-            .Where(s => s.StudentId == dto.StudentId)
-            .Select(s => s.Student)
-            .FirstOrDefaultAsync();
 
         var holidays = await _holidayRepo.GetByProfessorIdAsync(professorId);
         var holidayDates = new HashSet<DateTime>();
@@ -590,12 +883,12 @@ public class ScheduleService : IScheduleService
             }
         }
 
-        var baseDate = (student != null && student.FirstClassDate.HasValue) 
-            ? student.FirstClassDate.Value.Date 
+        var baseDate = student.FirstClassDate.HasValue
+            ? student.FirstClassDate.Value.Date
             : schedule.ValidFrom.Date;
 
-        var endOfYear = schedule.ValidUntil.HasValue 
-            ? schedule.ValidUntil.Value.Date 
+        var endOfYear = schedule.ValidUntil.HasValue
+            ? schedule.ValidUntil.Value.Date
             : new DateTime(baseDate.Year, 12, 31);
 
         if ((endOfYear - baseDate).TotalDays < 90)
@@ -603,19 +896,19 @@ public class ScheduleService : IScheduleService
             endOfYear = new DateTime(baseDate.Year + 1, 12, 31);
         }
 
+        // Proteção contra loop excessivo (máx. 2 anos de geração automática)
+        if ((endOfYear - baseDate).TotalDays > 730)
+        {
+            endOfYear = baseDate.AddDays(730);
+        }
+
         for (var date = baseDate; date <= endOfYear; date = date.AddDays(1))
         {
             if (holidayDates.Contains(date.Date)) continue;
 
-            if ((int)date.DayOfWeek == dto.DayOfWeek)
+            if (MatchesScheduleFrequency(date, schedule))
             {
                 var lessonDate = date.Add(schedule.StartTime);
-                
-                // Check schedule validity range
-                if (lessonDate.Date < schedule.ValidFrom.Date || (schedule.ValidUntil.HasValue && lessonDate.Date > schedule.ValidUntil.Value.Date))
-                {
-                    continue;
-                }
 
                 var exists = await _lessonRepo.Query().AnyAsync(l => l.StudentId == dto.StudentId && l.ScheduledAt == lessonDate && !l.IsDeleted);
                 if (exists) continue;
@@ -635,22 +928,31 @@ public class ScheduleService : IScheduleService
         return _mapper.Map<ScheduleResponseDto>(schedule);
     }
 
-    public async Task<ScheduleResponseDto> UpdateAsync(Guid id, UpdateScheduleDto dto)
+    public async Task<ScheduleResponseDto> UpdateAsync(Guid id, Guid professorId, UpdateScheduleDto dto)
     {
         var schedule = await _scheduleRepo.GetByIdAsync(id)
             ?? throw new KeyNotFoundException("Agendamento não encontrado.");
-        
-        if (dto.StudentId.HasValue) schedule.StudentId = dto.StudentId.Value;
+        if (schedule.ProfessorId != professorId)
+            throw new UnauthorizedAccessException("Acesso negado.");
+
+        if (dto.StudentId.HasValue)
+        {
+            var targetStudent = await _studentRepo.GetByIdAsync(dto.StudentId.Value)
+                ?? throw new KeyNotFoundException("Aluno não encontrado.");
+            if (targetStudent.ProfessorId != professorId)
+                throw new UnauthorizedAccessException("Acesso negado.");
+            schedule.StudentId = dto.StudentId.Value;
+        }
         if (dto.DayOfWeek.HasValue) schedule.DayOfWeek = dto.DayOfWeek.Value;
         if (dto.StartTime != null) schedule.StartTime = TimeSpan.Parse(dto.StartTime);
         if (dto.EndTime != null) schedule.EndTime = TimeSpan.Parse(dto.EndTime);
+        if (dto.Frequency != null) schedule.Frequency = NormalizeFrequency(dto.Frequency);
         if (dto.IsRecurring.HasValue) schedule.IsRecurring = dto.IsRecurring.Value;
         if (dto.ValidFrom.HasValue) schedule.ValidFrom = dto.ValidFrom.Value;
-        schedule.ValidUntil = dto.ValidUntil; // Allow clearing or updating
+        schedule.ValidUntil = dto.ValidUntil;
 
         await _scheduleRepo.UpdateAsync(schedule);
 
-        // Delete future scheduled lessons for this student
         var today = DateTime.Today;
         var futureLessons = await _lessonRepo.Query()
             .Where(l => l.StudentId == schedule.StudentId && l.ScheduledAt >= today && l.Status == "scheduled" && !l.IsDeleted)
@@ -661,11 +963,7 @@ public class ScheduleService : IScheduleService
             await _lessonRepo.DeleteAsync(lesson);
         }
 
-        // Regenerate future lessons until end of year based on new schedule configuration
-        var student = await _scheduleRepo.Query()
-            .Where(s => s.StudentId == schedule.StudentId)
-            .Select(s => s.Student)
-            .FirstOrDefaultAsync();
+        var student = await _studentRepo.GetByIdAsync(schedule.StudentId);
 
         var holidays = await _holidayRepo.GetByProfessorIdAsync(schedule.ProfessorId);
         var holidayDates = new HashSet<DateTime>();
@@ -679,60 +977,71 @@ public class ScheduleService : IScheduleService
             }
         }
 
-        var updateBaseDate = (student != null && student.FirstClassDate.HasValue) 
-            ? (student.FirstClassDate.Value.Date > today ? student.FirstClassDate.Value.Date : today)
-            : (schedule.ValidFrom.Date > today ? schedule.ValidFrom.Date : today);
-
-        var updateEndOfYear = schedule.ValidUntil.HasValue 
-            ? schedule.ValidUntil.Value.Date 
-            : new DateTime(updateBaseDate.Year, 12, 31);
-
-        if ((updateEndOfYear - updateBaseDate).TotalDays < 90)
+        var studentSchedules = await _scheduleRepo.GetByStudentIdAsync(schedule.StudentId);
+        foreach (var activeSched in studentSchedules.Where(s => s.IsRecurring))
         {
-            updateEndOfYear = new DateTime(updateBaseDate.Year + 1, 12, 31);
-        }
+            var updateBaseDate = (student != null && student.FirstClassDate.HasValue)
+                ? (student.FirstClassDate.Value.Date > today ? student.FirstClassDate.Value.Date : today)
+                : (activeSched.ValidFrom.Date > today ? activeSched.ValidFrom.Date : today);
 
-        for (var date = updateBaseDate; date <= updateEndOfYear; date = date.AddDays(1))
-        {
-            if (holidayDates.Contains(date.Date)) continue;
+            var updateEndOfYear = activeSched.ValidUntil.HasValue
+                ? activeSched.ValidUntil.Value.Date
+                : new DateTime(updateBaseDate.Year, 12, 31);
 
-            if ((int)date.DayOfWeek == schedule.DayOfWeek)
+            if ((updateEndOfYear - updateBaseDate).TotalDays < 90)
             {
-                var lessonDate = date.Add(schedule.StartTime);
-                
-                // Check schedule validity range
-                if (lessonDate.Date < schedule.ValidFrom.Date || (schedule.ValidUntil.HasValue && lessonDate.Date > schedule.ValidUntil.Value.Date))
+                updateEndOfYear = new DateTime(updateBaseDate.Year + 1, 12, 31);
+            }
+
+            if ((updateEndOfYear - updateBaseDate).TotalDays > 730)
+            {
+                updateEndOfYear = updateBaseDate.AddDays(730);
+            }
+
+            for (var date = updateBaseDate; date <= updateEndOfYear; date = date.AddDays(1))
+            {
+                if (holidayDates.Contains(date.Date)) continue;
+
+                if (MatchesScheduleFrequency(date, activeSched))
                 {
-                    continue;
+                    var lessonDate = date.Add(activeSched.StartTime);
+
+                    var exists = await _lessonRepo.Query().AnyAsync(l => l.StudentId == activeSched.StudentId && l.ScheduledAt == lessonDate && !l.IsDeleted);
+                    if (exists) continue;
+
+                    var lesson = new Lesson
+                    {
+                        ProfessorId = activeSched.ProfessorId,
+                        StudentId = activeSched.StudentId,
+                        ScheduledAt = lessonDate,
+                        DurationMinutes = (int)(activeSched.EndTime - activeSched.StartTime).TotalMinutes,
+                        Status = "scheduled"
+                    };
+                    await _lessonRepo.AddAsync(lesson);
                 }
-
-                var exists = await _lessonRepo.Query().AnyAsync(l => l.StudentId == schedule.StudentId && l.ScheduledAt == lessonDate && !l.IsDeleted);
-                if (exists) continue;
-
-                var lesson = new Lesson
-                {
-                    ProfessorId = schedule.ProfessorId,
-                    StudentId = schedule.StudentId,
-                    ScheduledAt = lessonDate,
-                    DurationMinutes = (int)(schedule.EndTime - schedule.StartTime).TotalMinutes,
-                    Status = "scheduled"
-                };
-                await _lessonRepo.AddAsync(lesson);
             }
         }
 
         return _mapper.Map<ScheduleResponseDto>(schedule);
     }
 
-    public async Task DeleteAsync(Guid id)
+    public async Task DeleteAsync(Guid id, Guid professorId)
     {
         var schedule = await _scheduleRepo.GetByIdAsync(id)
             ?? throw new KeyNotFoundException("Agendamento não encontrado.");
+        if (schedule.ProfessorId != professorId)
+            throw new UnauthorizedAccessException("Acesso negado.");
         await _scheduleRepo.DeleteAsync(schedule);
     }
 
     public async Task<int> ReplicateWeekAsync(Guid professorId, Application.DTOs.Schedule.ReplicateWeekDto dto)
     {
+        if (dto.EndDate < dto.StartDate)
+            throw new ArgumentException("A data final deve ser maior ou igual à data inicial.");
+
+        if ((dto.EndDate.Date - dto.StartDate.Date).TotalDays > 366)
+            throw new ArgumentException("O intervalo máximo para replicação de agenda é de 1 ano (366 dias).");
+
         var schedules = await _scheduleRepo.GetByProfessorIdAsync(professorId);
         var holidays = await _holidayRepo.GetByProfessorIdAsync(professorId);
         var holidayDates = new HashSet<DateTime>();
@@ -755,16 +1064,12 @@ public class ScheduleService : IScheduleService
 
             foreach (var schedule in schedules.Where(s => s.DayOfWeek == dayOfWeek && s.IsRecurring && s.Student.IsActive))
             {
-                var lessonDate = date.Add(schedule.StartTime);
-                
-                // Do not schedule classes in the past
-                if (lessonDate <= DateTime.UtcNow)
-                {
+                if (!MatchesScheduleFrequency(date, schedule))
                     continue;
-                }
 
-                // Check schedule validity range
-                if (lessonDate.Date < schedule.ValidFrom.Date || (schedule.ValidUntil.HasValue && lessonDate.Date > schedule.ValidUntil.Value.Date))
+                var lessonDate = date.Add(schedule.StartTime);
+
+                if (lessonDate <= DateTime.UtcNow)
                 {
                     continue;
                 }
@@ -782,6 +1087,34 @@ public class ScheduleService : IScheduleService
             }
         }
         return count;
+    }
+
+    public async Task EndScheduleAsync(Guid id, Guid professorId, DateTime endDate)
+    {
+        var schedule = await _scheduleRepo.GetByIdAsync(id)
+            ?? throw new KeyNotFoundException("Agendamento não encontrado.");
+        if (schedule.ProfessorId != professorId)
+            throw new UnauthorizedAccessException("Acesso negado.");
+
+        schedule.ValidUntil = endDate.Date;
+        await _scheduleRepo.UpdateAsync(schedule);
+
+        var lessons = await _lessonRepo.Query()
+            .Where(l => l.StudentId == schedule.StudentId
+                     && l.ScheduledAt >= endDate.Date
+                     && l.Status == "scheduled"
+                     && !l.IsDeleted)
+            .ToListAsync();
+
+        var lessonsToDelete = lessons
+            .Where(l => (int)l.ScheduledAt.DayOfWeek == schedule.DayOfWeek
+                     && Math.Abs((l.ScheduledAt.TimeOfDay - schedule.StartTime).TotalMinutes) < 5)
+            .ToList();
+
+        foreach (var lesson in lessonsToDelete)
+        {
+            await _lessonRepo.DeleteAsync(lesson);
+        }
     }
 }
 
@@ -810,10 +1143,13 @@ public class HolidayService : IHolidayService
         return _mapper.Map<HolidayResponseDto>(holiday);
     }
 
-    public async Task<HolidayResponseDto> UpdateAsync(Guid id, UpdateHolidayDto dto)
+    public async Task<HolidayResponseDto> UpdateAsync(Guid id, Guid professorId, UpdateHolidayDto dto)
     {
         var holiday = await _holidayRepo.GetByIdAsync(id)
             ?? throw new KeyNotFoundException("Feriado não encontrado.");
+        if (holiday.ProfessorId != professorId)
+            throw new UnauthorizedAccessException("Acesso negado.");
+
         if (dto.Name != null) holiday.Name = dto.Name;
         if (dto.Date.HasValue) holiday.Date = dto.Date;
         if (dto.IsVacationPeriod.HasValue) holiday.IsVacationPeriod = dto.IsVacationPeriod.Value;
@@ -823,10 +1159,12 @@ public class HolidayService : IHolidayService
         return _mapper.Map<HolidayResponseDto>(holiday);
     }
 
-    public async Task DeleteAsync(Guid id)
+    public async Task DeleteAsync(Guid id, Guid professorId)
     {
         var holiday = await _holidayRepo.GetByIdAsync(id)
             ?? throw new KeyNotFoundException("Feriado não encontrado.");
+        if (holiday.ProfessorId != professorId)
+            throw new UnauthorizedAccessException("Acesso negado.");
         await _holidayRepo.DeleteAsync(holiday);
     }
 }
@@ -834,31 +1172,83 @@ public class HolidayService : IHolidayService
 public class FileStorageService : IFileStorageService
 {
     private readonly string _basePath;
+    private static readonly HashSet<string> AllowedExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".jpg", ".jpeg", ".png", ".webp", ".gif"
+    };
 
     public FileStorageService(string basePath)
     {
-        _basePath = basePath;
+        _basePath = Path.GetFullPath(basePath);
     }
 
     public async Task<string> SaveFileAsync(Stream stream, string fileName, string folder)
     {
-        var ext = Path.GetExtension(fileName);
+        var ext = Path.GetExtension(fileName)?.ToLowerInvariant() ?? string.Empty;
+        if (!AllowedExtensions.Contains(ext))
+            throw new ArgumentException("Formato de arquivo não permitido. Envie apenas imagens JPG, PNG, WEBP ou GIF.");
+
+        using var memoryStream = new MemoryStream();
+        await stream.CopyToAsync(memoryStream);
+
+        if (memoryStream.Length == 0 || memoryStream.Length > 5 * 1024 * 1024)
+            throw new ArgumentException("O arquivo de imagem deve ter no máximo 5 MB.");
+
+        var header = memoryStream.GetBuffer();
+        if (!IsValidImageSignature(header, (int)Math.Min(memoryStream.Length, 16)))
+            throw new ArgumentException("O conteúdo do arquivo enviado não corresponde a uma imagem válida.");
+
+        var safeFolder = Path.GetFileName(folder);
         var uniqueName = $"{Guid.NewGuid()}{ext}";
-        var folderPath = Path.Combine(_basePath, "uploads", folder);
+        var folderPath = Path.Combine(_basePath, "uploads", safeFolder);
         Directory.CreateDirectory(folderPath);
         var filePath = Path.Combine(folderPath, uniqueName);
 
-        using var fileStream = new FileStream(filePath, FileMode.Create);
-        await stream.CopyToAsync(fileStream);
+        memoryStream.Position = 0;
+        using var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None);
+        await memoryStream.CopyToAsync(fileStream);
 
-        return $"/uploads/{folder}/{uniqueName}";
+        return $"/uploads/{safeFolder}/{uniqueName}";
     }
 
     public void DeleteFile(string relativePath)
     {
-        if (string.IsNullOrEmpty(relativePath)) return;
-        var fullPath = Path.Combine(_basePath, relativePath.TrimStart('/'));
-        if (File.Exists(fullPath)) File.Delete(fullPath);
+        if (string.IsNullOrWhiteSpace(relativePath)) return;
+        var sanitizedRelative = relativePath.TrimStart('/', '\\').Replace('/', Path.DirectorySeparatorChar);
+        var fullPath = Path.GetFullPath(Path.Combine(_basePath, sanitizedRelative));
+
+        // Proteção contra Path Traversal: garante que o caminho final está dentro de _basePath/uploads
+        var uploadsRoot = Path.GetFullPath(Path.Combine(_basePath, "uploads"));
+        if (!fullPath.StartsWith(uploadsRoot, StringComparison.OrdinalIgnoreCase))
+            return;
+
+        if (File.Exists(fullPath))
+            File.Delete(fullPath);
+    }
+
+    private static bool IsValidImageSignature(byte[] bytes, int length)
+    {
+        if (length < 4) return false;
+
+        // JPEG: FF D8 FF
+        if (bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF)
+            return true;
+
+        // PNG: 89 50 4E 47
+        if (bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47)
+            return true;
+
+        // GIF: 47 49 46 38 ("GIF8")
+        if (bytes[0] == 0x47 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x38)
+            return true;
+
+        // WEBP: "RIFF" .... "WEBP"
+        if (length >= 12 &&
+            bytes[0] == 0x52 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x46 &&
+            bytes[8] == 0x57 && bytes[9] == 0x45 && bytes[10] == 0x42 && bytes[11] == 0x50)
+            return true;
+
+        return false;
     }
 }
 
@@ -867,9 +1257,11 @@ public class FinanceService : IFinanceService
     private readonly IStudentRepository _studentRepo;
     private readonly IMonthlyPaymentRepository _paymentRepo;
     private readonly IMapper _mapper;
+    private readonly AuraDbContext _context;
 
-    public FinanceService(IStudentRepository studentRepo, IMonthlyPaymentRepository paymentRepo, IMapper mapper)
+    public FinanceService(IStudentRepository studentRepo, IMonthlyPaymentRepository paymentRepo, IMapper mapper, AuraDbContext context)
     {
+        _context = context;
         _studentRepo = studentRepo;
         _paymentRepo = paymentRepo;
         _mapper = mapper;
@@ -881,7 +1273,6 @@ public class FinanceService : IFinanceService
         int targetMonth = month ?? now.Month;
         int targetYear = year ?? now.Year;
 
-        // Fetch all paid payments for this professor's students
         var payments = await _paymentRepo.Query()
             .Include(p => p.Student)
             .ThenInclude(s => s.Subject)
@@ -889,11 +1280,31 @@ public class FinanceService : IFinanceService
             .ToListAsync();
 
         var totalRevenue = payments.Sum(p => p.Amount);
-        var monthlyRevenue = payments.Where(p => p.Month == targetMonth && p.Year == targetYear).Sum(p => p.Amount);
-        var yearlyRevenue = payments.Where(p => p.Year == targetYear).Sum(p => p.Amount);
+        var manualEntries = new List<ManualFinanceEntry>();
+        try
+        {
+            await EnsureManualTableAsync();
+            manualEntries = await _context.ManualFinanceEntries
+                .Where(m => m.ProfessorId == professorId && !m.IsDeleted)
+                .OrderByDescending(m => m.Date)
+                .ThenByDescending(m => m.CreatedAt)
+                .ToListAsync();
+        }
+        catch
+        {
+            manualEntries = new List<ManualFinanceEntry>();
+        }
 
-        // Revenue progression by month
-        var progression = payments
+        totalRevenue += manualEntries.Sum(m => m.Amount);
+        var monthlyManualSum = manualEntries.Where(m => m.Month == targetMonth && m.Year == targetYear).Sum(m => m.Amount);
+        var yearlyManualSum = manualEntries.Where(m => m.Year == targetYear).Sum(m => m.Amount);
+        var monthlyRevenue = payments.Where(p => p.Month == targetMonth && p.Year == targetYear).Sum(p => p.Amount) + monthlyManualSum;
+        var yearlyRevenue = payments.Where(p => p.Year == targetYear).Sum(p => p.Amount) + yearlyManualSum;
+
+        var combinedMonthlyItems = payments.Select(p => new { p.Year, p.Month, p.Amount })
+            .Concat(manualEntries.Select(m => new { m.Year, m.Month, m.Amount }));
+
+        var progression = combinedMonthlyItems
             .GroupBy(p => new { p.Year, p.Month })
             .Select(g => new MonthlyRevenueDto
             {
@@ -905,7 +1316,6 @@ public class FinanceService : IFinanceService
             .OrderBy(p => p.Year).ThenBy(p => p.Month)
             .ToList();
 
-        // Revenue by subject
         var subjectRevenue = payments
             .GroupBy(p => p.Student.SubjectId)
             .Select(g => new SubjectRevenueDto
@@ -915,7 +1325,6 @@ public class FinanceService : IFinanceService
             })
             .ToList();
 
-        // Target month student payment statuses
         var students = await _studentRepo.Query()
             .Include(s => s.Subject)
             .Include(s => s.Level)
@@ -926,20 +1335,18 @@ public class FinanceService : IFinanceService
         var paymentStatuses = new List<StudentPaymentStatusDto>();
         foreach (var student in students)
         {
-            // Skip student if target month/year is before their first class date (or creation date)
             var startDate = student.FirstClassDate ?? student.CreatedAt;
             if (targetYear < startDate.Year || (targetYear == startDate.Year && targetMonth < startDate.Month))
             {
                 continue;
             }
 
-            // If student is inactive, hide them from monthly status if target month is after their LastClassDate
             if (!student.IsActive && student.LastClassDate.HasValue)
             {
                 var lastClass = student.LastClassDate.Value;
                 if (targetYear > lastClass.Year || (targetYear == lastClass.Year && targetMonth > lastClass.Month))
                 {
-                    continue; // Skip inactive student since they ended before this period
+                    continue;
                 }
             }
 
@@ -966,8 +1373,86 @@ public class FinanceService : IFinanceService
             YearlyRevenue = yearlyRevenue,
             RevenueProgression = progression,
             RevenueBySubject = subjectRevenue,
-            StudentPaymentStatuses = paymentStatuses
+            StudentPaymentStatuses = paymentStatuses,
+            ManualEntries = manualEntries
+                .Where(m => m.Month == targetMonth && m.Year == targetYear)
+                .OrderByDescending(m => m.Date)
+                .ThenByDescending(m => m.CreatedAt)
+                .Select(m => new ManualFinanceEntryDto
+                {
+                    Id = m.Id,
+                    Amount = m.Amount,
+                    Date = m.Date,
+                    Month = m.Month,
+                    Year = m.Year,
+                    Description = m.Description
+                })
+                .ToList()
         };
+    }
+
+    private async Task EnsureManualTableAsync()
+    {
+        try
+        {
+            await _context.Database.ExecuteSqlRawAsync(@"
+                CREATE TABLE IF NOT EXISTS aura.""ManualFinanceEntries"" (
+                    ""Id"" uuid NOT NULL,
+                    ""ProfessorId"" uuid NOT NULL,
+                    ""Amount"" numeric(18,2) NOT NULL,
+                    ""Date"" timestamp without time zone NOT NULL,
+                    ""Month"" integer NOT NULL,
+                    ""Year"" integer NOT NULL,
+                    ""Description"" character varying(500) NOT NULL,
+                    ""CreatedAt"" timestamp without time zone NOT NULL,
+                    ""UpdatedAt"" timestamp without time zone NULL,
+                    ""IsDeleted"" boolean NOT NULL,
+                    CONSTRAINT ""PK_ManualFinanceEntries"" PRIMARY KEY (""Id""),
+                    CONSTRAINT ""FK_ManualFinanceEntries_Professors_ProfessorId"" FOREIGN KEY (""ProfessorId"") REFERENCES aura.""Professors"" (""Id"") ON DELETE CASCADE
+                );
+                CREATE INDEX IF NOT EXISTS ""IX_ManualFinanceEntries_ProfessorId"" ON aura.""ManualFinanceEntries"" (""ProfessorId"");
+            ");
+        }
+        catch
+        {
+        }
+    }
+
+    public async Task<ManualFinanceEntryDto> CreateManualEntryAsync(Guid professorId, CreateManualFinanceEntryDto dto)
+    {
+        await EnsureManualTableAsync();
+        var cleanDate = DateTime.SpecifyKind(dto.Date, DateTimeKind.Unspecified);
+        var entry = new ManualFinanceEntry
+        {
+            ProfessorId = professorId,
+            Amount = dto.Amount,
+            Date = cleanDate,
+            Month = dto.Month ?? cleanDate.Month,
+            Year = dto.Year ?? cleanDate.Year,
+            Description = dto.Description
+        };
+        await _context.ManualFinanceEntries.AddAsync(entry);
+        await _context.SaveChangesAsync();
+
+        return new ManualFinanceEntryDto
+        {
+            Id = entry.Id,
+            Amount = entry.Amount,
+            Date = entry.Date,
+            Month = entry.Month,
+            Year = entry.Year,
+            Description = entry.Description
+        };
+    }
+
+    public async Task DeleteManualEntryAsync(Guid id, Guid professorId)
+    {
+        var entry = await _context.ManualFinanceEntries
+            .FirstOrDefaultAsync(m => m.Id == id && m.ProfessorId == professorId)
+            ?? throw new KeyNotFoundException("Lançamento manual não encontrado.");
+        entry.IsDeleted = true;
+        _context.ManualFinanceEntries.Update(entry);
+        await _context.SaveChangesAsync();
     }
 
     private static string GetMonthName(int month)
@@ -988,5 +1473,149 @@ public class FinanceService : IFinanceService
             12 => "Dez",
             _ => ""
         };
+    }
+}
+
+public class ClassSheetService : IClassSheetService
+{
+    private readonly IClassSheetRepository _classSheetRepo;
+    private readonly AuraDbContext _context;
+    private readonly IMapper _mapper;
+
+    public ClassSheetService(IClassSheetRepository classSheetRepo, AuraDbContext context, IMapper mapper)
+    {
+        _classSheetRepo = classSheetRepo;
+        _context = context;
+        _mapper = mapper;
+    }
+
+    public async Task<IEnumerable<ClassSheetResponseDto>> GetByLevelIdAsync(Guid levelId, Guid professorId)
+    {
+        var levelValid = await _context.Levels
+            .AnyAsync(l => l.Id == levelId && l.Subject.ProfessorId == professorId);
+        if (!levelValid)
+            throw new UnauthorizedAccessException("Acesso negado.");
+
+        var sheets = await _classSheetRepo.GetByLevelIdAsync(levelId);
+        return _mapper.Map<IEnumerable<ClassSheetResponseDto>>(sheets);
+    }
+
+    public async Task<ClassSheetResponseDto> GetByIdAsync(Guid id, Guid? professorId = null)
+    {
+        var sheet = await _context.ClassSheets
+            .Include(cs => cs.Level)
+            .ThenInclude(l => l.Subject)
+            .FirstOrDefaultAsync(cs => cs.Id == id && !cs.IsDeleted)
+            ?? throw new KeyNotFoundException("Ficha de aula não encontrada.");
+
+        if (professorId.HasValue && sheet.Level.Subject.ProfessorId != professorId.Value)
+            throw new UnauthorizedAccessException("Acesso negado.");
+
+        return _mapper.Map<ClassSheetResponseDto>(sheet);
+    }
+
+    public async Task<ClassSheetResponseDto> CreateAsync(Guid professorId, CreateClassSheetDto dto)
+    {
+        var levelValid = await _context.Levels
+            .AnyAsync(l => l.Id == dto.LevelId && l.Subject.ProfessorId == professorId);
+        if (!levelValid)
+            throw new UnauthorizedAccessException("Nível inválido ou sem permissão.");
+
+        var sheet = _mapper.Map<ClassSheet>(dto);
+        sheet.Content = HtmlSanitizerHelper.Sanitize(dto.Content);
+        sheet.CreatedAt = DateTime.UtcNow;
+        sheet.UpdatedAt = DateTime.UtcNow;
+        await _classSheetRepo.AddAsync(sheet);
+        return _mapper.Map<ClassSheetResponseDto>(sheet);
+    }
+
+    public async Task<ClassSheetResponseDto> UpdateAsync(Guid id, Guid professorId, UpdateClassSheetDto dto)
+    {
+        var sheet = await _context.ClassSheets
+            .Include(cs => cs.Level)
+            .ThenInclude(l => l.Subject)
+            .FirstOrDefaultAsync(cs => cs.Id == id && !cs.IsDeleted)
+            ?? throw new KeyNotFoundException("Ficha de aula não encontrada.");
+
+        if (sheet.Level.Subject.ProfessorId != professorId)
+            throw new UnauthorizedAccessException("Acesso negado.");
+
+        sheet.Title = dto.Title;
+        sheet.Content = HtmlSanitizerHelper.Sanitize(dto.Content);
+        sheet.UpdatedAt = DateTime.UtcNow;
+
+        await _classSheetRepo.UpdateAsync(sheet);
+        return _mapper.Map<ClassSheetResponseDto>(sheet);
+    }
+
+    public async Task DeleteAsync(Guid id, Guid professorId)
+    {
+        var sheet = await _context.ClassSheets
+            .Include(cs => cs.Level)
+            .ThenInclude(l => l.Subject)
+            .FirstOrDefaultAsync(cs => cs.Id == id && !cs.IsDeleted)
+            ?? throw new KeyNotFoundException("Ficha de aula não encontrada.");
+
+        if (sheet.Level.Subject.ProfessorId != professorId)
+            throw new UnauthorizedAccessException("Acesso negado.");
+
+        await _classSheetRepo.DeleteAsync(sheet);
+    }
+
+    public async Task<IEnumerable<ClassSheetResponseDto>> GetReleasedByStudentIdAsync(Guid studentId, Guid professorId)
+    {
+        var studentValid = await _context.Students
+            .AnyAsync(s => s.Id == studentId && s.ProfessorId == professorId);
+        if (!studentValid)
+            throw new UnauthorizedAccessException("Acesso negado.");
+
+        var sheets = await _context.ClassSheetStudents
+            .Where(cs => cs.StudentId == studentId && !cs.ClassSheet.IsDeleted)
+            .Select(cs => cs.ClassSheet)
+            .ToListAsync();
+
+        return _mapper.Map<IEnumerable<ClassSheetResponseDto>>(sheets);
+    }
+
+    public async Task ReleaseToStudentAsync(Guid professorId, Guid studentId, Guid classSheetId)
+    {
+        var studentValid = await _context.Students
+            .AnyAsync(s => s.Id == studentId && s.ProfessorId == professorId);
+        var sheetValid = await _context.ClassSheets
+            .AnyAsync(cs => cs.Id == classSheetId && cs.Level.Subject.ProfessorId == professorId);
+
+        if (!studentValid || !sheetValid)
+            throw new UnauthorizedAccessException("Acesso negado para vincular ficha ao aluno.");
+
+        var exists = await _context.ClassSheetStudents
+            .AnyAsync(cs => cs.StudentId == studentId && cs.ClassSheetId == classSheetId);
+
+        if (!exists)
+        {
+            var relation = new ClassSheetStudent
+            {
+                StudentId = studentId,
+                ClassSheetId = classSheetId
+            };
+            _context.ClassSheetStudents.Add(relation);
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    public async Task RevokeFromStudentAsync(Guid professorId, Guid studentId, Guid classSheetId)
+    {
+        var studentValid = await _context.Students
+            .AnyAsync(s => s.Id == studentId && s.ProfessorId == professorId);
+        if (!studentValid)
+            throw new UnauthorizedAccessException("Acesso negado.");
+
+        var relation = await _context.ClassSheetStudents
+            .FirstOrDefaultAsync(cs => cs.StudentId == studentId && cs.ClassSheetId == classSheetId);
+
+        if (relation != null)
+        {
+            _context.ClassSheetStudents.Remove(relation);
+            await _context.SaveChangesAsync();
+        }
     }
 }

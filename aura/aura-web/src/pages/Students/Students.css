@@ -135,6 +135,21 @@
   white-space: nowrap;
 }
 
+.student-row-header-part {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex: 1;
+  min-width: 0;
+}
+
+.student-row-details-part {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-shrink: 0;
+}
+
 .row-details-btn {
   font-size: 12px;
   font-weight: 700;
@@ -179,13 +194,41 @@
 @media (max-width: 768px) {
   .form-row { grid-template-columns: 1fr; }
   .student-row-content {
-    flex-wrap: wrap;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: var(--space-sm) !important;
+    width: 100% !important;
   }
-  .student-row-info {
-    gap: var(--space-sm);
+  .student-row-header-part {
+    display: flex !important;
+    align-items: center !important;
+    gap: var(--space-sm) !important;
+    width: 100% !important;
   }
-  .row-details-btn {
-    margin-left: 0;
+  .student-row-details-part {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    gap: 6px !important;
+  }
+  .student-tags {
+    display: flex !important;
+    gap: 4px !important;
+    flex-wrap: wrap !important;
+    flex: 1 !important;
+  }
+  .student-tags .badge {
+    font-size: 10px !important;
+    padding: 2px 6px !important;
+  }
+  .student-row-actions {
+    flex-shrink: 0 !important;
+  }
+  .student-row-actions .icon-btn {
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 13px !important;
   }
   .filters-bar {
     flex-direction: column;

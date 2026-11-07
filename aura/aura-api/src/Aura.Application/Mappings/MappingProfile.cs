@@ -1,3 +1,4 @@
+using System.Linq;
 using AutoMapper;
 using Aura.Domain.Entities;
 using Aura.Application.DTOs.Auth;
@@ -51,6 +52,13 @@ public class MappingProfile : Profile
             .ForMember(d => d.StudentCount, o => o.MapFrom(s => s.Students != null ? s.Students.Count : 0));
         CreateMap<CreateLevelDto, Level>();
 
+        // ClassSheet
+        CreateMap<ClassSheet, ClassSheetResponseDto>()
+            .ForMember(d => d.LevelName, o => o.MapFrom(s => s.Level != null ? s.Level.Name : null));
+        CreateMap<CreateClassSheetDto, ClassSheet>();
+        CreateMap<UpdateClassSheetDto, ClassSheet>()
+            .ForAllMembers(o => o.Condition((src, dest, srcMember) => srcMember != null));
+
         // Lesson
         CreateMap<Lesson, LessonResponseDto>()
             .ForMember(d => d.StudentName, o => o.MapFrom(s => s.Student != null ? s.Student.Name : null))
@@ -99,7 +107,7 @@ public class MappingProfile : Profile
         CreateMap<TemplateActivity, TemplateResponseDto>()
             .ForMember(d => d.SubjectName, o => o.MapFrom(s => s.Subject != null ? s.Subject.Name : null))
             .ForMember(d => d.LevelName, o => o.MapFrom(s => s.Level != null ? s.Level.Name : null))
-            .ForMember(d => d.Questions, o => o.MapFrom(s => s.Questions));
+            .ForMember(d => d.Questions, o => o.MapFrom(s => s.Questions != null ? s.Questions.OrderBy(q => q.CreatedAt).ToList() : null));
 
         CreateMap<TemplateQuestion, QuestionResponseDto>();
 
@@ -107,7 +115,7 @@ public class MappingProfile : Profile
             .ForMember(d => d.StudentName, o => o.MapFrom(s => s.Student != null ? s.Student.Name : null))
             .ForMember(d => d.Title, o => o.MapFrom(s => s.TemplateActivity != null ? s.TemplateActivity.Title : null))
             .ForMember(d => d.Type, o => o.MapFrom(s => s.TemplateActivity != null ? s.TemplateActivity.Type : null))
-            .ForMember(d => d.Answers, o => o.MapFrom(s => s.Answers));
+            .ForMember(d => d.Answers, o => o.MapFrom(s => s.Answers != null ? s.Answers.OrderBy(a => a.CreatedAt).ToList() : null));
 
         CreateMap<StudentAnswer, StudentAnswerResponseDto>();
     }

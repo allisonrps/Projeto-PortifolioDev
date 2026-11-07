@@ -216,5 +216,24 @@ public class SubscriptionRepository : GenericRepository<Subscription>, ISubscrip
     public SubscriptionRepository(AuraDbContext context) : base(context) { }
 
     public async Task<Subscription?> GetActiveByProfessorIdAsync(Guid professorId)
-        => await _dbSet.FirstOrDefaultAsync(s => s.ProfessorId == professorId && s.Status == "active");
+        => await _dbSet.OrderByDescending(s => s.CreatedAt)
+            .FirstOrDefaultAsync(s => s.ProfessorId == professorId && s.Status == "active");
+
+    public async Task<IEnumerable<Subscription>> GetByProfessorIdAsync(Guid professorId)
+        => await _dbSet.Where(s => s.ProfessorId == professorId)
+            .OrderByDescending(s => s.CreatedAt)
+            .ToListAsync();
+
+    public async Task<Subscription?> GetByGatewayIdAsync(string gatewayId)
+        => await _dbSet.FirstOrDefaultAsync(s => s.PaymentGatewayId == gatewayId);
+}
+
+// ClassSheet Repository
+public class ClassSheetRepository : GenericRepository<ClassSheet>, IClassSheetRepository
+{
+    public ClassSheetRepository(AuraDbContext context) : base(context) { }
+
+    public async Task<IEnumerable<ClassSheet>> GetByLevelIdAsync(Guid levelId)
+        => await _dbSet.Where(cs => cs.LevelId == levelId && !cs.IsDeleted)
+            .OrderBy(cs => cs.Title).ToListAsync();
 }

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Aura.Application.DTOs.Activity;
 using Aura.Application.Services;
 
@@ -29,6 +30,13 @@ public class ActivitiesController : BaseApiController
         return Ok(result);
     }
 
+    [HttpPut("templates/{id}")]
+    public async Task<ActionResult<TemplateResponseDto>> UpdateTemplate(Guid id, [FromBody] CreateTemplateDto dto)
+    {
+        var result = await _activityService.UpdateTemplateAsync(GetProfessorId(), id, dto);
+        return Ok(result);
+    }
+
     [HttpDelete("templates/{id}")]
     public async Task<IActionResult> DeleteTemplate(Guid id)
     {
@@ -46,7 +54,7 @@ public class ActivitiesController : BaseApiController
     [HttpGet("student/{studentId}")]
     public async Task<ActionResult<List<StudentActivityResponseDto>>> GetStudentActivities(Guid studentId)
     {
-        var result = await _activityService.GetStudentActivitiesAsync(studentId);
+        var result = await _activityService.GetStudentActivitiesAsync(GetProfessorId(), studentId);
         return Ok(result);
     }
 
@@ -59,6 +67,7 @@ public class ActivitiesController : BaseApiController
 
     [HttpGet("public/{activityId}")]
     [AllowAnonymous]
+    [EnableRateLimiting("public")]
     public async Task<ActionResult<StudentActivityResponseDto>> GetPublicActivity(Guid activityId)
     {
         var result = await _activityService.GetStudentActivityForSubmissionAsync(activityId);
@@ -67,9 +76,24 @@ public class ActivitiesController : BaseApiController
 
     [HttpPost("public/{activityId}/submit")]
     [AllowAnonymous]
+    [EnableRateLimiting("public")]
     public async Task<ActionResult<StudentActivityResponseDto>> SubmitActivity(Guid activityId, [FromBody] SubmitActivityDto dto)
     {
         var result = await _activityService.SubmitActivityAsync(activityId, dto);
         return Ok(result);
+    }
+
+    [HttpPost("correct/{activityId}")]
+    public async Task<ActionResult<StudentActivityResponseDto>> CorrectActivity(Guid activityId, [FromBody] CorrectActivityDto dto)
+    {
+        var result = await _activityService.CorrectActivityAsync(GetProfessorId(), activityId, dto);
+        return Ok(result);
+    }
+
+    [HttpDelete("student-activity/{id}")]
+    public async Task<IActionResult> DeleteStudentActivity(Guid id)
+    {
+        await _activityService.DeleteStudentActivityAsync(GetProfessorId(), id);
+        return NoContent();
     }
 }

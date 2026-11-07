@@ -1,0 +1,199 @@
+.statistics-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  padding-bottom: 40px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  border-radius: var(--radius-lg);
+}
+
+.stat-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  font-size: 22px;
+}
+
+.stat-icon-wrap[data-color="#7C3AED"] { background: rgba(124, 58, 237, 0.1); color: var(--accent-primary); }
+.stat-icon-wrap[data-color="#10B981"] { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+.stat-icon-wrap[data-color="#6B7280"] { background: rgba(107, 114, 128, 0.1); color: var(--text-muted); }
+.stat-icon-wrap[data-color="#F59E0B"] { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+
+.stat-label { font-size: 13px; color: var(--text-secondary); margin-bottom: 2px; }
+.stat-value { font-size: 24px; font-weight: 800; }
+.dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: var(--space-lg); }
+.card-section-header { display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-lg); font-size: 18px; color: var(--accent-primary); }
+.card-section-header h3 { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+
+/* Birthday List style */
+.birthday-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.birthday-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: 10px 14px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
+.birthday-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.birthday-student-name {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.birthday-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.birthday-header-icon {
+  color: var(--accent-secondary);
+}
+
+.empty-text { color: var(--text-muted); font-size: 14px; text-align: center; padding: var(--space-lg); }
+
+/* Status Donut Chart & Breakdown */
+.status-chart-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.status-stats-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.status-stat-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--bg-tertiary);
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
+.status-stat-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.status-color-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-stat-label {
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.status-stat-badge {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.status-stat-percent {
+  font-weight: 800;
+  color: var(--text-primary);
+  font-size: 13px;
+  min-width: 45px;
+  text-align: right;
+}
+
+.status-stat-bar {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.status-stat-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.5s ease;
+}
+
+/* Chart Controls */
+.chart-mode-toggle {
+  display: flex;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  padding: 2px;
+  border-radius: var(--radius-md);
+  gap: 2px;
+}
+
+.mode-btn {
+  padding: 4px 10px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.mode-btn:hover {
+  color: var(--text-primary);
+}
+
+.mode-btn.active {
+  background: var(--accent-primary);
+  color: #ffffff;
+}
+
+.filter-select-sm {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .stats-grid { grid-template-columns: 1fr; }
+  .dashboard-grid { grid-template-columns: 1fr; }
+}

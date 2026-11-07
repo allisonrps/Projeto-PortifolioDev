@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { MdAdd, MdSearch, MdDelete, MdEdit, MdSchool, MdLayers, MdPerson, MdVisibility } from 'react-icons/md';
+import { MdAdd, MdSearch, MdDelete, MdEdit, MdSchool, MdLayers, MdPerson, MdVisibility, MdOpenInNew } from 'react-icons/md';
 import { useNavigate } from 'react-router-dom';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
@@ -29,7 +29,9 @@ export default function StudentsPage() {
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
-    name: '', birthDate: '', phone: '', guardianName: '', guardianPhone: '', subjectId: '', levelId: '',
+    name: '', birthDate: '', phone: '', guardianName: '', guardianPhone: '',
+    city: '', state: '', country: 'Brasil',
+    subjectId: '', levelId: '',
     observation: '', monthlyPrice: '', isActive: 'true', firstClassDate: '', lastClassDate: ''
   });
   const navigate = useNavigate();
@@ -71,7 +73,9 @@ export default function StudentsPage() {
   const openCreate = () => {
     setEditingStudent(null);
     setForm({
-      name: '', birthDate: '', phone: '', guardianName: '', guardianPhone: '', subjectId: '', levelId: '',
+      name: '', birthDate: '', phone: '', guardianName: '', guardianPhone: '',
+      city: '', state: '', country: 'Brasil',
+      subjectId: '', levelId: '',
       observation: '', monthlyPrice: '', isActive: 'true', firstClassDate: '', lastClassDate: ''
     });
     setFormLevels([]);
@@ -86,8 +90,11 @@ export default function StudentsPage() {
       phone: student.phone || '',
       guardianName: student.guardianName || '',
       guardianPhone: student.guardianPhone || '',
-      subjectId: student.subjectId,
-      levelId: student.levelId,
+      city: student.city || '',
+      state: student.state || '',
+      country: student.country || 'Brasil',
+      subjectId: student.subjectId || '',
+      levelId: student.levelId || '',
       observation: student.observation || '',
       monthlyPrice: String(student.monthlyPrice || 0),
       isActive: String(student.isActive),
@@ -95,8 +102,14 @@ export default function StudentsPage() {
       lastClassDate: student.lastClassDate?.split('T')[0] || ''
     });
     if (student.subjectId) {
-      const res = await levelService.getBySubject(student.subjectId);
-      setFormLevels(res.data);
+      try {
+        const res = await levelService.getBySubject(student.subjectId);
+        setFormLevels(res.data || []);
+      } catch {
+        setFormLevels([]);
+      }
+    } else {
+      setFormLevels([]);
     }
     setIsModalOpen(true);
   };
@@ -110,7 +123,7 @@ export default function StudentsPage() {
       missingFields.push('Nome do Aluno');
     }
 
-    if (subjects.length > 0) {
+    if (!editingStudent && subjects.length > 0) {
       if (!form.subjectId) {
         missingFields.push('Matéria');
       }
@@ -128,9 +141,9 @@ export default function StudentsPage() {
       }
     }
 
-    if (form.isActive === 'false' && !form.lastClassDate) {
-      missingFields.push('Data da Última Aula (para arquivamento)');
-    }
+    const effectiveLastClassDate = form.isActive === 'false'
+      ? (form.lastClassDate || new Date().toISOString().split('T')[0])
+      : form.lastClassDate;
 
     if (missingFields.length > 0) {
       if (missingFields.length === 1) {
@@ -144,10 +157,12 @@ export default function StudentsPage() {
     setSaving(true);
     const body = {
       ...form,
+      subjectId: form.subjectId || undefined,
+      levelId: form.levelId || undefined,
       monthlyPrice: parseFloat(form.monthlyPrice || '0'),
       isActive: form.isActive === 'true',
       firstClassDate: form.firstClassDate ? `${form.firstClassDate}T00:00:00` : undefined,
-      lastClassDate: form.isActive === 'false' && form.lastClassDate ? `${form.lastClassDate}T00:00:00` : undefined,
+      lastClassDate: form.isActive === 'false' && effectiveLastClassDate ? `${effectiveLastClassDate}T00:00:00` : undefined,
       birthDate: form.birthDate ? `${form.birthDate}T00:00:00` : undefined
     };
 
@@ -194,6 +209,12 @@ export default function StudentsPage() {
     } catch {
       toast.error('Erro ao excluir aluno.');
     }
+  };
+
+  const handleCopyPortalLink = (studentId: string) => {
+    const portalUrl = `${window.location.origin}/student-portal/${studentId}`;
+    navigator.clipboard.writeText(portalUrl);
+    toast.success('Link do portal do aluno copiado!');
   };
 
   // Filter levels options based on selected subject in top filters
@@ -283,19 +304,22 @@ export default function StudentsPage() {
               onClick={() => navigate(`/students/${student.id}`)}
             >
               <div className="student-row-content">
-                <Avatar src={student.photoUrl} name={student.name} size="md" shape="square" />
-                <div className="student-row-info">
+                <div className="student-row-header-part">
+                  <Avatar src={student.photoUrl} name={student.name} size="md" shape="square" />
                   <h3 className="student-row-name">{student.name}</h3>
+                </div>
+                <div className="student-row-details-part">
                   <div className="student-tags">
                     {student.subjectName && <Badge variant="primary">{student.subjectName}</Badge>}
                     {student.levelName && <Badge variant="secondary">{student.levelName}</Badge>}
                     <Badge variant={student.isActive ? 'success' : 'danger'}>{student.isActive ? 'Ativo' : 'Arquivado'}</Badge>
                   </div>
-                </div>
-                <div className="student-row-actions" onClick={e => e.stopPropagation()}>
-                  <button className="icon-btn icon-btn-primary" onClick={() => navigate(`/students/${student.id}`)} title="Ver Detalhes do Aluno"><MdVisibility /></button>
-                  <button className="icon-btn" onClick={() => openEdit(student)} title="Editar"><MdEdit /></button>
-                  <button className="icon-btn icon-btn-danger" onClick={() => handleDelete(student.id)} title="Excluir"><MdDelete /></button>
+                  <div className="student-row-actions" onClick={e => e.stopPropagation()}>
+                    <button className="icon-btn icon-btn-warning" onClick={() => handleCopyPortalLink(student.id)} title="Copiar Link do Portal do Aluno"><MdOpenInNew /></button>
+                    <button className="icon-btn icon-btn-primary" onClick={() => navigate(`/students/${student.id}`)} title="Ver Detalhes do Aluno"><MdVisibility /></button>
+                    <button className="icon-btn" onClick={() => openEdit(student)} title="Editar"><MdEdit /></button>
+                    <button className="icon-btn icon-btn-danger" onClick={() => handleDelete(student.id)} title="Excluir"><MdDelete /></button>
+                  </div>
                 </div>
               </div>
             </Card>
@@ -339,18 +363,30 @@ export default function StudentsPage() {
             <Input label="Valor da Mensalidade (R$)" type="number" placeholder="Ex: 350.00" value={form.monthlyPrice} onChange={e => setForm({ ...form, monthlyPrice: e.target.value })} />
           </div>
 
+          <div className="form-row" style={{ gridTemplateColumns: '2fr 1fr 1.5fr' }}>
+            <Input label="Cidade" placeholder="Ex: São Paulo" value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} />
+            <Input label="Estado" placeholder="Ex: SP" maxLength={30} value={form.state} onChange={e => setForm({ ...form, state: e.target.value })} />
+            <Input label="País" placeholder="Ex: Brasil" value={form.country} onChange={e => setForm({ ...form, country: e.target.value })} />
+          </div>
+
           <div className="form-row">
             <div className="input-group">
               <label className="input-label">Matéria {subjects.length > 0 ? '*' : '(Opcional — será criada Geral)'}</label>
-              <select className="input-field" value={form.subjectId} onChange={e => handleFormSubjectChange(e.target.value)} required={subjects.length > 0}>
+              <select className="input-field" value={form.subjectId} onChange={e => handleFormSubjectChange(e.target.value)} required={!editingStudent && subjects.length > 0}>
                 <option value="">{subjects.length > 0 ? 'Selecione...' : 'Criar Matéria Geral Automática'}</option>
+                {editingStudent && editingStudent.subjectId && !subjects.some(s => s.id === editingStudent.subjectId) && (
+                  <option value={editingStudent.subjectId}>{editingStudent.subjectName || 'Matéria Atual'}</option>
+                )}
                 {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </div>
             <div className="input-group">
               <label className="input-label">Nível {subjects.length > 0 ? '*' : '(Opcional — será criado Geral)'}</label>
-              <select className="input-field" value={form.levelId} onChange={e => setForm({ ...form, levelId: e.target.value })} required={subjects.length > 0}>
+              <select className="input-field" value={form.levelId} onChange={e => setForm({ ...form, levelId: e.target.value })} required={!editingStudent && subjects.length > 0}>
                 <option value="">{formLevels.length > 0 ? 'Selecione...' : 'Criar Nível Geral Automático'}</option>
+                {editingStudent && editingStudent.levelId && !formLevels.some(l => l.id === editingStudent.levelId) && (
+                  <option value={editingStudent.levelId}>{editingStudent.levelName || 'Nível Atual'}</option>
+                )}
                 {formLevels.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
               </select>
             </div>
@@ -358,7 +394,21 @@ export default function StudentsPage() {
 
           <div className="input-group">
             <label className="input-label">Status *</label>
-            <select className="input-field" value={form.isActive} onChange={e => setForm({ ...form, isActive: e.target.value })} required>
+            <select
+              className="input-field"
+              value={form.isActive}
+              onChange={e => {
+                const nextActive = e.target.value;
+                setForm({
+                  ...form,
+                  isActive: nextActive,
+                  lastClassDate: nextActive === 'false' && !form.lastClassDate
+                    ? new Date().toISOString().split('T')[0]
+                    : form.lastClassDate
+                });
+              }}
+              required
+            >
               <option value="true">Ativo</option>
               <option value="false">Arquivado</option>
             </select>

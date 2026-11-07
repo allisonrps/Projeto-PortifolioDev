@@ -19,7 +19,7 @@ public class LessonsController : BaseApiController
 
     [HttpGet("by-student/{studentId}")]
     public async Task<ActionResult> GetByStudent(Guid studentId)
-        => Ok(await _lessonService.GetByStudentIdAsync(studentId));
+        => Ok(await _lessonService.GetByStudentIdAsync(studentId, GetProfessorId()));
 
     [HttpGet("week")]
     public async Task<ActionResult> GetWeek([FromQuery] DateTime date)
@@ -27,7 +27,7 @@ public class LessonsController : BaseApiController
 
     [HttpGet("{id}")]
     public async Task<ActionResult> GetById(Guid id)
-        => Ok(await _lessonService.GetByIdAsync(id));
+        => Ok(await _lessonService.GetByIdAsync(id, GetProfessorId()));
 
     [HttpPost]
     public async Task<ActionResult> Create([FromBody] CreateLessonDto dto)
@@ -38,12 +38,12 @@ public class LessonsController : BaseApiController
 
     [HttpPut("{id}")]
     public async Task<ActionResult> Update(Guid id, [FromBody] UpdateLessonDto dto)
-        => Ok(await _lessonService.UpdateAsync(id, dto));
+        => Ok(await _lessonService.UpdateAsync(id, GetProfessorId(), dto));
 
     [HttpDelete("{id}")]
     public async Task<ActionResult> Delete(Guid id)
     {
-        await _lessonService.DeleteAsync(id);
+        await _lessonService.DeleteAsync(id, GetProfessorId());
         return NoContent();
     }
 }
@@ -69,23 +69,23 @@ public class PaymentsController : BaseApiController
 
     [HttpGet("by-student/{studentId}")]
     public async Task<ActionResult> GetByStudent(Guid studentId)
-        => Ok(await _paymentService.GetByStudentIdAsync(studentId));
+        => Ok(await _paymentService.GetByStudentIdAsync(studentId, GetProfessorId()));
 
     [HttpPost]
     public async Task<ActionResult> Create([FromBody] CreatePaymentDto dto)
     {
-        var result = await _paymentService.CreateAsync(dto);
+        var result = await _paymentService.CreateAsync(GetProfessorId(), dto);
         return Created("", result);
     }
 
     [HttpPut("{id}")]
     public async Task<ActionResult> Update(Guid id, [FromBody] UpdatePaymentDto dto)
-        => Ok(await _paymentService.UpdateAsync(id, dto));
+        => Ok(await _paymentService.UpdateAsync(id, GetProfessorId(), dto));
 
     [HttpDelete("{id}")]
     public async Task<ActionResult> Delete(Guid id)
     {
-        await _paymentService.DeleteAsync(id);
+        await _paymentService.DeleteAsync(id, GetProfessorId());
         return NoContent();
     }
 }
@@ -99,23 +99,23 @@ public class ExamsController : BaseApiController
 
     [HttpGet("by-student/{studentId}")]
     public async Task<ActionResult> GetByStudent(Guid studentId)
-        => Ok(await _examService.GetByStudentIdAsync(studentId));
+        => Ok(await _examService.GetByStudentIdAsync(studentId, GetProfessorId()));
 
     [HttpPost]
     public async Task<ActionResult> Create([FromBody] CreateExamDto dto)
     {
-        var result = await _examService.CreateAsync(dto);
+        var result = await _examService.CreateAsync(GetProfessorId(), dto);
         return Created("", result);
     }
 
     [HttpPut("{id}")]
     public async Task<ActionResult> Update(Guid id, [FromBody] UpdateExamDto dto)
-        => Ok(await _examService.UpdateAsync(id, dto));
+        => Ok(await _examService.UpdateAsync(id, GetProfessorId(), dto));
 
     [HttpDelete("{id}")]
     public async Task<ActionResult> Delete(Guid id)
     {
-        await _examService.DeleteAsync(id);
+        await _examService.DeleteAsync(id, GetProfessorId());
         return NoContent();
     }
 }
@@ -129,23 +129,23 @@ public class ExercisesController : BaseApiController
 
     [HttpGet("by-student/{studentId}")]
     public async Task<ActionResult> GetByStudent(Guid studentId)
-        => Ok(await _exerciseService.GetByStudentIdAsync(studentId));
+        => Ok(await _exerciseService.GetByStudentIdAsync(studentId, GetProfessorId()));
 
     [HttpPost]
     public async Task<ActionResult> Create([FromBody] CreateExerciseDto dto)
     {
-        var result = await _exerciseService.CreateAsync(dto);
+        var result = await _exerciseService.CreateAsync(GetProfessorId(), dto);
         return Created("", result);
     }
 
     [HttpPut("{id}")]
     public async Task<ActionResult> Update(Guid id, [FromBody] UpdateExerciseDto dto)
-        => Ok(await _exerciseService.UpdateAsync(id, dto));
+        => Ok(await _exerciseService.UpdateAsync(id, GetProfessorId(), dto));
 
     [HttpDelete("{id}")]
     public async Task<ActionResult> Delete(Guid id)
     {
-        await _exerciseService.DeleteAsync(id);
+        await _exerciseService.DeleteAsync(id, GetProfessorId());
         return NoContent();
     }
 }
@@ -163,7 +163,7 @@ public class ScheduleController : BaseApiController
 
     [HttpGet("by-student/{studentId}")]
     public async Task<ActionResult> GetByStudent(Guid studentId)
-        => Ok(await _scheduleService.GetByStudentIdAsync(studentId));
+        => Ok(await _scheduleService.GetByStudentIdAsync(studentId, GetProfessorId()));
 
     [HttpPost]
     public async Task<ActionResult> Create([FromBody] CreateScheduleDto dto)
@@ -174,12 +174,12 @@ public class ScheduleController : BaseApiController
 
     [HttpPut("{id}")]
     public async Task<ActionResult> Update(Guid id, [FromBody] UpdateScheduleDto dto)
-        => Ok(await _scheduleService.UpdateAsync(id, dto));
+        => Ok(await _scheduleService.UpdateAsync(id, GetProfessorId(), dto));
 
     [HttpDelete("{id}")]
     public async Task<ActionResult> Delete(Guid id)
     {
-        await _scheduleService.DeleteAsync(id);
+        await _scheduleService.DeleteAsync(id, GetProfessorId());
         return NoContent();
     }
 
@@ -188,6 +188,13 @@ public class ScheduleController : BaseApiController
     {
         var count = await _scheduleService.ReplicateWeekAsync(GetProfessorId(), dto);
         return Ok(new { lessonsCreated = count });
+    }
+
+    [HttpPost("{id}/end")]
+    public async Task<ActionResult> EndSchedule(Guid id, [FromBody] EndScheduleDto dto)
+    {
+        await _scheduleService.EndScheduleAsync(id, GetProfessorId(), dto.EndDate);
+        return Ok();
     }
 }
 
@@ -211,12 +218,12 @@ public class HolidaysController : BaseApiController
 
     [HttpPut("{id}")]
     public async Task<ActionResult> Update(Guid id, [FromBody] UpdateHolidayDto dto)
-        => Ok(await _holidayService.UpdateAsync(id, dto));
+        => Ok(await _holidayService.UpdateAsync(id, GetProfessorId(), dto));
 
     [HttpDelete("{id}")]
     public async Task<ActionResult> Delete(Guid id)
     {
-        await _holidayService.DeleteAsync(id);
+        await _holidayService.DeleteAsync(id, GetProfessorId());
         return NoContent();
     }
 }
