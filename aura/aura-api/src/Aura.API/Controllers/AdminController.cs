@@ -43,4 +43,11 @@ public class AdminController : BaseApiController
         var result = await _adminService.UpdateGatewayConfigAsync(GetProfessorId(), dto);
         return Ok(result);
     }
+
+    [HttpPost("seed-demo-data")]
+    public async Task<ActionResult> SeedDemoData([FromServices] Aura.Infrastructure.Data.AuraDbContext db)
+    {
+        await Aura.Infrastructure.Data.DemoDataSeeder.SeedAllisonAccountAsync(db, force: true);
+        return Ok(new { message = "Dados de demonstração populados com sucesso para allison_rps@hotmail.com!" });
+    }
 }

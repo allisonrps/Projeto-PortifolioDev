@@ -4,6 +4,7 @@ using Aura.Application.DTOs.Students;
 using Aura.Application.Services;
 using Aura.Domain.Entities;
 using Aura.Domain.Interfaces;
+using SkiaSharp;
 
 namespace Aura.Infrastructure.Services;
 
@@ -104,7 +105,7 @@ public class StudentService : IStudentService
             subject = professorSubjects.FirstOrDefault();
             if (subject == null)
             {
-                subject = new Subject { ProfessorId = professorId, Name = "Geral" };
+                subject = new Subject { Name = "Geral", ProfessorId = professorId };
                 await _subjectRepo.AddAsync(subject);
             }
             dto.SubjectId = subject.Id;
@@ -231,5 +232,90 @@ public class StudentService : IStudentService
         student.PhotoUrl = photoUrl;
         await _studentRepo.UpdateAsync(student);
         return photoUrl;
+    }
+
+    public async Task<string> UploadPhotoBase64Async(Guid id, Guid professorId, string base64)
+    {
+        var student = await _studentRepo.GetByIdAsync(id)
+            ?? throw new KeyNotFoundException("Aluno não encontrado.");
+        if (student.ProfessorId != professorId)
+            throw new UnauthorizedAccessException("Acesso negado.");
+
+        if (string.IsNullOrWhiteSpace(base64))
+            throw new ArgumentException("A imagem base64 não foi enviada.");
+
+        // Remover prefixo data:image/...;base64, caso venha do frontend
+        var base64Data = base64.Trim();
+        var commaIndex = base64Data.IndexOf(',');
+        if (commaIndex >= 0)
+        {
+            base64Data = base64Data.Substring(commaIndex + 1);
+        }
+
+        // Normalizar espaços e quebras de linha para evitar erro de Base64
+        base64Data = base64Data.Replace(" ", "+").Replace("\r", "").Replace("\n", "");
+
+        var imageBytes = Convert.FromBase64String(base64Data);
+        if (imageBytes.Length == 0 || imageBytes.Length > 15 * 1024 * 1024)
+            throw new ArgumentException("Tamanho de arquivo de imagem inválido.");
+
+        // Validação binária pura (Magic Bytes) sem depender de bibliotecas nativas C++
+        string ext = "jpg";
+        if (imageBytes.Length >= 3 && imageBytes[0] == 0xFF && imageBytes[1] == 0xD8 && imageBytes[2] == 0xFF)
+        {
+            ext = "jpg";
+        }
+        else if (imageBytes.Length >= 8 && imageBytes[0] == 0x89 && imageBytes[1] == 0x50 && imageBytes[2] == 0x4E && imageBytes[3] == 0x47)
+        {
+            ext = "png";
+        }
+        else if (imageBytes.Length >= 12 && imageBytes[0] == 0x52 && imageBytes[1] == 0x49 && imageBytes[2] == 0x46 && imageBytes[3] == 0x46 
+                 && imageBytes[8] == 0x57 && imageBytes[9] == 0x45 && imageBytes[10] == 0x42 && imageBytes[11] == 0x50)
+        {
+            ext = "webp";
+        }
+        else
+        {
+            throw new ArgumentException("Formato de imagem inválido. O arquivo enviado deve ser JPEG, PNG ou WebP.");
+        }
+
+        byte[] finalBytes = imageBytes;
+
+        // Tentativa resiliente de processamento adicional com SkiaSharp.
+        try
+        {
+            using var data = SKData.CreateCopy(imageBytes);
+            using var originalBitmap = SKBitmap.Decode(data);
+            if (originalBitmap != null)
+            {
+                int targetWidth = 400;
+                int targetHeight = 400;
+                using var resizedBitmap = originalBitmap.Resize(new SKImageInfo(targetWidth, targetHeight), new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear));
+                if (resizedBitmap != null)
+                {
+                    using var image = SKImage.FromBitmap(resizedBitmap);
+                    using var encoded = image.Encode(SKEncodedImageFormat.Jpeg, 88) 
+                                     ?? image.Encode(SKEncodedImageFormat.Png, 100);
+                    if (encoded != null)
+                    {
+                        finalBytes = encoded.ToArray();
+                        ext = "jpg";
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // Fallback silencioso mantendo os bytes limpos da imagem
+        }
+
+        // PERSISTÊNCIA PERMANENTE NO BANCO DE DADOS:
+        // Salva como Data URI diretamente na coluna PhotoUrl da tabela Students.
+        string mimeType = ext == "png" ? "image/png" : ext == "webp" ? "image/webp" : "image/jpeg";
+        var persistentDataUrl = $"data:{mimeType};base64,{Convert.ToBase64String(finalBytes)}";
+        student.PhotoUrl = persistentDataUrl;
+        await _studentRepo.UpdateAsync(student);
+
+        return persistentDataUrl;
     }
 }

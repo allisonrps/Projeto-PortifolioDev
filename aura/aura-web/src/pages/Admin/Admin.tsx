@@ -9,13 +9,16 @@ import {
   MdRefresh,
   MdPersonAddAlt1,
   MdBlock,
-  MdAutorenew,
   MdOutlineWorkspacePremium,
   MdOpenInNew,
   MdSecurity,
   MdMenuBook,
   MdAssignment,
-  MdVpnKey
+  MdVpnKey,
+  MdCalendarMonth,
+  MdAssignmentTurnedIn,
+  MdPaid,
+  MdAllInclusive
 } from 'react-icons/md';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
@@ -334,7 +337,7 @@ export default function AdminPage() {
 
       {/* Tab 1: Professors Management */}
       {activeTab === 'professors' && (
-        <Card variant="elevated" className="admin-section-card">
+        <div className="admin-tab-pane animate-fadeIn">
           <div className="admin-filters-row">
             <div className="admin-search-box">
               <MdSearch className="admin-search-icon" />
@@ -396,19 +399,67 @@ export default function AdminPage() {
                         {getPlanBadge(prof)}
                       </div>
                       <div className="admin-prof-meta-line">
-                        <span>{prof.email}</span>
-                        {prof.phone && <span>• Tel: {prof.phone}</span>}
-                        {prof.cpfCnpj && <span>• Doc: {prof.cpfCnpj}</span>}
-                        <span>• Cadastro: {new Date(prof.createdAt).toLocaleDateString('pt-BR')}</span>
-                        {expiryDate && prof.planType !== 'lifetime' && (
-                          <span>• Vencimento: <strong>{new Date(expiryDate).toLocaleDateString('pt-BR')}</strong></span>
-                        )}
+                        <span className="admin-meta-row-identity">
+                          <span className="admin-meta-email">{prof.email}</span>
+                          {prof.phone && <span className="admin-meta-sep">•</span>}
+                          {prof.phone && <span className="admin-meta-phone">Tel: {prof.phone}</span>}
+                          {prof.cpfCnpj && <span className="admin-meta-sep">•</span>}
+                          {prof.cpfCnpj && <span className="admin-meta-doc">Doc: {prof.cpfCnpj}</span>}
+                        </span>
+
+                        <span className="admin-meta-row-dates">
+                          <span className="admin-meta-sep-date">•</span>
+                          <span className="admin-meta-start">Início: {new Date(prof.createdAt).toLocaleDateString('pt-BR')}</span>
+                          {expiryDate && prof.planType !== 'lifetime' && (
+                            <>
+                              <span className="admin-meta-sep">•</span>
+                              <span className="admin-meta-end">Fim: <strong>{new Date(expiryDate).toLocaleDateString('pt-BR')}</strong></span>
+                            </>
+                          )}
+                          {prof.planType === 'lifetime' && (
+                            <>
+                              <span className="admin-meta-sep">•</span>
+                              <span className="admin-meta-end">Fim: <strong>Vitalício</strong></span>
+                            </>
+                          )}
+                        </span>
                       </div>
                       <div className="admin-prof-stats-line">
-                        <span>👥 <strong>{prof.activeStudentsCount}</strong> alunos ativos ({prof.studentsCount} total)</span>
-                        <span>📅 <strong>{prof.lessonsCount}</strong> aulas</span>
-                        <span>📝 <strong>{prof.activitiesCount}</strong> atividades</span>
-                        <span>💰 Pago: <strong>{formatCurrency(prof.totalPaidAmount)}</strong></span>
+                        <div className="admin-stat-pill admin-pill-students">
+                          <MdPeople className="admin-stat-icon" />
+                          <span className="admin-stat-num">{prof.activeStudentsCount}</span>
+                          <div className="admin-stat-tooltip">
+                            <strong>Alunos Ativos</strong>
+                            <span>{prof.activeStudentsCount} ativos de {prof.studentsCount} cadastrados</span>
+                          </div>
+                        </div>
+
+                        <div className="admin-stat-pill admin-pill-lessons">
+                          <MdCalendarMonth className="admin-stat-icon" />
+                          <span className="admin-stat-num">{prof.lessonsCount}</span>
+                          <div className="admin-stat-tooltip">
+                            <strong>Aulas Agendadas</strong>
+                            <span>{prof.lessonsCount} aulas no histórico total</span>
+                          </div>
+                        </div>
+
+                        <div className="admin-stat-pill admin-pill-activities">
+                          <MdAssignmentTurnedIn className="admin-stat-icon" />
+                          <span className="admin-stat-num">{prof.activitiesCount}</span>
+                          <div className="admin-stat-tooltip">
+                            <strong>Atividades Pedagógicas</strong>
+                            <span>{prof.activitiesCount} provas/exercícios criados</span>
+                          </div>
+                        </div>
+
+                        <div className="admin-stat-pill admin-pill-revenue">
+                          <MdPaid className="admin-stat-icon" />
+                          <span className="admin-stat-num">{formatCurrency(prof.totalPaidAmount)}</span>
+                          <div className="admin-stat-tooltip">
+                            <strong>Total Pago à Plataforma</strong>
+                            <span>{formatCurrency(prof.totalPaidAmount)} em assinaturas/renovações</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
@@ -416,11 +467,11 @@ export default function AdminPage() {
                       <button
                         type="button"
                         disabled={isBusy}
-                        className="admin-act-btn annual"
-                        title="Ativar ou renovar licença anual (+365 dias)"
-                        onClick={() => handleLicenseAction(prof, 'activate_annual', 'Licença Anual (+1 ano)')}
+                        className="admin-act-btn trial"
+                        title="Estender período de teste por +14 dias"
+                        onClick={() => handleLicenseAction(prof, 'extend_trial', '+14 dias de Trial')}
                       >
-                        +1 Ano (Anual)
+                        +14
                       </button>
                       <button
                         type="button"
@@ -429,7 +480,16 @@ export default function AdminPage() {
                         title="Ativar ou renovar licença mensal (+30 dias)"
                         onClick={() => handleLicenseAction(prof, 'activate_monthly', 'Licença Mensal (+30 dias)')}
                       >
-                        +30d (Mensal)
+                        +30
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isBusy}
+                        className="admin-act-btn annual"
+                        title="Ativar ou renovar licença anual (+365 dias)"
+                        onClick={() => handleLicenseAction(prof, 'activate_annual', 'Licença Anual (+1 ano)')}
+                      >
+                        +365
                       </button>
                       <button
                         type="button"
@@ -438,16 +498,7 @@ export default function AdminPage() {
                         title="Conceder licença vitalícia gratuita"
                         onClick={() => handleLicenseAction(prof, 'activate_lifetime', 'Licença Vitalícia')}
                       >
-                        Vitalício
-                      </button>
-                      <button
-                        type="button"
-                        disabled={isBusy}
-                        className="admin-act-btn trial"
-                        title="Estender período de teste por +14 dias"
-                        onClick={() => handleLicenseAction(prof, 'extend_trial', '+14 dias de Trial')}
-                      >
-                        <MdAutorenew /> +14d Trial
+                        <MdAllInclusive style={{ fontSize: '15px' }} />
                       </button>
                       {prof.subscriptionStatus !== 'blocked' && prof.id !== professor?.id && !prof.isAdmin && (
                         <button
@@ -457,7 +508,7 @@ export default function AdminPage() {
                           title="Bloquear escrita / Expirar acesso"
                           onClick={() => handleLicenseAction(prof, 'block', 'Bloqueio de licença')}
                         >
-                          <MdBlock /> Bloquear
+                          <MdBlock style={{ fontSize: '14px' }} />
                         </button>
                       )}
                     </div>
@@ -466,12 +517,12 @@ export default function AdminPage() {
               })
             )}
           </div>
-        </Card>
+        </div>
       )}
 
       {/* Tab 2: Subscriptions & Payments History */}
       {activeTab === 'subscriptions' && (
-        <Card variant="elevated" className="admin-section-card">
+        <div className="admin-tab-pane animate-fadeIn">
           <div className="admin-filters-row">
             <div className="admin-filter-pills">
               <button
@@ -546,7 +597,7 @@ export default function AdminPage() {
               ))
             )}
           </div>
-        </Card>
+        </div>
       )}
 
       {/* Modal: Liberar / Pré-Ativar Licença por E-mail */}

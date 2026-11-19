@@ -1152,6 +1152,12 @@
   gap: 28px;
 }
 
+.lp-themes-grid.lp-themes-grid-two {
+  grid-template-columns: repeat(2, 1fr);
+  max-width: 900px;
+  margin: 0 auto;
+}
+
 .lp-theme-card {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.12);

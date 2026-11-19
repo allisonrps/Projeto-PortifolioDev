@@ -48,6 +48,45 @@ export default function PublicQuiz() {
     }
   }, [activity]);
 
+  // Alerta de proteção contra perda de progresso: restrito a atividades do tipo 'exam' (Prova)
+  useEffect(() => {
+    const isExamInProgress =
+      activity &&
+      activity.type === 'exam' &&
+      activity.status === 'pending' &&
+      !submittedActivity &&
+      !submitting;
+
+    if (!isExamInProgress) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      // Browsers modernos requerem returnValue definido para exibir o diálogo de confirmação
+      const message = 'Atenção: Você está realizando uma prova! Se sair ou recarregar a página agora, todo o seu progresso será perdido.';
+      e.returnValue = message;
+      return message;
+    };
+
+    // Prevenir navegação acidental pelo histórico / botão voltar
+    window.history.pushState(null, '', window.location.href);
+    const handlePopState = () => {
+      const confirmLeave = window.confirm(
+        '⚠️ ATENÇÃO: PROVA EM ANDAMENTO!\n\nSe você sair desta página ou voltar, todo o seu progresso e respostas desta prova serão perdidos.\n\nDeseja realmente sair da prova?'
+      );
+      if (!confirmLeave) {
+        window.history.pushState(null, '', window.location.href);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [activity, submittedActivity, submitting]);
+
   const loadActivity = async (id: string) => {
     setLoading(true);
     try {
@@ -455,6 +494,19 @@ export default function PublicQuiz() {
           </span>
         </div>
       </Card>
+
+      {activity.type === 'exam' && (
+        <div className="exam-warning-banner animate-slideDown">
+          <div className="exam-warning-icon">⚠️</div>
+          <div className="exam-warning-content">
+            <strong>Atenção: Modo Prova em Andamento!</strong>
+            <p>
+              Ao sair, fechar ou recarregar esta página, <u>você perderá todo o progresso</u> da prova.
+              Responda com calma e clique em <em>"Finalizar e Enviar Atividade"</em> para registrar sua entrega.
+            </p>
+          </div>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="quiz-questions-form">
         {(() => {

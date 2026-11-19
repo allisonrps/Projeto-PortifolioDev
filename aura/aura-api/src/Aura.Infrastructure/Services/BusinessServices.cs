@@ -1174,7 +1174,7 @@ public class FileStorageService : IFileStorageService
     private readonly string _basePath;
     private static readonly HashSet<string> AllowedExtensions = new(StringComparer.OrdinalIgnoreCase)
     {
-        ".jpg", ".jpeg", ".png", ".webp", ".gif"
+        ".jpg", ".jpeg", ".png", ".webp", ".gif", ".pdf"
     };
 
     public FileStorageService(string basePath)
@@ -1186,17 +1186,17 @@ public class FileStorageService : IFileStorageService
     {
         var ext = Path.GetExtension(fileName)?.ToLowerInvariant() ?? string.Empty;
         if (!AllowedExtensions.Contains(ext))
-            throw new ArgumentException("Formato de arquivo não permitido. Envie apenas imagens JPG, PNG, WEBP ou GIF.");
+            throw new ArgumentException("Formato de arquivo não permitido. Envie apenas imagens JPG, PNG, WEBP, GIF ou documentos PDF.");
 
         using var memoryStream = new MemoryStream();
         await stream.CopyToAsync(memoryStream);
 
-        if (memoryStream.Length == 0 || memoryStream.Length > 5 * 1024 * 1024)
-            throw new ArgumentException("O arquivo de imagem deve ter no máximo 5 MB.");
+        if (memoryStream.Length == 0 || memoryStream.Length > 20 * 1024 * 1024)
+            throw new ArgumentException("O arquivo deve ter no máximo 20 MB.");
 
         var header = memoryStream.GetBuffer();
-        if (!IsValidImageSignature(header, (int)Math.Min(memoryStream.Length, 16)))
-            throw new ArgumentException("O conteúdo do arquivo enviado não corresponde a uma imagem válida.");
+        if (!IsValidFileSignature(header, (int)Math.Min(memoryStream.Length, 16), ext))
+            throw new ArgumentException("O conteúdo do arquivo enviado não corresponde ao formato esperado.");
 
         var safeFolder = Path.GetFileName(folder);
         var uniqueName = $"{Guid.NewGuid()}{ext}";
@@ -1226,9 +1226,15 @@ public class FileStorageService : IFileStorageService
             File.Delete(fullPath);
     }
 
-    private static bool IsValidImageSignature(byte[] bytes, int length)
+    private static bool IsValidFileSignature(byte[] bytes, int length, string ext)
     {
         if (length < 4) return false;
+
+        // PDF: %PDF (25 50 44 46)
+        if (ext.Equals(".pdf", StringComparison.OrdinalIgnoreCase))
+        {
+            return bytes[0] == 0x25 && bytes[1] == 0x50 && bytes[2] == 0x44 && bytes[3] == 0x46;
+        }
 
         // JPEG: FF D8 FF
         if (bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF)
@@ -1565,16 +1571,29 @@ public class ClassSheetService : IClassSheetService
     public async Task<IEnumerable<ClassSheetResponseDto>> GetReleasedByStudentIdAsync(Guid studentId, Guid professorId)
     {
         var studentValid = await _context.Students
+            .AsNoTracking()
             .AnyAsync(s => s.Id == studentId && s.ProfessorId == professorId);
         if (!studentValid)
             throw new UnauthorizedAccessException("Acesso negado.");
 
         var sheets = await _context.ClassSheetStudents
+            .AsNoTracking()
+            .Include(cs => cs.ClassSheet)
+                .ThenInclude(c => c.Level)
             .Where(cs => cs.StudentId == studentId && !cs.ClassSheet.IsDeleted)
-            .Select(cs => cs.ClassSheet)
+            .Select(cs => new ClassSheetResponseDto
+            {
+                Id = cs.ClassSheet.Id,
+                LevelId = cs.ClassSheet.LevelId,
+                LevelName = cs.ClassSheet.Level != null ? cs.ClassSheet.Level.Name : string.Empty,
+                Title = cs.ClassSheet.Title,
+                Content = string.Empty,
+                CreatedAt = cs.ClassSheet.CreatedAt,
+                UpdatedAt = cs.ClassSheet.UpdatedAt ?? cs.ClassSheet.CreatedAt
+            })
             .ToListAsync();
 
-        return _mapper.Map<IEnumerable<ClassSheetResponseDto>>(sheets);
+        return sheets;
     }
 
     public async Task ReleaseToStudentAsync(Guid professorId, Guid studentId, Guid classSheetId)

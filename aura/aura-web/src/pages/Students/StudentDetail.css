@@ -81,10 +81,31 @@
 }
 
 .profile-avatar-wrap .avatar-xl {
-  width: 108px;
-  height: 108px;
-  font-size: 32px;
+  width: 216px;
+  height: 216px;
+  font-size: 64px;
   border: none;
+}
+
+@media (max-width: 900px) and (min-width: 577px) {
+  .profile-avatar-wrap .avatar-xl {
+    width: 160px;
+    height: 160px;
+    font-size: 48px;
+  }
+}
+
+.student-name-with-tags {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 600px) {
+  .student-name-with-tags {
+    justify-content: center;
+  }
 }
 
 .profile-avatar-wrap:hover {
@@ -92,7 +113,23 @@
   border-color: var(--accent-primary);
 }
 
-.student-profile { display: flex; align-items: center; gap: var(--space-xl); height: 100%; width: 100%; max-width: 100%; box-sizing: border-box; overflow: visible; }
+.student-profile {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xl);
+  height: 100%;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: visible;
+  padding-bottom: 12px !important;
+}
+
+.student-profile-inner {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
 
 .profile-info-content {
   display: flex;
@@ -119,18 +156,45 @@
 }
 
 .student-name-title {
-  font-size: 26px;
+  font-size: 52px;
   font-weight: 800;
   color: var(--text-primary);
   margin: 0;
   word-break: break-word;
-  line-height: 1.2;
+  line-height: 1.15;
+  letter-spacing: -0.5px;
+}
+
+@media (max-width: 900px) {
+  .student-name-title {
+    font-size: 38px;
+  }
+}
+
+@media (max-width: 600px) {
+  .student-name-title {
+    font-size: 28px;
+  }
 }
 
 .student-actions {
   display: flex;
   gap: 8px;
   flex-shrink: 0;
+}
+
+.profile-meta-combined-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+@media (max-width: 600px) {
+  .profile-meta-combined-row {
+    justify-content: center;
+    gap: 10px;
+  }
 }
 
 .profile-tags-row {
@@ -178,39 +242,84 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 18px;
+  gap: 16px;
   margin-top: 6px;
   padding-top: 4px;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 680px) {
   .profile-dials-row {
-    display: flex;
-    flex-wrap: nowrap;
-    justify-content: space-between;
-    align-items: center;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    justify-items: center;
+    align-items: start;
     width: 100%;
-    gap: 6px;
-    margin-top: 10px;
-    padding-top: 2px;
+    gap: 16px 12px;
+    margin-top: 14px;
+    padding: 14px 10px 4px 10px;
+    box-sizing: border-box;
+    border-top: 1px solid var(--border-color);
   }
 
   .metric-dial-item {
-    flex: 1;
-    min-width: 0;
-    gap: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    gap: 6px;
   }
 
   .metric-dial-circle {
-    width: 40px;
-    height: 40px;
-    font-size: 18px;
+    width: 48px;
+    height: 48px;
+    font-size: 22px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
   }
 
   .metric-dial-counter {
-    font-size: 10px;
-    padding: 1px 5px;
+    font-size: 11.5px;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: var(--radius-full, 999px);
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: clip;
     letter-spacing: 0;
+    max-width: none;
+  }
+}
+
+@media (max-width: 360px) {
+  .profile-dials-row {
+    gap: 12px 8px;
+    padding: 12px 6px 2px 6px;
+  }
+  .metric-dial-circle {
+    width: 44px;
+    height: 44px;
+    font-size: 20px;
+  }
+  .metric-dial-counter {
+    font-size: 10.5px;
+    padding: 2px 6px;
+  }
+}
+
+@media (max-width: 900px) and (min-width: 681px) {
+  .profile-dials-row {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .metric-dial-circle {
+    width: 52px;
+    height: 52px;
+    font-size: 24px;
+  }
+  .metric-dial-counter {
+    font-size: 11.5px;
+    padding: 2px 8px;
   }
 }
 
@@ -233,18 +342,19 @@
   transform: translateY(-3px);
 }
 
+/* Mostradores Circulares do Cabeçalho (-30% calibrado) */
 .metric-dial-circle {
-  width: 48px;
-  height: 48px;
+  width: 58px;
+  height: 58px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
+  font-size: 26px;
   background: var(--bg-tertiary);
   border: 2px solid var(--border-color);
   color: var(--accent-primary);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
   transition: all 0.25s ease;
 }
 
@@ -255,7 +365,7 @@
   color: var(--text-primary);
   background: var(--bg-tertiary);
   border: 1px solid var(--border-color);
-  padding: 2px 8px;
+  padding: 2px 9px;
   border-radius: 999px;
   line-height: 1.3;
   white-space: nowrap;
@@ -568,13 +678,14 @@
 /* Integrated Full-Width Navigation Tabs (Frameless Clean Style) */
 .detail-tabs {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 8px;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
-  margin-top: 8px;
-  padding-top: 12px;
+  margin-top: 18px;
+  padding-top: 14px;
+  padding-bottom: 2px;
   border-top: 1px solid var(--border-color);
   background: transparent;
 }
@@ -584,7 +695,7 @@
   align-items: center;
   justify-content: center;
   gap: 9px;
-  padding: 12px 10px;
+  padding: 10px 10px;
   border: none !important;
   background: transparent !important;
   border-radius: 0 !important;
@@ -666,11 +777,15 @@
 }
 
 @media (max-width: 980px) {
+  .detail-tabs {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 4px;
+  }
   .tab-btn {
     flex-direction: column;
     gap: 6px;
-    padding: 10px 6px;
-    font-size: 12px;
+    padding: 8px 4px;
+    font-size: 11px;
   }
   .tab-btn .tab-icon {
     font-size: 22px;
@@ -678,35 +793,51 @@
 }
 
 @media (max-width: 640px) {
+  .student-profile {
+    padding-bottom: 6px !important;
+  }
   .detail-tabs {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 4px;
+    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+    gap: 2px;
+    margin-top: 14px;
     padding-top: 10px;
+    padding-bottom: 2px;
+    box-sizing: border-box;
   }
   .tab-btn {
     padding: 10px 2px;
     flex-direction: column;
-    gap: 5px;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    position: relative;
+    border-radius: var(--radius-md) !important;
+    min-height: 48px;
   }
-  .tab-label {
-    font-size: 10.5px;
-    font-weight: 700;
-    max-width: 100%;
+  /* No mobile: oculta o texto para exibir apenas os ícones alinhados em linha única */
+  .tab-btn .tab-label {
+    display: none !important;
   }
   .tab-btn .tab-icon {
-    font-size: 21px;
+    font-size: 24px;
+    color: var(--text-secondary);
+  }
+  .tab-active .tab-icon {
+    color: var(--accent-primary) !important;
+    transform: scale(1.15);
   }
   .tab-count {
     position: absolute;
     top: 2px;
     right: 4px;
-    padding: 0 5px;
-    font-size: 10px;
-    min-width: 17px;
-    height: 17px;
+    padding: 0 4px;
+    font-size: 9.5px;
+    min-width: 16px;
+    height: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
+    border-radius: 999px;
   }
 }
 
@@ -1064,9 +1195,9 @@
     gap: 12px;
   }
   .profile-avatar-wrap .avatar-xl {
-    width: 60px !important;
-    height: 60px !important;
-    font-size: 18px !important;
+    width: 120px !important;
+    height: 120px !important;
+    font-size: 36px !important;
   }
   .side-stats-grid {
     grid-template-columns: 1fr !important;
@@ -1142,4 +1273,321 @@
     display: inline-flex !important;
     align-items: center !important;
   }
+}
+
+
+/* Container relativo do avatar e botão de foto */
+.profile-avatar-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Botão de câmera para trocar foto do aluno */
+.profile-photo-edit-btn {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  color: #ffffff;
+  border: 3px solid var(--bg-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  transition: all 0.2s ease;
+  z-index: 5;
+}
+
+.profile-photo-edit-btn:hover {
+  transform: scale(1.12);
+  background: var(--accent-primary-hover, #7c3aed);
+}
+
+@media (max-width: 900px) {
+  .profile-photo-edit-btn {
+    width: 42px;
+    height: 42px;
+    font-size: 19px;
+    bottom: 6px;
+    right: 6px;
+  }
+}
+
+@media (max-width: 576px) {
+  .profile-photo-edit-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 17px;
+    bottom: 4px;
+    right: 4px;
+  }
+}
+
+/* Crop Modal Styling */
+.crop-modal-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.crop-instruction {
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: center;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.crop-container {
+  position: relative;
+  width: 260px;
+  height: 260px;
+  background: #090d16;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  border: 2px dashed var(--border-color);
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.crop-container:active {
+  cursor: grabbing;
+}
+
+.crop-preview-image {
+  max-width: none;
+  max-height: none;
+  transform-origin: center center;
+  pointer-events: none;
+  transition: transform 0.05s linear;
+}
+
+.crop-circle-mask {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: 50%;
+  box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.65);
+  border: 2px solid var(--accent-primary);
+}
+
+.crop-controls-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 260px;
+  margin-top: 4px;
+}
+
+.crop-zoom-btn {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.crop-zoom-btn:hover {
+  background: var(--bg-hover);
+  color: var(--accent-primary);
+  transform: scale(1.08);
+}
+
+.crop-zoom-slider {
+  flex: 1;
+  accent-color: var(--accent-primary);
+  cursor: pointer;
+}
+
+
+/* Loading com Porcentagem na Aba de Fichas do Aluno */
+.sheets-tab-loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 48px 16px;
+  width: 100%;
+}
+
+.sheets-tab-loading-card {
+  width: 100%;
+  max-width: 380px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg, 16px);
+  padding: 32px 28px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 14px;
+}
+
+.sheets-brand-badge {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(139, 92, 246, 0.15);
+  color: var(--accent-primary);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.sheets-loading-percentage {
+  font-size: 42px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  line-height: 1;
+  margin: 4px 0;
+  text-shadow: 0 0 16px rgba(139, 92, 246, 0.4);
+}
+
+.sheets-progress-bar-container {
+  width: 100%;
+  height: 8px;
+  background: var(--bg-tertiary);
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sheets-progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6, #d946ef);
+  border-radius: 999px;
+  transition: width 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.6);
+}
+
+.sheets-loading-status-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0;
+  min-height: 18px;
+}
+
+/* Certificates Tab */
+.certificates-tab {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.certificate-card {
+  padding: 0 !important;
+  overflow: hidden !important;
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+  border: 1px solid var(--border-color);
+}
+
+.certificate-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
+  border-color: var(--accent-primary);
+}
+
+.certificate-card-top img {
+  transition: transform var(--transition-fast);
+}
+
+.certificate-card:hover .certificate-card-top img {
+  transform: scale(1.05);
+}
+
+/* Leitor / Preview de Fichas Pedagógicas no Detalhe do Aluno */
+.sheet-reader-body {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 8px 12px 16px 4px;
+}
+
+.sheet-reader-content {
+  color: var(--text-primary);
+  line-height: 1.75;
+  font-size: 15px;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.sheet-reader-content div {
+  min-height: 1.45em;
+  line-height: 1.75;
+}
+
+.sheet-reader-content p {
+  margin-bottom: 12px;
+  line-height: 1.75;
+}
+
+.sheet-reader-content strong,
+.sheet-reader-content b {
+  font-weight: 700;
+  color: inherit;
+}
+
+.sheet-reader-content em,
+.sheet-reader-content i {
+  font-style: italic;
+}
+
+.sheet-reader-content u {
+  text-decoration: underline;
+}
+
+.sheet-reader-content ul,
+.sheet-reader-content ol {
+  padding-left: 24px;
+  margin: 12px 0;
+}
+
+.sheet-reader-content li {
+  margin-bottom: 6px;
+  line-height: 1.6;
+}
+
+.sheet-reader-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm);
+}
+
+.sheet-reader-content font[size="1"] { font-size: 11px; }
+.sheet-reader-content font[size="2"] { font-size: 13px; }
+.sheet-reader-content font[size="3"] { font-size: 15px; }
+.sheet-reader-content font[size="4"] { font-size: 18px; }
+.sheet-reader-content font[size="5"] { font-size: 22px; }
+.sheet-reader-content font[size="6"] { font-size: 28px; }
+.sheet-reader-content font[size="7"] { font-size: 36px; }
+
+.sheet-reader-content select,
+.sheet-reader-content input {
+  display: none;
 }

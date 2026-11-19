@@ -1,5 +1,5 @@
 import api from './api';
-import type { Subject, Level, DashboardData, Lesson, MonthlyPayment, Exam, Exercise, ScheduleEntry, Holiday, ClassSheet } from '../types';
+import type { Subject, Level, DashboardData, Lesson, MonthlyPayment, Exam, Exercise, ScheduleEntry, Holiday, ClassSheet, Certificate } from '../types';
 
 export const subjectService = {
   getAll: () => api.get<Subject[]>('/subjects'),
@@ -99,10 +99,20 @@ export const classSheetService = {
   revokeFromStudent: (studentId: string, classSheetId: string) => api.post('/class-sheets/revoke-from-student', { studentId, classSheetId }),
 };
 
+export const certificateService = {
+  getByStudent: (studentId: string) => api.get<Certificate[]>(`/students/${studentId}/certificates`),
+  upload: (studentId: string, formData: FormData) =>
+    api.post<Certificate>(`/students/${studentId}/certificates`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+  delete: (id: string) => api.delete(`/certificates/${id}`),
+};
+
 export const publicStudentService = {
   getProfile: (studentId: string) => api.get<any>(`/public/student/${studentId}`),
   getExamsAndExercises: (studentId: string) => api.get<any[]>(`/public/student/${studentId}/exams-exercises`),
   getClassSheets: (studentId: string) => api.get<ClassSheet[]>(`/public/student/${studentId}/class-sheets`),
   getClassSheetDetail: (id: string) => api.get<ClassSheet>(`/public/student/class-sheets/${id}`),
   uploadPhoto: (studentId: string, imageBase64: string) => api.post<{ message: string; photoUrl: string }>(`/public/student/${studentId}/photo`, { imageBase64 }),
+  getCertificates: (studentId: string) => api.get<Certificate[]>(`/public/student/${studentId}/certificates`),
 };

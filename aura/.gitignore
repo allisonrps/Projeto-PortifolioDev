@@ -20,6 +20,10 @@ obj/
 *.suo
 *.userosscache
 *.sln.docstates
+appsettings.Secrets.json
+**/appsettings.Secrets.json
+.env
+.env.*
 
 # IDEs and Editors
 .vscode/

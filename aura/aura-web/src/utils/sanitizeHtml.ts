@@ -20,18 +20,44 @@ export function escapeHtml(raw?: string | null): string {
     .replace(/'/g, '&#39;');
 }
 
+export function decodeHtmlEntitiesIfTags(str?: string | null): string {
+  if (!str) return '';
+  // Se contiver tags HTML codificadas como entidade (ex: &lt;div, &lt;br, &lt;p, etc.)
+  if (/&lt;\s*\/?\s*(div|p|span|br|h[1-6]|strong|b|em|i|u|ul|ol|li|table|tr|td|th|img|hr|blockquote|font|code|pre)\b/i.test(str)) {
+    if (typeof window !== 'undefined' && typeof DOMParser !== 'undefined') {
+      const doc = new DOMParser().parseFromString(str, 'text/html');
+      let decoded = doc.documentElement.textContent || str;
+      if (/&lt;\s*\/?\s*(div|p|span|br|h[1-6]|strong|b|em|i|u|ul|ol|li|table|tr|td|th|img|hr|blockquote|font|code|pre)\b/i.test(decoded)) {
+        const doc2 = new DOMParser().parseFromString(decoded, 'text/html');
+        decoded = doc2.documentElement.textContent || decoded;
+      }
+      return decoded;
+    } else {
+      return str
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&amp;/g, '&');
+    }
+  }
+  return str;
+}
+
 export function sanitizeHtml(dirtyHtml?: string | null): string {
   if (!dirtyHtml) return '';
 
+  const cleanInput = decodeHtmlEntitiesIfTags(dirtyHtml);
+
   if (typeof window === 'undefined' || typeof DOMParser === 'undefined') {
-    return dirtyHtml
+    return cleanInput
       .replace(/<\s*(script|iframe|object|embed|applet|form|meta|base|link)\b[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, '')
       .replace(/<\s*\/?\s*(script|iframe|object|embed|applet|form|meta|base|link)\b[^>]*>/gi, '')
       .replace(/\s+on[a-z0-9_]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '');
   }
 
   const parser = new DOMParser();
-  const doc = parser.parseFromString(dirtyHtml, 'text/html');
+  const doc = parser.parseFromString(cleanInput, 'text/html');
 
   const elements = Array.from(doc.body.querySelectorAll('*'));
   for (const el of elements) {

@@ -331,8 +331,8 @@ export default function LandingPage() {
             </div>
             <div className="metric-divider" />
             <div className="metric-ribbon-item">
-              <span className="metric-number">3 Estilos</span>
-              <span className="metric-caption">Clássico, Vibrant Square e Minimal Manga</span>
+              <span className="metric-number">2 Estilos</span>
+              <span className="metric-caption">Clássico e Vibrant Square</span>
             </div>
             <div className="metric-divider" />
             <div className="metric-ribbon-item">
@@ -367,7 +367,7 @@ export default function LandingPage() {
             ))}
           </div>
 
-          <div className="showcase-panel reveal-on-scroll" key={currentTab.id}>
+          <div className="showcase-panel reveal-on-scroll is-visible" key={currentTab.id}>
             <div className="showcase-panel-info">
               <span className="showcase-tag" style={{ color: currentTab.accent, background: `${currentTab.accent}18` }}>
                 {currentTab.tag}
@@ -500,13 +500,13 @@ export default function LandingPage() {
         <div className="landing-container">
           <div className="lp-section-header lp-header-on-dark reveal-on-scroll">
             <span className="lp-eyebrow eyebrow-cyan-glow">Personalização Total</span>
-            <h2>Três estéticas visuais, infinitas combinações de cores</h2>
+            <h2>Duas estéticas visuais, infinitas combinações de cores</h2>
             <p>
               Além do modo Claro e Escuro e da escolha livre das cores primária e secundária, você pode transformar a geometria de todo o sistema.
             </p>
           </div>
 
-          <div className="lp-themes-grid">
+          <div className="lp-themes-grid lp-themes-grid-two">
             <div className="lp-theme-card reveal-on-scroll">
               <div className="lp-theme-img-holder">
                 <img src="/prints/dashboard.png" alt="Tema Clássico" />
@@ -528,20 +528,7 @@ export default function LandingPage() {
               <div className="lp-theme-card-content">
                 <h4>2. Vibrant Square</h4>
                 <p>
-                  Geometria 100% reta, contornos definidos de 2px, base destacada em 4px na cor primária e sombras sólidas de inspiração neo-brutalista.
-                </p>
-              </div>
-            </div>
-
-            <div className="lp-theme-card reveal-on-scroll">
-              <div className="lp-theme-img-holder">
-                <img src="/prints/tema_minimalmanga.png" alt="Tema Minimal Manga" />
-                <span className="lp-theme-chip chip-manga">Chanfrado & Screentone</span>
-              </div>
-              <div className="lp-theme-card-content">
-                <h4>3. Minimal Manga</h4>
-                <p>
-                  Recortes chanfrados de 12px nos cantos superiores, textura técnica de hachuras diagonais e alto contraste editorial.
+                  Geometria 100% reta, contornos definidos de 2px, base destacada na cor primária e sombras sólidas com alta definição visual.
                 </p>
               </div>
             </div>

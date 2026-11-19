@@ -166,9 +166,19 @@
   border-color: var(--accent-primary);
 }
 
-/* Section Card & Filters */
+/* Section Tab Pane & Filters */
+.admin-tab-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
 .admin-section-card {
-  padding: 20px !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 .admin-filters-row {
@@ -176,7 +186,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  margin-bottom: 18px;
+  margin-bottom: 4px;
   flex-wrap: wrap;
 }
 
@@ -318,18 +328,151 @@
   color: var(--text-secondary);
 }
 
+.admin-meta-row-identity,
+.admin-meta-row-dates {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
 .admin-prof-stats-line {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   flex-wrap: wrap;
-  font-size: 12px;
-  color: var(--text-muted);
-  margin-top: 2px;
+  margin-top: 4px;
 }
 
-.admin-prof-stats-line strong {
+.admin-stat-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full, 999px);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  font-size: 12px;
+  font-weight: 700;
   color: var(--text-primary);
+  cursor: default;
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  user-select: none;
+}
+
+.admin-stat-pill:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-hover, rgba(255, 255, 255, 0.2));
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+}
+
+.admin-stat-icon {
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.admin-pill-students {
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.3);
+  background: rgba(56, 189, 248, 0.08);
+}
+.admin-pill-students:hover {
+  border-color: #38bdf8;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+}
+
+.admin-pill-lessons {
+  color: #a855f7;
+  border-color: rgba(168, 85, 247, 0.3);
+  background: rgba(168, 85, 247, 0.08);
+}
+.admin-pill-lessons:hover {
+  border-color: #a855f7;
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.25);
+}
+
+.admin-pill-activities {
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.3);
+  background: rgba(245, 158, 11, 0.08);
+}
+.admin-pill-activities:hover {
+  border-color: #f59e0b;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.25);
+}
+
+.admin-pill-revenue {
+  color: #10b981;
+  border-color: rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.08);
+}
+.admin-pill-revenue:hover {
+  border-color: #10b981;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
+}
+
+.admin-stat-num {
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+
+/* Tooltip Balãozinho do Mouse */
+.admin-stat-tooltip {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: rgba(15, 23, 42, 0.96);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #f8fafc;
+  padding: 6px 12px;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: max-content;
+  max-width: 240px;
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;
+  z-index: 60;
+}
+
+.admin-stat-tooltip strong {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.2;
+}
+
+.admin-stat-tooltip span {
+  font-size: 10.5px;
+  font-weight: 400;
+  color: #cbd5e1;
+  line-height: 1.25;
+}
+
+.admin-stat-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: rgba(15, 23, 42, 0.96) transparent transparent transparent;
+}
+
+.admin-stat-pill:hover .admin-stat-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
 }
 
 .admin-prof-actions {
@@ -366,6 +509,16 @@
 
 .admin-act-btn.annual:hover:not(:disabled) {
   background: #10b981;
+  color: #ffffff;
+}
+
+.admin-act-btn.trial {
+  border-color: #f59e0b;
+  color: #f59e0b;
+}
+
+.admin-act-btn.trial:hover:not(:disabled) {
+  background: #f59e0b;
   color: #ffffff;
 }
 
@@ -417,5 +570,88 @@
   .admin-kpi-grid,
   .admin-usage-strip {
     grid-template-columns: 1fr;
+  }
+
+  .admin-prof-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .admin-prof-main {
+    min-width: 0;
+    width: 100%;
+    gap: 8px;
+  }
+
+  /* Linha 1: Nome, Tag e Badge */
+  .admin-prof-title-line {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  /* Linha 2 e 3: Meta dividida em blocos verticais */
+  .admin-prof-meta-line {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    width: 100%;
+  }
+
+  /* Linha 2 no mobile: Email e Doc */
+  .admin-meta-row-identity {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    width: 100%;
+    font-size: 12px;
+    word-break: break-all;
+  }
+
+  /* Linha 3 no mobile: Início e Fim da assinatura */
+  .admin-meta-row-dates {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    width: 100%;
+    font-size: 12px;
+  }
+
+  .admin-meta-row-dates .admin-meta-sep-date {
+    display: none; /* oculta a bolinha no início da linha 3 */
+  }
+
+  /* Linha 4: Pílulas de estatísticas */
+  .admin-prof-stats-line {
+    width: 100%;
+    gap: 6px;
+    margin-top: 2px;
+  }
+
+  .admin-stat-pill {
+    padding: 3px 8px;
+    font-size: 11px;
+  }
+
+  /* Linha de baixo (Linha 5 no mobile): Botões de ação */
+  .admin-prof-actions {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 6px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--border-color);
+  }
+
+  .admin-act-btn {
+    flex: 1;
+    min-width: 0;
+    justify-content: center;
+    padding: 7px 4px;
+    font-size: 12px;
   }
 }

@@ -26,6 +26,7 @@ public class AuraDbContext : DbContext
     public DbSet<ClassSheetStudent> ClassSheetStudents => Set<ClassSheetStudent>();
     public DbSet<ManualFinanceEntry> ManualFinanceEntries => Set<ManualFinanceEntry>();
     public DbSet<PlatformSetting> PlatformSettings => Set<PlatformSetting>();
+    public DbSet<Certificate> Certificates => Set<Certificate>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -52,6 +53,7 @@ public class AuraDbContext : DbContext
         modelBuilder.Entity<StudentAnswer>().HasQueryFilter(e => !e.IsDeleted);
         modelBuilder.Entity<ClassSheet>().HasQueryFilter(e => !e.IsDeleted);
         modelBuilder.Entity<ManualFinanceEntry>().HasQueryFilter(e => !e.IsDeleted);
+        modelBuilder.Entity<Certificate>().HasQueryFilter(e => !e.IsDeleted);
 
         // Professor
         modelBuilder.Entity<Professor>(e =>
@@ -252,6 +254,17 @@ public class AuraDbContext : DbContext
             e.Property(a => a.CorrectOption).IsRequired(false);
             e.HasIndex(a => new { a.StudentActivityId, a.IsDeleted });
             e.HasOne(a => a.StudentActivity).WithMany(sa => sa.Answers).HasForeignKey(a => a.StudentActivityId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Certificate
+        modelBuilder.Entity<Certificate>(e =>
+        {
+            e.Property(c => c.Title).HasMaxLength(200).IsRequired();
+            e.Property(c => c.FileUrl).IsRequired();
+            e.HasIndex(c => new { c.StudentId, c.IsDeleted });
+            e.HasIndex(c => new { c.ProfessorId, c.IsDeleted });
+            e.HasOne(c => c.Student).WithMany(s => s.Certificates).HasForeignKey(c => c.StudentId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(c => c.Professor).WithMany().HasForeignKey(c => c.ProfessorId).OnDelete(DeleteBehavior.Restrict);
         });
 
         // PlatformSetting

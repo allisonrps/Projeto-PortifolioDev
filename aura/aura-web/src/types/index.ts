@@ -414,3 +414,16 @@ export interface StudentActivity {
   status: 'pending' | 'completed' | 'corrigir';
   answers: StudentAnswer[];
 }
+
+export interface Certificate {
+  id: string;
+  studentId: string;
+  studentName?: string;
+  title: string;
+  description?: string | null;
+  fileUrl: string;
+  fileType: 'image' | 'pdf';
+  fileName?: string | null;
+  issueDate: string;
+  createdAt: string;
+}

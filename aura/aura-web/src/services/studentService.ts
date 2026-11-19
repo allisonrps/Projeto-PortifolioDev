@@ -14,4 +14,6 @@ export const studentService = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
+  uploadPhotoBase64: (id: string, imageBase64: string) =>
+    api.post<{ photoUrl: string; message?: string }>(`/students/${id}/photo-base64`, { imageBase64 }),
 };

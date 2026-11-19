@@ -15,6 +15,7 @@ public interface IStudentService
     Task<StudentResponseDto> UpdateAsync(Guid id, Guid professorId, UpdateStudentDto dto);
     Task DeleteAsync(Guid id, Guid professorId);
     Task<string> UploadPhotoAsync(Guid id, Guid professorId, Stream stream, string fileName);
+    Task<string> UploadPhotoBase64Async(Guid id, Guid professorId, string base64);
 }
 
 public interface ISubjectService

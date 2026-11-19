@@ -305,7 +305,9 @@ export default function StudentsPage() {
             >
               <div className="student-row-content">
                 <div className="student-row-header-part">
-                  <Avatar src={student.photoUrl} name={student.name} size="md" shape="square" />
+                  <div className="student-row-avatar-wrap">
+                    <Avatar src={student.photoUrl} name={student.name} size="lg" shape="circle" />
+                  </div>
                   <h3 className="student-row-name">{student.name}</h3>
                 </div>
                 <div className="student-row-details-part">

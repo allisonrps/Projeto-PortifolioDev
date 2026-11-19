@@ -23,6 +23,10 @@ builder.Services.AddInfrastructure(builder.Configuration);
 // File Storage Service
 var wwwrootPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
 Directory.CreateDirectory(wwwrootPath);
+if (string.IsNullOrEmpty(builder.Environment.WebRootPath))
+{
+    builder.Environment.WebRootPath = wwwrootPath;
+}
 builder.Services.AddSingleton<IFileStorageService>(new FileStorageService(wwwrootPath));
 
 // JWT Authentication (prioriza variável de ambiente JWT_SECRET_KEY)
@@ -301,6 +305,9 @@ using (var scope = app.Services.CreateScope())
                 db.SaveChanges();
             }
         }
+
+        // Popula automaticamente dados de demonstracao profissionais para allison_rps@hotmail.com
+        Aura.Infrastructure.Data.DemoDataSeeder.SeedAllisonAccountAsync(db, force: true).GetAwaiter().GetResult();
     }
     catch (Exception ex)
     {
@@ -327,8 +334,17 @@ if (app.Environment.IsDevelopment())
     app.Urls.Add("http://localhost:5000");
 }
 
-app.UseStaticFiles();
 app.UseCors();
+
+var uploadsPath = Path.Combine(wwwrootPath, "uploads");
+Directory.CreateDirectory(uploadsPath);
+
+app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(uploadsPath),
+    RequestPath = "/uploads"
+});
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();

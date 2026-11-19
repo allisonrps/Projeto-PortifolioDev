@@ -17,16 +17,34 @@
   max-width: 1000px;
   margin: 0 auto;
   padding: 0 var(--space-md);
+  box-sizing: border-box;
 }
 
 .portal-profile-card {
-  padding: var(--space-lg) !important;
+  padding: var(--space-xl) !important;
+}
+
+.portal-profile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 24px;
+  width: 100%;
 }
 
 .portal-profile-info {
   display: flex;
   align-items: center;
-  gap: var(--space-md);
+  gap: var(--space-xl, 24px);
+  flex: 1;
+  min-width: 280px;
+}
+
+.portal-student-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .portal-avatar-wrapper {
@@ -38,36 +56,319 @@
 }
 
 .portal-avatar-wrapper .avatar-lg {
-  width: 76px;
-  height: 76px;
-  font-size: 26px;
-  border: 3px solid rgba(255, 255, 255, 0.16);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  width: 152px;
+  height: 152px;
+  font-size: 52px;
+  border: 4px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
   transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.portal-avatar-wrapper:hover .avatar-lg {
+  transform: scale(1.02);
+  border-color: var(--accent-primary);
 }
 
 .portal-photo-edit-btn {
   position: absolute;
-  bottom: -2px;
-  right: -2px;
-  width: 30px;
-  height: 30px;
+  bottom: 4px;
+  right: 4px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: var(--accent-primary);
   color: #ffffff;
-  border: 2px solid var(--bg-card);
+  border: 3px solid var(--bg-card);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 15px;
+  font-size: 19px;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
   transition: all 0.2s ease;
 }
 
 .portal-photo-edit-btn:hover {
   transform: scale(1.12);
   background: var(--accent-primary-hover, #7c3aed);
+}
+
+/* Lado direito do cabeçalho preenchido pelos 2 mostradores circulares */
+.portal-dials-right {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+/* Mostradores Circulares (réplica idêntica de StudentDetail) */
+.portal-dials-right .metric-dial-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  outline: none;
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.portal-dials-right .metric-dial-item:hover {
+  transform: translateY(-3px);
+}
+
+.portal-dials-right .metric-dial-circle {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  background: var(--bg-tertiary);
+  border: 2px solid var(--border-color);
+  color: var(--accent-primary);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  transition: all 0.25s ease;
+}
+
+.portal-dials-right .metric-dial-counter {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  padding: 2px 9px;
+  border-radius: 999px;
+  line-height: 1.3;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  transition: all 0.25s ease;
+}
+
+/* Mostrador: Tempo de Atividade */
+.portal-dials-right .metric-dial-tenure .metric-dial-circle {
+  color: #06b6d4;
+  border-color: rgba(6, 182, 212, 0.4);
+  background: rgba(6, 182, 212, 0.12);
+}
+.portal-dials-right .metric-dial-tenure:hover .metric-dial-circle {
+  background: #06b6d4;
+  color: #ffffff;
+  border-color: #06b6d4;
+  box-shadow: 0 0 16px rgba(6, 182, 212, 0.45);
+}
+.portal-dials-right .metric-dial-tenure:hover .metric-dial-counter {
+  border-color: #06b6d4;
+  color: #06b6d4;
+}
+
+/* Mostrador: Média de Notas */
+.portal-dials-right .metric-dial-grade.grade-perf-none .metric-dial-circle {
+  color: var(--text-muted);
+  border-color: var(--border-color);
+  background: var(--bg-tertiary);
+}
+
+.portal-dials-right .metric-dial-grade.grade-perf-red .metric-dial-circle {
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.48);
+  background: rgba(239, 68, 68, 0.14);
+}
+.portal-dials-right .metric-dial-grade.grade-perf-red .metric-dial-counter {
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.45);
+}
+.portal-dials-right .metric-dial-grade.grade-perf-red:hover .metric-dial-circle {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.5);
+}
+
+.portal-dials-right .metric-dial-grade.grade-perf-orange .metric-dial-circle {
+  color: #f97316;
+  border-color: rgba(249, 115, 22, 0.48);
+  background: rgba(249, 115, 22, 0.14);
+}
+.portal-dials-right .metric-dial-grade.grade-perf-orange .metric-dial-counter {
+  color: #f97316;
+  border-color: rgba(249, 115, 22, 0.45);
+}
+.portal-dials-right .metric-dial-grade.grade-perf-orange:hover .metric-dial-circle {
+  background: #f97316;
+  color: #ffffff;
+  border-color: #f97316;
+  box-shadow: 0 0 16px rgba(249, 115, 22, 0.5);
+}
+
+.portal-dials-right .metric-dial-grade.grade-perf-yellow .metric-dial-circle {
+  color: #eab308;
+  border-color: rgba(234, 179, 8, 0.48);
+  background: rgba(234, 179, 8, 0.14);
+}
+.portal-dials-right .metric-dial-grade.grade-perf-yellow .metric-dial-counter {
+  color: #eab308;
+  border-color: rgba(234, 179, 8, 0.45);
+}
+.portal-dials-right .metric-dial-grade.grade-perf-yellow:hover .metric-dial-circle {
+  background: #eab308;
+  color: #ffffff;
+  border-color: #eab308;
+  box-shadow: 0 0 16px rgba(234, 179, 8, 0.5);
+}
+
+.portal-dials-right .metric-dial-grade.grade-perf-green .metric-dial-circle {
+  color: #10b981;
+  border-color: rgba(16, 185, 129, 0.48);
+  background: rgba(16, 185, 129, 0.14);
+}
+.portal-dials-right .metric-dial-grade.grade-perf-green .metric-dial-counter {
+  color: #10b981;
+  border-color: rgba(16, 185, 129, 0.45);
+}
+.portal-dials-right .metric-dial-grade.grade-perf-green:hover .metric-dial-circle {
+  background: #10b981;
+  color: #ffffff;
+  border-color: #10b981;
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.5);
+}
+
+/* Tooltip Balão ao Hover */
+.portal-dials-right .metric-dial-tooltip {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%) translateY(6px);
+  background: rgba(15, 23, 42, 0.96);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #f8fafc;
+  padding: 8px 12px;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: max-content;
+  max-width: 240px;
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+  z-index: 60;
+}
+
+.portal-dials-right .metric-dial-tooltip strong {
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.25;
+}
+
+.portal-dials-right .metric-dial-tooltip span {
+  font-size: 11px;
+  font-weight: 400;
+  color: #cbd5e1;
+  line-height: 1.3;
+}
+
+.portal-dials-right .metric-dial-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: rgba(15, 23, 42, 0.96) transparent transparent transparent;
+}
+
+.portal-dials-right .metric-dial-item:hover .metric-dial-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+@media (max-width: 680px) {
+  .portal-hero {
+    padding: var(--space-lg) 0 var(--space-xs);
+  }
+  .portal-hero-container {
+    padding: 0 12px;
+  }
+  .portal-profile-card {
+    padding: 18px 14px !important;
+  }
+  .portal-profile-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 16px;
+  }
+  .portal-profile-info {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 14px;
+    min-width: 0;
+    width: 100%;
+  }
+  .portal-avatar-wrapper .avatar-lg {
+    width: 110px;
+    height: 110px;
+    font-size: 38px;
+  }
+  .portal-student-tags {
+    justify-content: center;
+  }
+  .portal-dials-right {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
+    border-top: 1px solid var(--border-color);
+    padding: 14px 10px 4px 10px;
+    margin-top: 4px;
+    gap: 32px;
+    box-sizing: border-box;
+  }
+  .portal-dials-right .metric-dial-circle {
+    width: 48px;
+    height: 48px;
+    font-size: 22px;
+  }
+  .portal-dials-right .metric-dial-counter {
+    font-size: 11.5px;
+    font-weight: 800;
+    padding: 2px 8px;
+    white-space: nowrap;
+    overflow: visible;
+  }
+}
+
+@media (max-width: 420px) {
+  .portal-dials-right {
+    gap: 20px;
+  }
+  .portal-dials-right .metric-dial-circle {
+    width: 44px;
+    height: 44px;
+    font-size: 20px;
+  }
+  .portal-dials-right .metric-dial-counter {
+    font-size: 10.5px;
+    padding: 2px 6px;
+    white-space: nowrap;
+    overflow: visible;
+  }
 }
 
 /* Crop Modal Styling */
@@ -176,10 +477,25 @@
 }
 
 .portal-student-name {
-  font-size: 24px;
+  font-size: 48px;
   font-weight: 800;
   color: var(--text-primary);
-  margin-bottom: 6px;
+  margin-bottom: 8px;
+  line-height: 1.15;
+  letter-spacing: -0.5px;
+  word-break: break-word;
+}
+
+@media (max-width: 900px) {
+  .portal-student-name {
+    font-size: 36px;
+  }
+}
+
+@media (max-width: 600px) {
+  .portal-student-name {
+    font-size: 28px;
+  }
 }
 
 .portal-student-tags {
@@ -195,6 +511,7 @@
   margin: var(--space-md) auto 0;
   padding: 0 var(--space-md);
   flex: 1;
+  box-sizing: border-box;
 }
 
 .portal-tabs-row {
@@ -204,6 +521,7 @@
   margin-bottom: var(--space-lg);
   overflow-x: auto;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .portal-tab-btn {
@@ -222,6 +540,7 @@
   white-space: nowrap;
   transition: all var(--transition-fast);
   flex: 1;
+  box-sizing: border-box;
 }
 
 .portal-tab-btn:hover {
@@ -231,6 +550,38 @@
 .portal-tab-btn.active {
   color: var(--accent-primary);
   border-bottom-color: var(--accent-primary);
+}
+
+@media (max-width: 680px) {
+  .portal-main-content {
+    padding: 0 12px;
+    margin-top: var(--space-sm);
+  }
+  .portal-tabs-row {
+    gap: 4px;
+    margin-bottom: var(--space-md);
+    padding-bottom: 2px;
+  }
+  .portal-tab-btn {
+    font-size: 13px;
+    padding: 10px 4px;
+    gap: 5px;
+  }
+  .portal-tab-btn svg {
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 420px) {
+  .portal-tab-btn {
+    font-size: 11.5px;
+    padding: 8px 2px;
+    gap: 3px;
+  }
+  .portal-tab-btn svg {
+    font-size: 16px;
+  }
 }
 
 /* Grid of sheets */
@@ -379,9 +730,69 @@
 }
 
 .sheet-reader-body {
-  max-height: 60vh;
+  max-height: 72vh;
   overflow-y: auto;
-  padding-right: var(--space-xs);
+  padding: 8px 12px 16px 4px;
+}
+
+.sheet-reader-content {
+  color: var(--text-primary);
+  line-height: 1.75;
+  font-size: 15px;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Quebras de linhas, divs e parágrafos gerados pelo editor do professor */
+.sheet-reader-content div {
+  min-height: 1.45em;
+  line-height: 1.75;
+}
+
+.sheet-reader-content p {
+  margin-bottom: 12px;
+  line-height: 1.75;
+}
+
+.sheet-reader-content strong,
+.sheet-reader-content b {
+  font-weight: 700;
+  color: inherit;
+}
+
+.sheet-reader-content em,
+.sheet-reader-content i {
+  font-style: italic;
+}
+
+.sheet-reader-content u {
+  text-decoration: underline;
+}
+
+.sheet-reader-content ul,
+.sheet-reader-content ol {
+  padding-left: 24px;
+  margin: 12px 0;
+}
+
+.sheet-reader-content li {
+  margin-bottom: 6px;
+  line-height: 1.6;
+}
+
+/* Tamanhos de Fonte Baseados no execCommand de fontSize do editor */
+.sheet-reader-content font[size="1"] { font-size: 11px; }
+.sheet-reader-content font[size="2"] { font-size: 13px; }
+.sheet-reader-content font[size="3"] { font-size: 15px; }
+.sheet-reader-content font[size="4"] { font-size: 18px; }
+.sheet-reader-content font[size="5"] { font-size: 22px; }
+.sheet-reader-content font[size="6"] { font-size: 28px; }
+.sheet-reader-content font[size="7"] { font-size: 36px; }
+
+/* Oculta inputs residuais caso existam */
+.sheet-reader-content select,
+.sheet-reader-content input {
+  display: none;
 }
 
 /* Spinner */
@@ -434,4 +845,137 @@
   .portal-hero {
     padding: var(--space-md) 0;
   }
+}
+
+
+/* Loading com Porcentagem e Barra de Progresso */
+.portal-loading-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at top center, rgba(124, 58, 237, 0.12) 0%, var(--bg-primary) 70%);
+  padding: var(--space-lg);
+}
+
+.portal-loading-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl, 20px);
+  padding: 38px 32px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+}
+
+.portal-loading-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.portal-brand-title {
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  background: linear-gradient(135deg, #a78bfa, #c084fc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.portal-brand-badge {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(139, 92, 246, 0.15);
+  color: var(--accent-primary);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.portal-loading-percentage {
+  font-size: 48px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  line-height: 1;
+  margin: 6px 0;
+  text-shadow: 0 0 20px rgba(139, 92, 246, 0.45);
+}
+
+.portal-progress-bar-container {
+  width: 100%;
+  height: 10px;
+  background: var(--bg-tertiary);
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.portal-progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6, #d946ef);
+  border-radius: 999px;
+  transition: width 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.7);
+}
+
+.portal-loading-status-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0;
+  min-height: 20px;
+  transition: opacity 0.2s ease;
+}
+
+/* Spinner em linha dentro do botão 'Ler Material' */
+.spinner-inline {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  display: inline-block;
+  animation: spin 0.7s linear infinite;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.portal-sheet-card-loading {
+  opacity: 0.85;
+  border-color: var(--accent-primary) !important;
+}
+
+/* Certificates Tab */
+.portal-certificates-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: var(--space-lg);
+}
+
+.portal-certificate-card {
+  padding: 0 !important;
+  overflow: hidden !important;
+  transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base);
+  border: 1px solid var(--border-color);
+}
+
+.portal-certificate-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
+  border-color: var(--accent-primary);
+}
+
+.portal-certificate-card:hover .portal-cert-preview-box img {
+  transform: scale(1.05);
 }

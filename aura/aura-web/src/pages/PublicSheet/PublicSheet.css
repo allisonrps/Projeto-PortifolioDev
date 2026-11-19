@@ -59,6 +59,11 @@
   overflow-wrap: break-word;
 }
 
+.public-sheet-content div {
+  min-height: 1.45em;
+  line-height: 1.75;
+}
+
 .public-sheet-content p {
   margin-bottom: var(--space-md);
   line-height: 1.7;
@@ -100,4 +105,14 @@
   .public-sheet-title {
     font-size: 22px;
   }
+}
+
+
+.public-sheet-loading-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: radial-gradient(circle at top center, rgba(124, 58, 237, 0.12) 0%, var(--bg-primary) 70%);
+  padding: 20px;
 }

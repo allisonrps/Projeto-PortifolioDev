@@ -148,7 +148,15 @@ export default function SubjectsPage() {
     selection.removeAllRanges();
     selection.addRange(range);
     
-    setShowEmojiMenu(false);
+        setShowEmojiMenu(false);
+  };
+
+  const handlePasteEditor = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    const text = e.clipboardData.getData('text/plain');
+    if (text && /<\s*\/?\s*(div|p|span|br|h[1-6]|strong|b|em|i|u|ul|ol|li)\b/i.test(text)) {
+      e.preventDefault();
+      document.execCommand('insertHTML', false, text);
+    }
   };
 
   const handleSaveSubject = async (e: FormEvent) => {
@@ -356,7 +364,7 @@ export default function SubjectsPage() {
             </div>
 
             {/* Área do Editor */}
-            <div id="sheet-rich-editor" contentEditable={true} style={{ minHeight: '300px', maxHeight: '450px', overflowY: 'auto', padding: '16px', outline: 'none', color: 'var(--text-primary)', lineHeight: '1.6', fontSize: '14px', background: 'var(--bg-secondary)' }} data-placeholder="Escreva a ficha de aula aqui..." />
+            <div id="sheet-rich-editor" contentEditable={true} onPaste={handlePasteEditor} style={{ minHeight: '300px', maxHeight: '450px', overflowY: 'auto', padding: '16px', outline: 'none', color: 'var(--text-primary)', lineHeight: '1.6', fontSize: '14px', background: 'var(--bg-secondary)' }} data-placeholder="Escreva a ficha de aula aqui..." />
           </div>
         </form>
       </Modal>

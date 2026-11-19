@@ -1,23 +1,24 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState, useRef, type FormEvent } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   MdSchool, MdPayment, MdCalendarToday,
   MdSchedule, MdDelete, MdAdd, MdEdit, MdCheckCircle, MdCancel, MdPercent, MdAttachMoney,
   MdExpandMore, MdExpandLess, MdTimer, MdCake, MdEventAvailable, MdPerson, MdSwapVert,
   MdAssignmentTurnedIn, MdOpenInNew, MdAccessTime, MdShare, MdMenuBook,
-  MdEmojiEvents, MdLocationOn
+  MdEmojiEvents, MdLocationOn, MdCameraAlt, MdZoomIn, MdZoomOut, MdCheck,
+  MdCardMembership, MdVisibility, MdDownload
 } from 'react-icons/md';
 import { FaWhatsapp } from 'react-icons/fa';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
-import Avatar from '../../components/ui/Avatar';
+import Avatar, { getAbsoluteAvatarUrl } from '../../components/ui/Avatar';
 import Modal from '../../components/ui/Modal';
 import Input from '../../components/ui/Input';
 import { studentService } from '../../services/studentService';
 import { activityService } from '../../services/activityService';
-import { scheduleService, lessonService, paymentService, examService, exerciseService, subjectService, levelService, classSheetService } from '../../services/dataServices';
-import type { StudentDetail, ScheduleEntry, Lesson, Subject, Level, StudentActivity, TemplateActivity, ClassSheet } from '../../types';
+import { scheduleService, lessonService, paymentService, examService, exerciseService, subjectService, levelService, classSheetService, certificateService } from '../../services/dataServices';
+import type { StudentDetail, ScheduleEntry, Lesson, Subject, Level, StudentActivity, TemplateActivity, ClassSheet, Certificate } from '../../types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import toast from 'react-hot-toast';
@@ -58,6 +59,170 @@ const getWhatsappUrl = (phoneStr?: string) => {
 };
 
 export default function StudentDetailPage() {
+
+  // Estados para troca e corte de foto de perfil
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [imageSrc, setImageSrc] = useState<string | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [zoom, setZoom] = useState(1);
+  const [fitScale, setFitScale] = useState(1);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef({ x: 0, y: 0 });
+  const photoFileInputRef = useRef<HTMLInputElement>(null);
+  const imgElementRef = useRef<HTMLImageElement | null>(null);
+
+  const handleSelectPhotoFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    let file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error('A imagem deve ter menos de 20MB.');
+      e.target.value = '';
+      return;
+    }
+
+    const toastId = toast.loading('Carregando foto...');
+
+    try {
+      const fileNameLower = file.name.toLowerCase();
+      const isHeic =
+        fileNameLower.endsWith('.heic') ||
+        fileNameLower.endsWith('.heif') ||
+        file.type.includes('heic') ||
+        file.type.includes('heif');
+
+      if (isHeic) {
+        try {
+          const heic2anyModule = await import('heic2any');
+          const heic2any = (heic2anyModule as any).default || heic2anyModule;
+          const convertedBlob = await heic2any({
+            blob: file,
+            toType: 'image/jpeg',
+            quality: 0.9,
+          });
+          const singleBlob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+          file = new File([singleBlob], 'photo.jpg', { type: 'image/jpeg' });
+        } catch (heicErr) {
+          console.warn('Falha na conversão de HEIC:', heicErr);
+        }
+      }
+
+      const reader = new FileReader();
+      reader.onerror = () => {
+        toast.dismiss(toastId);
+        toast.error('Não foi possível ler o arquivo selecionado.');
+      };
+
+      reader.onload = () => {
+        const result = reader.result as string;
+        const img = new Image();
+        img.onerror = () => {
+          toast.dismiss(toastId);
+          toast.error('O formato da imagem não pôde ser decodificado. Experimente salvar como JPEG ou PNG.');
+        };
+        img.onload = () => {
+          toast.dismiss(toastId);
+          imgElementRef.current = img;
+          setImageSrc(result);
+          const baseFit = Math.min(260 / (img.naturalWidth || 260), 260 / (img.naturalHeight || 260));
+          setFitScale(baseFit);
+          setZoom(1);
+          setOffset({ x: 0, y: 0 });
+          setCropModalOpen(true);
+        };
+        img.src = result;
+      };
+
+      reader.readAsDataURL(file);
+    } catch (err: any) {
+      toast.dismiss(toastId);
+      toast.error('Erro ao processar imagem: ' + (err?.message || 'formato incompatível'));
+    } finally {
+      e.target.value = '';
+    }
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    dragStartRef.current = { x: e.clientX - offset.x, y: e.clientY - offset.y };
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    setOffset({
+      x: e.clientX - dragStartRef.current.x,
+      y: e.clientY - dragStartRef.current.y
+    });
+  };
+
+  const handleMouseUp = () => setIsDragging(false);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      setIsDragging(true);
+      dragStartRef.current = { x: e.touches[0].clientX - offset.x, y: e.touches[0].clientY - offset.y };
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging || e.touches.length !== 1) return;
+    setOffset({
+      x: e.touches[0].clientX - dragStartRef.current.x,
+      y: e.touches[0].clientY - dragStartRef.current.y
+    });
+  };
+
+  const handleTouchEnd = () => setIsDragging(false);
+
+  const handleSaveCroppedPhoto = async () => {
+    if (!student || !imgElementRef.current) return;
+    setUploadingPhoto(true);
+
+    try {
+      const img = imgElementRef.current;
+      const canvas = document.createElement('canvas');
+      const targetSize = 400;
+      canvas.width = targetSize;
+      canvas.height = targetSize;
+      const ctx = canvas.getContext('2d');
+
+      if (!ctx) {
+        toast.error('Falha ao processar a imagem no navegador.');
+        setUploadingPhoto(false);
+        return;
+      }
+
+      const cropBoxSize = 260;
+      const scaleRatio = targetSize / cropBoxSize;
+      const effectiveScale = fitScale * zoom * scaleRatio;
+
+      ctx.save();
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, targetSize, targetSize);
+      ctx.translate(targetSize / 2 + offset.x * scaleRatio, targetSize / 2 + offset.y * scaleRatio);
+      ctx.scale(effectiveScale, effectiveScale);
+      ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
+      ctx.restore();
+
+      let base64Data = '';
+      try {
+        base64Data = canvas.toDataURL('image/jpeg', 0.90);
+      } catch {
+        base64Data = canvas.toDataURL();
+      }
+
+      const res = await studentService.uploadPhotoBase64(student.id, base64Data);
+      toast.success('Foto do aluno atualizada com sucesso!');
+      setStudent(prev => prev ? { ...prev, photoUrl: res.data.photoUrl } : null);
+      setCropModalOpen(false);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || err.response?.data || 'Erro ao enviar a foto.');
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [student, setStudent] = useState<StudentDetail | null>(null);
@@ -65,7 +230,19 @@ export default function StudentDetailPage() {
   const [loading, setLoading] = useState(true);
   const location = useLocation();
   const initialTab = (location.state as any)?.activeTab || 'lessons';
-  const [tab, setTab] = useState<'lessons' | 'schedules' | 'payments' | 'activities' | 'sheets'>(initialTab);
+  const [tab, setTab] = useState<'lessons' | 'schedules' | 'payments' | 'activities' | 'sheets' | 'certificates'>(initialTab);
+
+  // Certificates states
+  const [certificates, setCertificates] = useState<Certificate[]>([]);
+  const [certModalOpen, setCertModalOpen] = useState(false);
+  const [certTitle, setCertTitle] = useState('');
+  const [certDescription, setCertDescription] = useState('');
+  const [certIssueDate, setCertIssueDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [certFile, setCertFile] = useState<File | null>(null);
+  const [certFilePreview, setCertFilePreview] = useState<string | null>(null);
+  const [certSaving, setCertSaving] = useState(false);
+  const [viewingCert, setViewingCert] = useState<Certificate | null>(null);
+  const certFileInputRef = useRef<HTMLInputElement>(null);
 
   // Online Activities states
   const [studentActivities, setStudentActivities] = useState<StudentActivity[]>([]);
@@ -140,7 +317,11 @@ export default function StudentDetailPage() {
   const [releasedSheetIds, setReleasedSheetIds] = useState<string[]>([]);
   const [releasedSheets, setReleasedSheets] = useState<ClassSheet[]>([]);
   const [loadingSheets, setLoadingSheets] = useState(false);
+  const [sheetsLoadingProgress, setSheetsLoadingProgress] = useState(15);
+  const [sheetsLoadingStatus, setSheetsLoadingStatus] = useState('Carregando fichas...');
+  const sheetsLoadedForStudentRef = useRef<string | null>(null);
   const [allSubjectSheets, setAllSubjectSheets] = useState<ClassSheet[]>([]);
+  const [previewSheet, setPreviewSheet] = useState<ClassSheet | null>(null);
   const [allLevels, setAllLevels] = useState<Level[]>([]);
   const [expandedLevelIds, setExpandedLevelIds] = useState<string[]>([]);
   const [teacherActivityFilter, setTeacherActivityFilter] = useState<'all' | 'exam' | 'exercise'>('all');
@@ -236,13 +417,15 @@ export default function StudentDetailPage() {
       studentService.getById(id),
       scheduleService.getByStudent(id),
       subjectService.getAll(),
-      activityService.getStudentActivities(id)
-    ]).then(([studentRes, scheduleRes, subjectRes, activityRes]) => {
+      activityService.getStudentActivities(id),
+      certificateService.getByStudent(id)
+    ]).then(([studentRes, scheduleRes, subjectRes, activityRes, certRes]) => {
       setStudent(studentRes.data);
       setMonthlyPriceInput(String(studentRes.data.monthlyPrice || 0));
       setSchedules(scheduleRes.data);
       setSubjectsList(subjectRes.data);
       setStudentActivities(activityRes.data);
+      setCertificates(certRes.data || []);
       
       // Carrega as fichas pedagógicas liberadas de forma paralela e resiliente
       classSheetService.getReleased(id)
@@ -259,31 +442,65 @@ export default function StudentDetailPage() {
       .finally(() => setLoading(false));
   };
 
-  const loadSheetsData = async () => {
+  const loadSheetsData = async (force: boolean = false) => {
     if (!student) return;
+    if (!force && sheetsLoadedForStudentRef.current === student.id && allSubjectSheets.length > 0) {
+      return;
+    }
+
     setLoadingSheets(true);
+    setSheetsLoadingProgress(18);
+    setSheetsLoadingStatus('Sincronizando fichas liberadas...');
+
+    const timer1 = setTimeout(() => {
+      setSheetsLoadingProgress(52);
+      setSheetsLoadingStatus('Buscando níveis da matéria...');
+    }, 120);
+
+    const timer2 = setTimeout(() => {
+      setSheetsLoadingProgress(84);
+      setSheetsLoadingStatus('Organizando fichas pedagógicas...');
+    }, 320);
+
     try {
-      const releasedRes = await classSheetService.getReleased(student.id);
-      setReleasedSheets(releasedRes.data || []);
-      const releasedIds = (releasedRes.data || []).map((cs: ClassSheet) => cs.id);
-      setReleasedSheetIds(releasedIds);
+      const [releasedRes, levelsRes] = await Promise.all([
+        classSheetService.getReleased(student.id),
+        levelService.getBySubject(student.subjectId)
+      ]);
 
-      const levelSheetsRes = await classSheetService.getByLevel(student.levelId);
-      setLevelClassSheets(levelSheetsRes.data || []);
+      const releasedList = releasedRes.data || [];
+      setReleasedSheets(releasedList);
+      setReleasedSheetIds(releasedList.map((cs: ClassSheet) => cs.id));
 
-      const levelsRes = await levelService.getBySubject(student.subjectId);
-      setAllLevels(levelsRes.data || []);
+      const levels = levelsRes.data || [];
+      setAllLevels(levels);
+
+      const sheetPromises = levels.map((lvl: Level) => classSheetService.getByLevel(lvl.id));
+      const sheetResponses = await Promise.all(sheetPromises);
 
       const allSheetsList: ClassSheet[] = [];
-      for (const lvl of (levelsRes.data || [])) {
-        const res = await classSheetService.getByLevel(lvl.id);
+      for (const res of sheetResponses) {
         allSheetsList.push(...(res.data || []));
       }
       setAllSubjectSheets(allSheetsList);
+
+      const studentLevelSheets = allSheetsList.filter((s: ClassSheet) => s.levelId === student.levelId);
+      setLevelClassSheets(studentLevelSheets);
+
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      setSheetsLoadingProgress(100);
+      setSheetsLoadingStatus('Tudo pronto!');
+      sheetsLoadedForStudentRef.current = student.id;
+
+      setTimeout(() => {
+        setLoadingSheets(false);
+      }, 160);
     } catch {
-      toast.error('Erro ao carregar fichas pedagógicas.');
-    } finally {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
       setLoadingSheets(false);
+      toast.error('Erro ao carregar fichas pedagógicas.');
     }
   };
 
@@ -656,12 +873,6 @@ export default function StudentDetailPage() {
     }
   };
 
-  const handleCopyPortalLink = (studentId: string) => {
-    const portalUrl = `${window.location.origin}/student-portal/${studentId}`;
-    navigator.clipboard.writeText(portalUrl);
-    toast.success('Link do portal do aluno copiado!');
-  };
-
   const handleCopyActivityLink = (actId: string) => {
     const quizUrl = `${window.location.origin}/quiz/${actId}`;
     navigator.clipboard.writeText(quizUrl);
@@ -984,24 +1195,117 @@ export default function StudentDetailPage() {
     return age;
   };
 
+  const openNewCertificate = () => {
+    setCertTitle('');
+    setCertDescription('');
+    setCertIssueDate(format(new Date(), 'yyyy-MM-dd'));
+    setCertFile(null);
+    setCertFilePreview(null);
+    if (certFileInputRef.current) certFileInputRef.current.value = '';
+    setCertModalOpen(true);
+  };
+
+  const handleSelectCertFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error('O arquivo deve ter no máximo 20 MB.');
+      e.target.value = '';
+      return;
+    }
+
+    setCertFile(file);
+
+    // Se for imagem, gera preview
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = () => setCertFilePreview(reader.result as string);
+      reader.readAsDataURL(file);
+    } else {
+      setCertFilePreview(null);
+    }
+  };
+
+  const handleSaveCertificate = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!id) return;
+    if (!certTitle.trim()) {
+      toast.error('Informe o título do certificado.');
+      return;
+    }
+    if (!certFile) {
+      toast.error('Selecione uma imagem ou arquivo PDF do certificado.');
+      return;
+    }
+
+    setCertSaving(true);
+    try {
+      const formData = new FormData();
+      formData.append('title', certTitle.trim());
+      if (certDescription.trim()) formData.append('description', certDescription.trim());
+      if (certIssueDate) formData.append('issueDate', certIssueDate);
+      formData.append('file', certFile);
+
+      const res = await certificateService.upload(id, formData);
+      toast.success('Certificado adicionado com sucesso!');
+      setCertificates(prev => [res.data, ...prev]);
+      setCertModalOpen(false);
+    } catch (err: any) {
+      toast.error(err.response?.data || 'Erro ao enviar certificado.');
+    } finally {
+      setCertSaving(false);
+    }
+  };
+
+  const handleDeleteCertificate = async (certId: string) => {
+    if (!confirm('Deseja realmente excluir este certificado? O aluno não poderá mais visualizá-lo.')) return;
+    try {
+      await certificateService.delete(certId);
+      toast.success('Certificado excluído com sucesso!');
+      setCertificates(prev => prev.filter(c => c.id !== certId));
+      if (viewingCert?.id === certId) setViewingCert(null);
+    } catch {
+      toast.error('Erro ao excluir certificado.');
+    }
+  };
+
   const tabs = [
     { key: 'lessons' as const, icon: <MdCalendarToday />, label: 'Aulas', count: visibleStudentLessons.length },
     { key: 'schedules' as const, icon: <MdSchedule />, label: 'Horários', count: schedules.length },
     { key: 'payments' as const, icon: <MdPayment />, label: 'Mensalidades', count: student.payments.length },
     { key: 'activities' as const, icon: <MdAssignmentTurnedIn />, label: 'Provas & Exercícios', count: studentActivities.length + (student.exams?.length || 0) + (student.exercises?.length || 0) },
     { key: 'sheets' as const, icon: <MdSchool />, label: 'Fichas', count: releasedSheetIds.length },
+    { key: 'certificates' as const, icon: <MdCardMembership />, label: 'Certificados', count: certificates.length },
   ];
 
   return (
     <div className="student-detail animate-fadeIn">
       <div className="profile-grid">
         <Card variant="elevated" className="student-profile animate-slideUp">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)', width: '100%' }}>
+          <div className="student-profile-inner">
             <div className="profile-header-wrap">
               {/* Large circular avatar with mobile action buttons alongside */}
               <div className="profile-avatar-container">
-                <div className="profile-avatar-wrap">
-                  <Avatar src={student.photoUrl} name={student.name} size="xl" shape="circle" />
+                <div className="profile-avatar-wrapper">
+                  <div className="profile-avatar-wrap">
+                    <Avatar src={student.photoUrl} name={student.name} size="xl" shape="circle" />
+                  </div>
+                  <button
+                    type="button"
+                    className="profile-photo-edit-btn"
+                    onClick={() => photoFileInputRef.current?.click()}
+                    title="Alterar foto do aluno"
+                  >
+                    <MdCameraAlt />
+                  </button>
+                  <input
+                    type="file"
+                    ref={photoFileInputRef}
+                    accept="image/*,.heic,.heif,.jpg,.jpeg,.png,.webp,.bmp,.gif,.tif,.tiff"
+                    style={{ display: 'none' }}
+                    onChange={handleSelectPhotoFile}
+                  />
                 </div>
                 {/* Mobile action buttons on the right of the avatar */}
                 <div className="student-actions-mobile">
@@ -1011,7 +1315,7 @@ export default function StudentDetailPage() {
               </div>
               
               <div className="profile-info-content">
-                {/* Row 1: Larger Student Name + Actions (Desktop) */}
+                {/* Row 1: Student Name + Actions (Desktop) */}
                 <div className="profile-info-top">
                   <h2 className="student-name-title">
                     {student.name}
@@ -1022,35 +1326,36 @@ export default function StudentDetailPage() {
                   </div>
                 </div>
 
-                {/* Row 2: Pills - Status, Subject, Level */}
-                <div className="profile-tags-row">
-                  <Badge variant={student.isActive ? 'success' : 'danger'}>
-                    {student.isActive ? 'Ativo' : 'Arquivado'}
-                  </Badge>
-                  {student.subjectName && <Badge variant="primary"><MdMenuBook style={{marginRight: '4px', verticalAlign: 'text-bottom'}}/>{student.subjectName}</Badge>}
-                  {student.levelName && <Badge variant="secondary"><MdSchool style={{marginRight: '4px', verticalAlign: 'text-bottom'}}/>{student.levelName}</Badge>}
-                </div>
-
-                {/* Row 3: Subtitle Metadata (Cidade, UF, País + Idade + Responsável) */}
-                {(locationLabel || student.birthDate || student.guardianName) && (
-                  <div className="profile-meta-subtitle-row">
-                    {locationLabel && (
-                      <span className="meta-subtitle-item">
-                        <MdLocationOn /> {locationLabel}
-                      </span>
-                    )}
-                    {student.birthDate && (
-                      <span className="meta-subtitle-item">
-                        <MdCake /> {calculateAge(student.birthDate)} anos
-                      </span>
-                    )}
-                    {student.guardianName && (
-                      <span className="meta-subtitle-item">
-                        <MdPerson /> Resp.: {student.guardianName}
-                      </span>
-                    )}
+                {/* Row 2: Pills (Status, Matéria, Nível) na mesma linha que Local, Idade e Responsável */}
+                <div className="profile-meta-combined-row">
+                  <div className="profile-tags-row">
+                    <Badge variant={student.isActive ? 'success' : 'danger'}>
+                      {student.isActive ? 'Ativo' : 'Arquivado'}
+                    </Badge>
+                    {student.subjectName && <Badge variant="primary"><MdMenuBook style={{marginRight: '4px', verticalAlign: 'text-bottom'}}/>{student.subjectName}</Badge>}
+                    {student.levelName && <Badge variant="secondary"><MdSchool style={{marginRight: '4px', verticalAlign: 'text-bottom'}}/>{student.levelName}</Badge>}
                   </div>
-                )}
+
+                  {(locationLabel || student.birthDate || student.guardianName) && (
+                    <div className="profile-meta-subtitle-row">
+                      {locationLabel && (
+                        <span className="meta-subtitle-item">
+                          <MdLocationOn /> {locationLabel}
+                        </span>
+                      )}
+                      {student.birthDate && (
+                        <span className="meta-subtitle-item">
+                          <MdCake /> {calculateAge(student.birthDate)} anos
+                        </span>
+                      )}
+                      {student.guardianName && (
+                        <span className="meta-subtitle-item">
+                          <MdPerson /> Resp.: {student.guardianName}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
 
                 {/* Row 4: Sleek Circular Icon Dials + Mostradores + Hover Balloons */}
                 <div className="profile-dials-row">
@@ -1796,8 +2101,27 @@ export default function StudentDetailPage() {
             </div>
 
             {loadingSheets ? (
-              <div className="tab-loading-spinner" style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
-                <div className="spinner"></div>
+              <div className="sheets-tab-loading-container animate-fadeIn">
+                <div className="sheets-tab-loading-card">
+                  <div className="sheets-loading-brand">
+                    <span className="sheets-brand-badge">Sincronização de Fichas</span>
+                  </div>
+
+                  <div className="sheets-loading-percentage">
+                    {Math.round(sheetsLoadingProgress)}%
+                  </div>
+
+                  <div className="sheets-progress-bar-container">
+                    <div
+                      className="sheets-progress-bar-fill"
+                      style={{ width: `${sheetsLoadingProgress}%` }}
+                    />
+                  </div>
+
+                  <p className="sheets-loading-status-text">
+                    {sheetsLoadingStatus}
+                  </p>
+                </div>
               </div>
             ) : (
               <>
@@ -1848,11 +2172,26 @@ export default function StudentDetailPage() {
                                       onChange={() => handleToggleSheet(sheet.id)}
                                       style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                                     />
-                                    <span style={{ fontSize: '13px', fontWeight: 600 }}>{sheet.title}</span>
+                                    <span
+                                      style={{ fontSize: '13px', fontWeight: 600, cursor: 'pointer', color: 'var(--text-primary)' }}
+                                      onClick={() => setPreviewSheet(sheet)}
+                                      title="Clique para visualizar a ficha formatada"
+                                    >
+                                      {sheet.title}
+                                    </span>
                                   </div>
-                                  <Badge variant={isReleased ? 'success' : 'secondary'}>
-                                    {isReleased ? 'Liberada' : 'Não Liberada'}
-                                  </Badge>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      icon={<MdVisibility />}
+                                      onClick={() => setPreviewSheet(sheet)}
+                                      title="Visualizar ficha formatada"
+                                    />
+                                    <Badge variant={isReleased ? 'success' : 'secondary'}>
+                                      {isReleased ? 'Liberada' : 'Não Liberada'}
+                                    </Badge>
+                                  </div>
                                 </div>
                               );
                             })}
@@ -1887,15 +2226,30 @@ export default function StudentDetailPage() {
                               style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                             />
                             <div>
-                              <strong>{sheet.title}</strong>
+                              <strong
+                                style={{ cursor: 'pointer' }}
+                                onClick={() => setPreviewSheet(sheet)}
+                                title="Clique para visualizar a ficha formatada"
+                              >
+                                {sheet.title}
+                              </strong>
                               <span className="detail-meta" style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)' }}>
                                 Nível: {levelName}
                               </span>
                             </div>
                           </div>
-                          <Badge variant="success">
-                            Liberada
-                          </Badge>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              icon={<MdVisibility />}
+                              onClick={() => setPreviewSheet(sheet)}
+                              title="Visualizar ficha formatada"
+                            />
+                            <Badge variant="success">
+                              Liberada
+                            </Badge>
+                          </div>
                         </Card>
                       );
                     })}
@@ -1905,6 +2259,95 @@ export default function StudentDetailPage() {
                   </div>
                 </div>
               </>
+            )}
+          </div>
+        )}
+
+        {tab === 'certificates' && (
+          <div className="certificates-tab animate-fadeIn">
+            <div className="tab-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+              <div>
+                <h3>Certificados e Conquistas do Aluno</h3>
+                <p className="tab-toolbar-info">
+                  Certificados oficiais liberados e visíveis no portal do aluno
+                </p>
+              </div>
+              <Button icon={<MdAdd />} onClick={openNewCertificate}>
+                Novo Certificado
+              </Button>
+            </div>
+
+            {certificates.length === 0 ? (
+              <Card variant="elevated" className="empty-certificates-card" style={{ textAlign: 'center', padding: '48px 24px', margin: '20px 0' }}>
+                <div style={{ fontSize: '48px', color: 'var(--accent-primary)', marginBottom: '16px' }}>
+                  <MdCardMembership />
+                </div>
+                <h4 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '8px' }}>Nenhum certificado emitido</h4>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '14px', maxWidth: '440px', margin: '0 auto 20px auto' }}>
+                  Envie diplomas, certificados de conclusão de nível ou declarações em imagem (JPG, PNG) ou documento PDF para o aluno acessar em seu portal.
+                </p>
+                <Button icon={<MdAdd />} onClick={openNewCertificate}>
+                  Emitir Primeiro Certificado
+                </Button>
+              </Card>
+            ) : (
+              <div className="certificates-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px', marginTop: '20px' }}>
+                {certificates.map(cert => {
+                  const isPdf = cert.fileType === 'pdf' || cert.fileUrl.toLowerCase().endsWith('.pdf');
+                  const fullUrl = getAbsoluteAvatarUrl(cert.fileUrl);
+                  return (
+                    <Card key={cert.id} variant="elevated" className="certificate-card animate-slideUp" hoverable>
+                      <div className="certificate-card-top" style={{ position: 'relative', height: '170px', borderRadius: 'var(--radius-md)', overflow: 'hidden', background: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {isPdf ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', color: '#ff5555' }}>
+                            <span style={{ fontSize: '52px' }}>📄</span>
+                            <span style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.05em', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Documento PDF</span>
+                          </div>
+                        ) : (
+                          <img
+                            src={fullUrl}
+                            alt={cert.title}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            onError={(e: any) => { e.currentTarget.style.display = 'none'; }}
+                          />
+                        )}
+                        <span className="cert-type-pill" style={{ position: 'absolute', top: '10px', right: '10px' }}>
+                          <Badge variant="primary">{isPdf ? 'PDF' : 'IMAGEM'}</Badge>
+                        </span>
+                      </div>
+
+                      <div className="certificate-card-body" style={{ padding: '16px 4px 6px 4px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--accent-primary)', fontWeight: 600, marginBottom: '6px' }}>
+                          <MdCardMembership />
+                          <span>Emitido em {format(new Date(cert.issueDate), 'dd/MM/yyyy')}</span>
+                        </div>
+                        <h4 style={{ fontSize: '16px', fontWeight: 700, margin: '0 0 6px 0', color: 'var(--text-primary)', lineHeight: 1.3 }}>
+                          {cert.title}
+                        </h4>
+                        {cert.description && (
+                          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '0 0 16px 0', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                            {cert.description}
+                          </p>
+                        )}
+
+                        <div className="certificate-card-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '14px', paddingTop: '12px', borderTop: '1px solid var(--border-color)' }}>
+                          <Button size="sm" variant="outline" icon={<MdVisibility />} onClick={() => setViewingCert(cert)}>
+                            Visualizar
+                          </Button>
+                          <button
+                            type="button"
+                            className="icon-btn icon-btn-danger"
+                            title="Excluir Certificado"
+                            onClick={() => handleDeleteCertificate(cert.id)}
+                          >
+                            <MdDelete />
+                          </button>
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
             )}
           </div>
         )}
@@ -2841,7 +3284,314 @@ export default function StudentDetailPage() {
           </div>
         </div>
       </Modal>
-    </div>
+    
+      {/* Modal de Recorte e Ajuste da Foto do Aluno */}
+      {cropModalOpen && (
+        <Modal
+          isOpen={cropModalOpen}
+          onClose={() => !uploadingPhoto && setCropModalOpen(false)}
+          title="Ajustar Foto do Aluno"
+          size="md"
+          footer={
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', width: '100%' }}>
+              <Button
+                variant="ghost"
+                onClick={() => setCropModalOpen(false)}
+                disabled={uploadingPhoto}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleSaveCroppedPhoto}
+                isLoading={uploadingPhoto}
+                icon={<MdCheck />}
+              >
+                Salvar Foto
+              </Button>
+            </div>
+          }
+        >
+          <div className="crop-modal-content">
+            <p className="crop-instruction">
+              Arraste a imagem para enquadrar o rosto do aluno dentro do círculo e use os controles para dar zoom.
+            </p>
+
+            <div
+              className="crop-container"
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
+              {imageSrc && (
+                <img
+                  src={imageSrc}
+                  alt="Pré-visualização"
+                  className="crop-preview-image"
+                  draggable={false}
+                  style={{
+                    transform: `translate(${offset.x}px, ${offset.y}px) scale(${fitScale * zoom})`,
+                  }}
+                />
+              )}
+              <div className="crop-circle-mask" />
+            </div>
+
+            <div className="crop-controls-row">
+              <button
+                type="button"
+                className="crop-zoom-btn"
+                onClick={() => setZoom(prev => Math.max(0.3, +(prev - 0.1).toFixed(2)))}
+                title="Diminuir Zoom"
+              >
+                <MdZoomOut />
+              </button>
+              <input
+                type="range"
+                min="0.3"
+                max="3"
+                step="0.05"
+                value={zoom}
+                onChange={e => setZoom(parseFloat(e.target.value))}
+                className="crop-zoom-slider"
+              />
+              <button
+                type="button"
+                className="crop-zoom-btn"
+                onClick={() => setZoom(prev => Math.min(3, +(prev + 0.1).toFixed(2)))}
+                title="Aumentar Zoom"
+              >
+                <MdZoomIn />
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      
+      {/* Modal de Pré-visualização de Ficha Pedagógica do Aluno */}
+      {previewSheet && (
+        <Modal
+          isOpen={!!previewSheet}
+          onClose={() => setPreviewSheet(null)}
+          title={previewSheet.title}
+          size="lg"
+          footer={
+            <Button variant="primary" onClick={() => setPreviewSheet(null)}>
+              Fechar
+            </Button>
+          }
+        >
+          <div className="sheet-reader-body">
+            <div
+              className="sheet-reader-content"
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(previewSheet.content) }}
+            />
+          </div>
+        </Modal>
+      )}
+
+      {/* Modal: Novo Certificado */}
+      <Modal
+        isOpen={certModalOpen}
+        onClose={() => !certSaving && setCertModalOpen(false)}
+        title="Emitir Novo Certificado para o Aluno"
+        size="md"
+        footer={
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', width: '100%' }}>
+            <Button
+              variant="ghost"
+              onClick={() => setCertModalOpen(false)}
+              disabled={certSaving}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleSaveCertificate}
+              isLoading={certSaving}
+              icon={<MdCheck />}
+            >
+              Salvar Certificado
+            </Button>
+          </div>
+        }
+      >
+        <form onSubmit={handleSaveCertificate} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div>
+            <label className="input-label" style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>
+              Título do Certificado *
+            </label>
+            <Input
+              placeholder="Ex: Certificado de Conclusão - Nível Intermediário"
+              value={certTitle}
+              onChange={e => setCertTitle(e.target.value)}
+              required
+            />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
+            <div>
+              <label className="input-label" style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>
+                Data de Emissão
+              </label>
+              <Input
+                type="date"
+                value={certIssueDate}
+                onChange={e => setCertIssueDate(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="input-label" style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>
+              Descrição / Observações (Opcional)
+            </label>
+            <textarea
+              className="select-field"
+              placeholder="Ex: Concluiu com 95% de aproveitamento e distinção em conversação e produção escrita."
+              value={certDescription}
+              onChange={e => setCertDescription(e.target.value)}
+              rows={3}
+              style={{
+                width: '100%',
+                padding: '10px 14px',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--border-color)',
+                background: 'var(--bg-tertiary)',
+                color: 'var(--text-primary)',
+                fontSize: '13px',
+                outline: 'none',
+                fontFamily: 'inherit',
+                resize: 'vertical'
+              }}
+            />
+          </div>
+
+          <div>
+            <label className="input-label" style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>
+              Arquivo do Certificado (Imagem ou PDF) *
+            </label>
+            <input
+              type="file"
+              ref={certFileInputRef}
+              accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
+              onChange={handleSelectCertFile}
+              style={{ display: 'none' }}
+            />
+            <div
+              onClick={() => certFileInputRef.current?.click()}
+              style={{
+                border: '2px dashed var(--border-color)',
+                borderRadius: 'var(--radius-md)',
+                padding: '24px 16px',
+                textAlign: 'center',
+                cursor: 'pointer',
+                background: 'var(--bg-secondary)',
+                transition: 'border-color var(--transition-fast)'
+              }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent-primary)'; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-color)'; }}
+            >
+              {certFile ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                  {certFilePreview ? (
+                    <img
+                      src={certFilePreview}
+                      alt="Prévia"
+                      style={{ maxHeight: '140px', maxWidth: '100%', borderRadius: '6px', objectFit: 'contain' }}
+                    />
+                  ) : (
+                    <span style={{ fontSize: '36px' }}>📄</span>
+                  )}
+                  <strong style={{ fontSize: '13px', color: 'var(--accent-primary)' }}>
+                    {certFile.name}
+                  </strong>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                    {(certFile.size / (1024 * 1024)).toFixed(2)} MB • Clique para trocar de arquivo
+                  </span>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontSize: '36px', color: 'var(--accent-primary)' }}>📁</span>
+                  <strong style={{ fontSize: '14px', color: 'var(--text-primary)' }}>
+                    Clique para selecionar a imagem ou arquivo PDF
+                  </strong>
+                  <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                    Formatos aceitos: JPG, PNG, WEBP ou PDF (até 20 MB)
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Modal: Visualizar Certificado */}
+      {viewingCert && (
+        <Modal
+          isOpen={!!viewingCert}
+          onClose={() => setViewingCert(null)}
+          title={viewingCert.title}
+          size="lg"
+          footer={
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: '10px' }}>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                Emitido em {format(new Date(viewingCert.issueDate), 'dd/MM/yyyy')}
+              </span>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <a
+                  href={getAbsoluteAvatarUrl(viewingCert.fileUrl)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  download
+                  style={{ textDecoration: 'none' }}
+                >
+                  <Button variant="outline" icon={<MdDownload />}>
+                    Baixar / Abrir Arquivo
+                  </Button>
+                </a>
+                <Button variant="primary" onClick={() => setViewingCert(null)}>
+                  Fechar
+                </Button>
+              </div>
+            </div>
+          }
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center', padding: '10px 0' }}>
+            {viewingCert.description && (
+              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', textAlign: 'center', maxWidth: '600px', margin: '0' }}>
+                {viewingCert.description}
+              </p>
+            )}
+
+            {viewingCert.fileType === 'pdf' || viewingCert.fileUrl.toLowerCase().endsWith('.pdf') ? (
+              <div style={{ width: '100%', borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--border-color)', background: '#1e1e2d' }}>
+                <iframe
+                  src={getAbsoluteAvatarUrl(viewingCert.fileUrl)}
+                  title={viewingCert.title}
+                  style={{ width: '100%', height: '540px', border: 'none' }}
+                />
+              </div>
+            ) : (
+              <div style={{ maxWidth: '100%', borderRadius: 'var(--radius-md)', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.5)', border: '2px solid var(--border-color)' }}>
+                <img
+                  src={getAbsoluteAvatarUrl(viewingCert.fileUrl)}
+                  alt={viewingCert.title}
+                  style={{ maxWidth: '100%', maxHeight: '65vh', display: 'block', objectFit: 'contain' }}
+                />
+              </div>
+            )}
+          </div>
+        </Modal>
+      )}
+
+</div>
   );
   } catch (renderError: any) {
     return (

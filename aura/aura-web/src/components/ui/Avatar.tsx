@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import './Avatar.css';
 
 interface AvatarProps { src?: string | null; name: string; size?: 'sm' | 'md' | 'lg' | 'xl'; shape?: 'circle' | 'square'; }
@@ -16,11 +17,25 @@ export function getAbsoluteAvatarUrl(url?: string | null): string | undefined {
 }
 
 export default function Avatar({ src, name, size = 'md', shape = 'circle' }: AvatarProps) {
+  const [hasError, setHasError] = useState(false);
   const resolvedSrc = getAbsoluteAvatarUrl(src);
+
+  useEffect(() => {
+    setHasError(false);
+  }, [src]);
+
   return (
     <div className={`avatar avatar-${size} avatar-${shape}`}>
-      {resolvedSrc ? <img src={resolvedSrc} alt={name} className="avatar-img" /> :
-        <span className="avatar-initials">{getInitials(name)}</span>}
+      {resolvedSrc && !hasError ? (
+        <img
+          src={resolvedSrc}
+          alt=""
+          className="avatar-img"
+          onError={() => setHasError(true)}
+        />
+      ) : (
+        <span className="avatar-initials">{getInitials(name)}</span>
+      )}
     </div>
   );
 }

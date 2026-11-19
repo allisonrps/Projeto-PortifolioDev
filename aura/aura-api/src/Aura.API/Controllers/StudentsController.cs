@@ -4,6 +4,11 @@ using Aura.Application.Services;
 
 namespace Aura.API.Controllers;
 
+public class UploadPhotoBase64Request
+{
+    public string ImageBase64 { get; set; } = string.Empty;
+}
+
 [Route("api/students")]
 public class StudentsController : BaseApiController
 {
@@ -59,5 +64,16 @@ public class StudentsController : BaseApiController
 
         var url = await _studentService.UploadPhotoAsync(id, GetProfessorId(), file.OpenReadStream(), file.FileName);
         return Ok(new { photoUrl = url });
+    }
+
+    [HttpPost("{id}/photo-base64")]
+    [RequestSizeLimit(5 * 1024 * 1024)]
+    public async Task<ActionResult> UploadPhotoBase64(Guid id, [FromBody] UploadPhotoBase64Request request)
+    {
+        if (string.IsNullOrWhiteSpace(request?.ImageBase64))
+            return BadRequest("A imagem base64 não foi enviada.");
+
+        var photoUrl = await _studentService.UploadPhotoBase64Async(id, GetProfessorId(), request.ImageBase64);
+        return Ok(new { photoUrl, message = "Foto do aluno atualizada com sucesso!" });
     }
 }

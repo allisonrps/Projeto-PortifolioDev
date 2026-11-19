@@ -23,6 +23,57 @@ namespace Aura.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Aura.Domain.Entities.Certificate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<string>("FileName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("FileType")
+                        .HasColumnType("text");
+
+                    b.Property<string>("FileUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("IssueDate")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<Guid>("ProfessorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProfessorId", "IsDeleted");
+
+                    b.HasIndex("StudentId", "IsDeleted");
+
+                    b.ToTable("Certificates", "aura");
+                });
+
             modelBuilder.Entity("Aura.Domain.Entities.ClassSheet", b =>
                 {
                     b.Property<Guid>("Id")
@@ -52,7 +103,7 @@ namespace Aura.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("LevelId");
+                    b.HasIndex("LevelId", "IsDeleted");
 
                     b.ToTable("ClassSheets", "aura");
                 });
@@ -113,7 +164,7 @@ namespace Aura.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("StudentId");
+                    b.HasIndex("StudentId", "IsDeleted", "ScheduledAt");
 
                     b.ToTable("Exams", "aura");
                 });
@@ -159,7 +210,7 @@ namespace Aura.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("StudentId");
+                    b.HasIndex("StudentId", "IsDeleted", "ScheduledAt");
 
                     b.ToTable("Exercises", "aura");
                 });
@@ -201,7 +252,7 @@ namespace Aura.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProfessorId");
+                    b.HasIndex("ProfessorId", "IsDeleted", "Date");
 
                     b.ToTable("Holidays", "aura");
                 });
@@ -249,9 +300,9 @@ namespace Aura.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProfessorId");
+                    b.HasIndex("StudentId", "IsDeleted", "ScheduledAt");
 
-                    b.HasIndex("StudentId");
+                    b.HasIndex("ProfessorId", "IsDeleted", "ScheduledAt", "Status");
 
                     b.ToTable("Lessons", "aura");
                 });
@@ -281,7 +332,7 @@ namespace Aura.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SubjectId");
+                    b.HasIndex("SubjectId", "IsDeleted");
 
                     b.ToTable("Levels", "aura");
                 });
@@ -324,7 +375,7 @@ namespace Aura.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProfessorId");
+                    b.HasIndex("ProfessorId", "IsDeleted", "Year", "Month");
 
                     b.ToTable("ManualFinanceEntries", "aura");
                 });
@@ -365,9 +416,27 @@ namespace Aura.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("StudentId");
+                    b.HasIndex("StudentId", "IsDeleted", "Year", "Month", "IsPaid");
 
                     b.ToTable("MonthlyPayments", "aura");
+                });
+
+            modelBuilder.Entity("Aura.Domain.Entities.PlatformSetting", b =>
+                {
+                    b.Property<string>("Key")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Key");
+
+                    b.ToTable("PlatformSettings", "aura");
                 });
 
             modelBuilder.Entity("Aura.Domain.Entities.Professor", b =>
@@ -376,6 +445,14 @@ namespace Aura.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("AsaasCustomerId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("CpfCnpj")
+                        .HasMaxLength(25)
+                        .HasColumnType("character varying(25)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp without time zone");
 
@@ -383,6 +460,9 @@ namespace Aura.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
+
+                    b.Property<bool>("IsAdmin")
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
@@ -407,7 +487,7 @@ namespace Aura.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)")
-                        .HasDefaultValue("free");
+                        .HasDefaultValue("trial");
 
                     b.Property<string>("PrimaryColor")
                         .IsRequired()
@@ -423,12 +503,25 @@ namespace Aura.Infrastructure.Migrations
                         .HasColumnType("character varying(20)")
                         .HasDefaultValue("#06B6D4");
 
+                    b.Property<DateTime?>("SubscriptionExpiresAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("SubscriptionStatus")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("trial");
+
                     b.Property<string>("Theme")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)")
                         .HasDefaultValue("dark");
+
+                    b.Property<DateTime?>("TrialEndsAt")
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp without time zone");
@@ -463,6 +556,13 @@ namespace Aura.Infrastructure.Migrations
                     b.Property<TimeSpan>("EndTime")
                         .HasColumnType("interval");
 
+                    b.Property<string>("Frequency")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("weekly");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
@@ -489,9 +589,9 @@ namespace Aura.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProfessorId");
+                    b.HasIndex("StudentId", "IsDeleted");
 
-                    b.HasIndex("StudentId");
+                    b.HasIndex("ProfessorId", "IsDeleted", "DayOfWeek", "IsRecurring");
 
                     b.ToTable("Schedules", "aura");
                 });
@@ -504,6 +604,12 @@ namespace Aura.Infrastructure.Migrations
 
                     b.Property<DateTime?>("BirthDate")
                         .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("City")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Country")
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp without time zone");
@@ -556,6 +662,9 @@ namespace Aura.Infrastructure.Migrations
                     b.Property<Guid>("ProfessorId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("State")
+                        .HasColumnType("text");
+
                     b.Property<Guid>("SubjectId")
                         .HasColumnType("uuid");
 
@@ -566,9 +675,9 @@ namespace Aura.Infrastructure.Migrations
 
                     b.HasIndex("LevelId");
 
-                    b.HasIndex("ProfessorId");
-
                     b.HasIndex("SubjectId");
+
+                    b.HasIndex("ProfessorId", "IsDeleted", "IsActive");
 
                     b.ToTable("Students", "aura");
                 });
@@ -619,9 +728,11 @@ namespace Aura.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("StudentId");
-
                     b.HasIndex("TemplateActivityId");
+
+                    b.HasIndex("Status", "IsDeleted", "CompletedAt");
+
+                    b.HasIndex("StudentId", "IsDeleted", "Status", "ScheduledAt");
 
                     b.ToTable("StudentActivities", "aura");
                 });
@@ -687,7 +798,7 @@ namespace Aura.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("StudentActivityId");
+                    b.HasIndex("StudentActivityId", "IsDeleted");
 
                     b.ToTable("StudentAnswers", "aura");
                 });
@@ -717,7 +828,7 @@ namespace Aura.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProfessorId");
+                    b.HasIndex("ProfessorId", "IsDeleted");
 
                     b.ToTable("Subjects", "aura");
                 });
@@ -728,16 +839,34 @@ namespace Aura.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("BillingType")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasDefaultValue("UNDEFINED");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime?>("EndDate")
                         .HasColumnType("timestamp without time zone");
 
+                    b.Property<string>("InvoiceUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
                     b.Property<string>("PaymentGatewayId")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<string>("PixCopyPaste")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PixQrCodeImage")
                         .HasColumnType("text");
 
                     b.Property<string>("PlanType")
@@ -760,14 +889,16 @@ namespace Aura.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)")
-                        .HasDefaultValue("active");
+                        .HasDefaultValue("pending");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp without time zone");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProfessorId");
+                    b.HasIndex("PaymentGatewayId");
+
+                    b.HasIndex("ProfessorId", "Status");
 
                     b.ToTable("Subscriptions", "aura");
                 });
@@ -818,9 +949,9 @@ namespace Aura.Infrastructure.Migrations
 
                     b.HasIndex("LevelId");
 
-                    b.HasIndex("ProfessorId");
-
                     b.HasIndex("SubjectId");
+
+                    b.HasIndex("ProfessorId", "IsDeleted", "CreatedAt");
 
                     b.ToTable("TemplateActivities", "aura");
                 });
@@ -871,9 +1002,28 @@ namespace Aura.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TemplateActivityId");
+                    b.HasIndex("TemplateActivityId", "IsDeleted");
 
                     b.ToTable("TemplateQuestions", "aura");
+                });
+
+            modelBuilder.Entity("Aura.Domain.Entities.Certificate", b =>
+                {
+                    b.HasOne("Aura.Domain.Entities.Professor", "Professor")
+                        .WithMany()
+                        .HasForeignKey("ProfessorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Aura.Domain.Entities.Student", "Student")
+                        .WithMany("Certificates")
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Professor");
+
+                    b.Navigation("Student");
                 });
 
             modelBuilder.Entity("Aura.Domain.Entities.ClassSheet", b =>
@@ -1151,6 +1301,8 @@ namespace Aura.Infrastructure.Migrations
 
             modelBuilder.Entity("Aura.Domain.Entities.Student", b =>
                 {
+                    b.Navigation("Certificates");
+
                     b.Navigation("ClassSheetStudents");
 
                     b.Navigation("Exams");
