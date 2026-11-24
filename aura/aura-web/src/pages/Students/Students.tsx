@@ -211,10 +211,9 @@ export default function StudentsPage() {
     }
   };
 
-  const handleCopyPortalLink = (studentId: string) => {
+  const handleOpenPortal = (studentId: string) => {
     const portalUrl = `${window.location.origin}/student-portal/${studentId}`;
-    navigator.clipboard.writeText(portalUrl);
-    toast.success('Link do portal do aluno copiado!');
+    window.open(portalUrl, '_blank', 'noopener,noreferrer');
   };
 
   // Filter levels options based on selected subject in top filters
@@ -350,7 +349,7 @@ export default function StudentsPage() {
                     <Badge variant={student.isActive ? 'success' : 'danger'}>{student.isActive ? 'Ativo' : 'Arquivado'}</Badge>
                   </div>
                   <div className="student-row-actions" onClick={e => e.stopPropagation()}>
-                    <button className="icon-btn icon-btn-warning" onClick={() => handleCopyPortalLink(student.id)} title="Copiar Link do Portal do Aluno"><MdOpenInNew /></button>
+                    <button className="icon-btn icon-btn-warning" onClick={() => handleOpenPortal(student.id)} title="Abrir Portal do Aluno em nova aba"><MdOpenInNew /></button>
                     <button className="icon-btn icon-btn-primary" onClick={() => navigate(`/students/${student.id}`)} title="Ver Detalhes do Aluno"><MdVisibility /></button>
                     <button className="icon-btn" onClick={() => openEdit(student)} title="Editar"><MdEdit /></button>
                     <button className="icon-btn icon-btn-danger" onClick={() => handleDelete(student.id)} title="Excluir"><MdDelete /></button>
