@@ -29,4 +29,5 @@ public class Student : BaseEntity
     public virtual ICollection<Exercise> Exercises { get; set; } = new List<Exercise>();
     public virtual ICollection<ClassSheetStudent> ClassSheetStudents { get; set; } = new List<ClassSheetStudent>();
     public virtual ICollection<Certificate> Certificates { get; set; } = new List<Certificate>();
+    public virtual ICollection<ChatMessage> ChatMessages { get; set; } = new List<ChatMessage>();
 }

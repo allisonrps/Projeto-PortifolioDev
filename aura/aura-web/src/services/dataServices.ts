@@ -1,5 +1,5 @@
 import api from './api';
-import type { Subject, Level, DashboardData, Lesson, MonthlyPayment, Exam, Exercise, ScheduleEntry, Holiday, ClassSheet, Certificate } from '../types';
+import type { Subject, Level, DashboardData, Lesson, MonthlyPayment, Exam, Exercise, ScheduleEntry, Holiday, ClassSheet, Certificate, ChatMessage, StudentUnreadSummary } from '../types';
 
 export const subjectService = {
   getAll: () => api.get<Subject[]>('/subjects'),
@@ -108,6 +108,13 @@ export const certificateService = {
   delete: (id: string) => api.delete(`/certificates/${id}`),
 };
 
+
+export const chatService = {
+  getStudentChat: (studentId: string) => api.get<ChatMessage[]>(`/chat/students/${studentId}`),
+  sendMessage: (studentId: string, content: string) => api.post<ChatMessage>(`/chat/students/${studentId}`, { content }),
+  getUnread: () => api.get<StudentUnreadSummary[]>('/chat/unread'),
+};
+
 export const publicStudentService = {
   getProfile: (studentId: string) => api.get<any>(`/public/student/${studentId}`),
   getExamsAndExercises: (studentId: string) => api.get<any[]>(`/public/student/${studentId}/exams-exercises`),
@@ -115,4 +122,6 @@ export const publicStudentService = {
   getClassSheetDetail: (id: string) => api.get<ClassSheet>(`/public/student/class-sheets/${id}`),
   uploadPhoto: (studentId: string, imageBase64: string) => api.post<{ message: string; photoUrl: string }>(`/public/student/${studentId}/photo`, { imageBase64 }),
   getCertificates: (studentId: string) => api.get<Certificate[]>(`/public/student/${studentId}/certificates`),
+  getMessages: (studentId: string) => api.get<ChatMessage[]>(`/public/student/${studentId}/messages`),
+  sendMessage: (studentId: string, content: string) => api.post<ChatMessage>(`/public/student/${studentId}/messages`, { content }),
 };

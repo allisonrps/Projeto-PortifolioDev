@@ -4,6 +4,7 @@ using Aura.Domain.Entities;
 using Aura.Application.DTOs.Auth;
 using Aura.Application.DTOs.Students;
 using Aura.Application.DTOs.Subjects;
+using Aura.Application.DTOs.Chat;
 using Aura.Application.DTOs.Dashboard;
 using Aura.Application.DTOs.Schedule;
 using Aura.Application.DTOs.Activity;
@@ -118,5 +119,9 @@ public class MappingProfile : Profile
             .ForMember(d => d.Answers, o => o.MapFrom(s => s.Answers != null ? s.Answers.OrderBy(a => a.CreatedAt).ToList() : null));
 
         CreateMap<StudentAnswer, StudentAnswerResponseDto>();
+
+        // Chat
+        CreateMap<ChatMessage, ChatMessageDto>()
+            .ForMember(d => d.SenderType, o => o.MapFrom(s => s.SenderType == MessageSenderType.Student ? "student" : "professor"));
     }
 }

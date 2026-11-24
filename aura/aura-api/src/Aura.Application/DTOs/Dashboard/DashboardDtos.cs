@@ -1,4 +1,5 @@
 using Aura.Application.DTOs.Students;
+using Aura.Application.DTOs.Chat;
 
 namespace Aura.Application.DTOs.Dashboard;
 
@@ -24,6 +25,8 @@ public class DashboardDto
     public List<PendingCorrectionDto> PendingCorrections { get; set; } = new();
     public List<CompletedActivityDto> CompletedActivities { get; set; } = new();
     public List<PendingPaymentDto> PendingPayments { get; set; } = new();
+    public List<StudentUnreadSummaryDto> UnreadMessages { get; set; } = new();
+    public int TotalUnreadMessagesCount { get; set; }
 }
 
 public class CompletedActivityDto

@@ -278,6 +278,8 @@ export interface DashboardData {
   pendingCorrections: PendingCorrection[];
   completedActivities: CompletedActivity[];
   pendingPayments: PendingPayment[];
+  unreadMessages?: StudentUnreadSummary[];
+  totalUnreadMessagesCount?: number;
 }
 
 export interface CompletedActivity {
@@ -426,4 +428,24 @@ export interface Certificate {
   fileName?: string | null;
   issueDate: string;
   createdAt: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  studentId: string;
+  professorId: string;
+  senderType: 'student' | 'professor';
+  content: string;
+  createdAt: string;
+  isReadByProfessor: boolean;
+  isReadByStudent: boolean;
+}
+
+export interface StudentUnreadSummary {
+  studentId: string;
+  studentName: string;
+  studentPhotoUrl?: string | null;
+  unreadCount: number;
+  lastMessageContent: string;
+  lastMessageDate: string;
 }

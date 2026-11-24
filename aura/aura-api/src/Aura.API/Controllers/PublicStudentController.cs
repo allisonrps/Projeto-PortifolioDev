@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Aura.Infrastructure.Data;
 using Aura.Application.DTOs.Subjects;
+using Aura.Application.DTOs.Chat;
+using Aura.Domain.Entities;
 using System;
 using System.IO;
 using System.Collections.Generic;
@@ -370,5 +372,71 @@ public class PublicStudentController : ControllerBase
         {
             return BadRequest($"Arquivo de imagem inválido ou não suportado: {ex.Message}");
         }
+    }
+
+    [HttpGet("{studentId}/messages")]
+    public async Task<ActionResult<List<ChatMessageDto>>> GetStudentMessages(Guid studentId)
+    {
+        var student = await _context.Students
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Id == studentId && !s.IsDeleted);
+
+        if (student == null)
+            return NotFound("Aluno não encontrado.");
+
+        var messages = await _context.ChatMessages
+            .Where(m => m.StudentId == studentId && !m.IsDeleted)
+            .OrderBy(m => m.CreatedAt)
+            .ToListAsync();
+
+        // Marcar mensagens do professor como lidas pelo aluno
+        var unreadFromProfessor = messages
+            .Where(m => m.SenderType == MessageSenderType.Professor && !m.IsReadByStudent)
+            .ToList();
+
+        if (unreadFromProfessor.Any())
+        {
+            foreach (var msg in unreadFromProfessor)
+            {
+                msg.IsReadByStudent = true;
+                msg.UpdatedAt = DateTime.UtcNow;
+            }
+            await _context.SaveChangesAsync();
+        }
+
+        var dtos = _mapper.Map<List<ChatMessageDto>>(messages);
+        return Ok(dtos);
+    }
+
+    [HttpPost("{studentId}/messages")]
+    public async Task<ActionResult<ChatMessageDto>> SendStudentMessage(Guid studentId, [FromBody] SendChatMessageDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto?.Content))
+            return BadRequest("A mensagem não pode estar vazia.");
+
+        var student = await _context.Students
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Id == studentId && !s.IsDeleted);
+
+        if (student == null)
+            return NotFound("Aluno não encontrado.");
+
+        var message = new ChatMessage
+        {
+            Id = Guid.NewGuid(),
+            StudentId = student.Id,
+            ProfessorId = student.ProfessorId,
+            SenderType = MessageSenderType.Student,
+            Content = dto.Content.Trim(),
+            IsReadByStudent = true,
+            IsReadByProfessor = false,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.ChatMessages.Add(message);
+        await _context.SaveChangesAsync();
+
+        var messageDto = _mapper.Map<ChatMessageDto>(message);
+        return Created($"/api/public/student/{studentId}/messages/{message.Id}", messageDto);
     }
 }

@@ -6,7 +6,7 @@ import {
   MdExpandMore, MdExpandLess, MdTimer, MdCake, MdEventAvailable, MdPerson, MdSwapVert,
   MdAssignmentTurnedIn, MdOpenInNew, MdAccessTime, MdShare, MdMenuBook,
   MdEmojiEvents, MdLocationOn, MdCameraAlt, MdZoomIn, MdZoomOut, MdCheck,
-  MdCardMembership, MdVisibility, MdDownload
+  MdCardMembership, MdVisibility, MdDownload, MdChat
 } from 'react-icons/md';
 import { FaWhatsapp } from 'react-icons/fa';
 import Card from '../../components/ui/Card';
@@ -17,12 +17,13 @@ import Modal from '../../components/ui/Modal';
 import Input from '../../components/ui/Input';
 import { studentService } from '../../services/studentService';
 import { activityService } from '../../services/activityService';
-import { scheduleService, lessonService, paymentService, examService, exerciseService, subjectService, levelService, classSheetService, certificateService } from '../../services/dataServices';
-import type { StudentDetail, ScheduleEntry, Lesson, Subject, Level, StudentActivity, TemplateActivity, ClassSheet, Certificate } from '../../types';
+import { scheduleService, lessonService, paymentService, examService, exerciseService, subjectService, levelService, classSheetService, certificateService, chatService } from '../../services/dataServices';
+import type { StudentDetail, ScheduleEntry, Lesson, Subject, Level, StudentActivity, TemplateActivity, ClassSheet, Certificate, ChatMessage } from '../../types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import toast from 'react-hot-toast';
 import { sanitizeHtml } from '../../utils/sanitizeHtml';
+import ChatWindow from '../../components/chat/ChatWindow';
 import './StudentDetail.css';
 
 const DAYS_OF_WEEK = [
@@ -229,8 +230,55 @@ export default function StudentDetailPage() {
   const [schedules, setSchedules] = useState<ScheduleEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const location = useLocation();
-  const initialTab = (location.state as any)?.activeTab || 'lessons';
-  const [tab, setTab] = useState<'lessons' | 'schedules' | 'payments' | 'activities' | 'sheets' | 'certificates'>(initialTab);
+  const initialTab = (location.state as any)?.activeTab || new URLSearchParams(location.search).get('tab') || 'lessons';
+  const [tab, setTab] = useState<'lessons' | 'schedules' | 'payments' | 'activities' | 'sheets' | 'certificates' | 'messages'>(initialTab);
+
+  // Chat states
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatLoading, setChatLoading] = useState(false);
+  const [chatUnreadCount, setChatUnreadCount] = useState(0);
+
+  const loadChat = async (silent = false) => {
+    if (!id) return;
+    if (!silent) setChatLoading(true);
+    try {
+      const res = await chatService.getStudentChat(id);
+      setChatMessages(res.data);
+      setChatUnreadCount(0);
+    } catch {
+      // silencioso
+    } finally {
+      if (!silent) setChatLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const queryTab = new URLSearchParams(location.search).get('tab');
+    if (queryTab && ['lessons', 'schedules', 'payments', 'activities', 'sheets', 'certificates', 'messages'].includes(queryTab)) {
+      setTab(queryTab as any);
+    }
+  }, [location.search]);
+
+  useEffect(() => {
+    if (tab === 'messages' && id) {
+      loadChat();
+      const interval = setInterval(() => {
+        loadChat(true);
+      }, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [tab, id]);
+
+  const handleSendMessage = async (text: string) => {
+    if (!id) return;
+    try {
+      const res = await chatService.sendMessage(id, text);
+      setChatMessages(prev => [...prev, res.data]);
+    } catch {
+      toast.error('Erro ao enviar mensagem.');
+      throw new Error();
+    }
+  };
 
   // Certificates states
   const [certificates, setCertificates] = useState<Certificate[]>([]);
@@ -1277,6 +1325,7 @@ export default function StudentDetailPage() {
     { key: 'activities' as const, icon: <MdAssignmentTurnedIn />, label: 'Provas & Exercícios', count: studentActivities.length + (student.exams?.length || 0) + (student.exercises?.length || 0) },
     { key: 'sheets' as const, icon: <MdSchool />, label: 'Fichas', count: releasedSheetIds.length },
     { key: 'certificates' as const, icon: <MdCardMembership />, label: 'Certificados', count: certificates.length },
+    { key: 'messages' as const, icon: <MdChat />, label: 'Mensagens', count: chatUnreadCount },
   ];
 
   return (
@@ -3394,6 +3443,30 @@ export default function StudentDetailPage() {
           </div>
         </Modal>
       )}
+
+      
+        {tab === 'messages' && (
+          <div className="messages-tab animate-fadeIn">
+            <div className="tab-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+              <div>
+                <h3>Chat com o Aluno</h3>
+                <p className="tab-toolbar-info">
+                  Conversas sincronizadas em tempo real com data e hora. O aluno visualiza e responde diretamente no Portal do Aluno.
+                </p>
+              </div>
+            </div>
+
+            <ChatWindow
+              messages={chatMessages}
+              currentSenderType="professor"
+              otherPartyName={student.name}
+              otherPartyAvatarUrl={student.photoUrl ? getAbsoluteAvatarUrl(student.photoUrl) : undefined}
+              otherPartySubtitle={`Aluno(a) • ${student.subjectName} (${student.levelName})`}
+              onSendMessage={handleSendMessage}
+              loading={chatLoading}
+            />
+          </div>
+        )}
 
       {/* Modal: Novo Certificado */}
       <Modal

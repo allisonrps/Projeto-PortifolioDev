@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Aura.Application.DTOs.Subjects;
 using Aura.Application.DTOs.Students;
 using Aura.Application.DTOs.Dashboard;
+using Aura.Application.DTOs.Chat;
 using Aura.Application.DTOs.Schedule;
 using Aura.Application.Services;
 using Aura.Domain.Entities;

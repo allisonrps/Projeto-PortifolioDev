@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   MdAccessTime, MdEdit, MdSchedule, MdCancel, MdCheckCircle, MdSchool,
   MdCake, MdTaskAlt, MdAttachMoney, MdAssignmentTurnedIn, MdOpenInNew, MdNotificationsActive,
-  MdHistory
+  MdHistory, MdChat
 } from 'react-icons/md';
 import Badge from '../../components/ui/Badge';
 import Avatar from '../../components/ui/Avatar';
@@ -32,6 +32,7 @@ export default function DashboardPage() {
   const [birthdayModalOpen, setBirthdayModalOpen] = useState(false);
   const [completedActivitiesModalOpen, setCompletedActivitiesModalOpen] = useState(false);
   const [pendingPaymentsModalOpen, setPendingPaymentsModalOpen] = useState(false);
+  const [messagesModalOpen, setMessagesModalOpen] = useState(false);
 
   // Local storage state for tracking viewed completed activities
   const [viewedActivityIds, setViewedActivityIds] = useState<string[]>(() => {
@@ -202,6 +203,33 @@ export default function DashboardPage() {
           </div>
           <span className="reminder-title">Aulas a Completar</span>
           <span className="reminder-subtitle">Pendentes</span>
+        </div>
+
+        {/* 6. Mensagens de Alunos */}
+        <div 
+          className={`reminder-square-card ${(data?.totalUnreadMessagesCount || 0) > 0 ? 'has-items' : ''}`}
+          onClick={() => setMessagesModalOpen(true)}
+          title="Ver mensagens de alunos"
+        >
+          {(data?.totalUnreadMessagesCount || 0) > 0 && (
+            <div className="reminder-notification-pill reminder-notification-chat" title="Nova mensagem de aluno!">
+              <MdNotificationsActive /> Nova
+            </div>
+          )}
+          <div className="reminder-header-row">
+            <div className="reminder-icon-badge reminder-icon-chat">
+              <MdChat />
+            </div>
+            <span className={`reminder-count ${(data?.totalUnreadMessagesCount || 0) > 0 ? 'active-chat' : ''}`}>
+              {data?.totalUnreadMessagesCount || 0}
+            </span>
+          </div>
+          <span className="reminder-title">Mensagens</span>
+          <span className="reminder-subtitle">
+            {(data?.totalUnreadMessagesCount || 0) > 0
+              ? `${data?.totalUnreadMessagesCount} não lida${(data?.totalUnreadMessagesCount || 0) > 1 ? 's' : ''}`
+              : 'Nenhuma nova'}
+          </span>
         </div>
       </div>
 
@@ -939,6 +967,74 @@ export default function DashboardPage() {
               </p>
             )}
           </div>
+        </div>
+      </Modal>
+
+      {/* Modal: Mensagens de Alunos */}
+      <Modal
+        isOpen={messagesModalOpen}
+        onClose={() => setMessagesModalOpen(false)}
+        title="Mensagens de Alunos"
+        size="md"
+        footer={<Button onClick={() => setMessagesModalOpen(false)}>Fechar</Button>}
+      >
+        <div className="reminder-modal-content">
+          {data?.unreadMessages && data.unreadMessages.length > 0 ? (
+            <div className="reminder-list">
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '14px' }}>
+                Alunos com mensagens aguardando sua resposta:
+              </p>
+              {data.unreadMessages.map((item) => (
+                <div
+                  key={item.studentId}
+                  className="reminder-item-card"
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', marginBottom: '10px' }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <Avatar
+                      src={item.studentPhotoUrl || undefined}
+                      name={item.studentName}
+                      size="md"
+                    />
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <strong style={{ fontSize: '14px', color: 'var(--text-primary)' }}>{item.studentName}</strong>
+                        <Badge variant="primary">{item.unreadCount} nova{item.unreadCount > 1 ? 's' : ''}</Badge>
+                      </div>
+                      <p style={{ fontSize: '12.5px', color: 'var(--text-secondary)', margin: '4px 0 0 0', maxWidth: '260px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        "{item.lastMessageContent}"
+                      </p>
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                        {format(new Date(item.lastMessageDate), "dd/MM/yyyy 'às' HH:mm")}
+                      </span>
+                    </div>
+                  </div>
+
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    icon={<MdChat />}
+                    onClick={() => {
+                      setMessagesModalOpen(false);
+                      navigate(`/students/${item.studentId}?tab=messages`);
+                    }}
+                  >
+                    Responder
+                  </Button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="reminder-empty" style={{ textAlign: 'center', padding: '30px 10px' }}>
+              <div style={{ fontSize: '42px', color: 'var(--accent-primary)', opacity: 0.7, marginBottom: '10px' }}>
+                <MdChat />
+              </div>
+              <h4 style={{ fontSize: '16px', fontWeight: 700, margin: '0 0 6px 0', color: 'var(--text-primary)' }}>Tudo em dia!</h4>
+              <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: 0 }}>
+                Nenhuma mensagem nova de aluno no momento.
+              </p>
+            </div>
+          )}
         </div>
       </Modal>
     </div>

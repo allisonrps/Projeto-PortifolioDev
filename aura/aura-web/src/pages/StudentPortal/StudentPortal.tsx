@@ -4,10 +4,11 @@ import {
   MdSchool, MdAssignmentTurnedIn, MdMenuBook, MdVisibility,
   MdDateRange, MdNotes, MdAccessTime, MdOpenInNew, MdExpandMore, MdExpandLess,
   MdCameraAlt, MdZoomIn, MdZoomOut, MdCheck, MdEventAvailable, MdEmojiEvents,
-  MdCardMembership, MdDownload
+  MdCardMembership, MdDownload, MdChat
 } from 'react-icons/md';
 import { publicStudentService } from '../../services/dataServices';
-import type { ClassSheet, Certificate } from '../../types';
+import type { ClassSheet, Certificate, ChatMessage } from '../../types';
+import ChatWindow from '../../components/chat/ChatWindow';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
@@ -48,10 +49,49 @@ export default function StudentPortalPage() {
   const [sheets, setSheets] = useState<ClassSheet[]>([]);
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'sheets' | 'assessments' | 'certificates'>('sheets');
+  const [activeTab, setActiveTab] = useState<'sheets' | 'assessments' | 'certificates' | 'messages'>('sheets');
   const [assessmentFilter, setAssessmentFilter] = useState<'all' | 'exam' | 'exercise'>('all');
   const [selectedCertificate, setSelectedCertificate] = useState<Certificate | null>(null);
 
+  // Chat states
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatLoading, setChatLoading] = useState(false);
+  const [chatUnreadCount, setChatUnreadCount] = useState(0);
+
+  const loadChat = async (silent = false) => {
+    if (!studentId) return;
+    if (!silent) setChatLoading(true);
+    try {
+      const res = await publicStudentService.getMessages(studentId);
+      setChatMessages(res.data);
+      setChatUnreadCount(0);
+    } catch {
+      // silencioso
+    } finally {
+      if (!silent) setChatLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'messages' && studentId) {
+      loadChat();
+      const interval = setInterval(() => {
+        loadChat(true);
+      }, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [activeTab, studentId]);
+
+  const handleSendMessage = async (text: string) => {
+    if (!studentId) return;
+    try {
+      const res = await publicStudentService.sendMessage(studentId, text);
+      setChatMessages(prev => [...prev, res.data]);
+    } catch {
+      toast.error('Erro ao enviar mensagem.');
+      throw new Error();
+    }
+  };
   // Reader Modal states
   const [selectedSheet, setSelectedSheet] = useState<ClassSheet | null>(null);
   const [loadingProgress, setLoadingProgress] = useState(10);
@@ -514,6 +554,12 @@ export default function StudentPortalPage() {
           >
             <MdCardMembership /> Certificados ({certificates.length})
           </button>
+          <button
+            className={`portal-tab-btn ${activeTab === 'messages' ? 'active' : ''}`}
+            onClick={() => setActiveTab('messages')}
+          >
+            <MdChat /> Mensagens {chatUnreadCount > 0 && <Badge variant="primary">{chatUnreadCount}</Badge>}
+          </button>
         </div>
 
         <div className="portal-tab-body">
@@ -833,6 +879,19 @@ export default function StudentPortalPage() {
                   })}
                 </div>
               )}
+            </div>
+          )}
+
+          {activeTab === 'messages' && (
+            <div className="portal-chat-section animate-fadeIn">
+              <ChatWindow
+                messages={chatMessages}
+                currentSenderType="student"
+                otherPartyName="Professor(a)"
+                otherPartySubtitle="Tire dúvidas, envie recados e receba orientações"
+                onSendMessage={handleSendMessage}
+                loading={chatLoading}
+              />
             </div>
           )}
         </div>

@@ -319,7 +319,7 @@
 /* Dashboard Reminder Squares (5 cards) */
 .dashboard-reminders-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 12px;
   margin-bottom: var(--space-xl);
 }
@@ -400,6 +400,20 @@
 .reminder-icon-corrections {
   background: rgba(249, 115, 22, 0.15);
   color: #f97316;
+}
+
+
+.reminder-icon-chat {
+  background: rgba(124, 58, 237, 0.15);
+  color: var(--accent-primary);
+}
+
+.reminder-count.active-chat {
+  color: var(--accent-primary);
+}
+
+.reminder-notification-chat {
+  background: var(--accent-primary);
 }
 
 .reminder-icon-lessons {

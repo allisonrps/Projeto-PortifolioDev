@@ -27,6 +27,7 @@ public class AuraDbContext : DbContext
     public DbSet<ManualFinanceEntry> ManualFinanceEntries => Set<ManualFinanceEntry>();
     public DbSet<PlatformSetting> PlatformSettings => Set<PlatformSetting>();
     public DbSet<Certificate> Certificates => Set<Certificate>();
+    public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -54,6 +55,7 @@ public class AuraDbContext : DbContext
         modelBuilder.Entity<ClassSheet>().HasQueryFilter(e => !e.IsDeleted);
         modelBuilder.Entity<ManualFinanceEntry>().HasQueryFilter(e => !e.IsDeleted);
         modelBuilder.Entity<Certificate>().HasQueryFilter(e => !e.IsDeleted);
+        modelBuilder.Entity<ChatMessage>().HasQueryFilter(e => !e.IsDeleted);
 
         // Professor
         modelBuilder.Entity<Professor>(e =>
