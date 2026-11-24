@@ -293,26 +293,26 @@
 @media (max-width: 768px) {
   .form-row { grid-template-columns: 1fr; }
   .students-list {
-    padding-left: 28px;
+    padding-left: 42px;
     gap: var(--space-md);
   }
   .student-row-card {
-    padding: 12px 14px 12px 14px !important;
+    padding: 14px 16px 14px 16px !important;
   }
   .student-row-avatar-wrap {
-    margin-left: -32px;
+    margin-left: -46px;
   }
   .student-row-avatar-wrap .avatar {
-    width: 56px !important;
-    height: 56px !important;
-    min-width: 56px !important;
-    border-width: 3px !important;
+    width: 84px !important;
+    height: 84px !important;
+    min-width: 84px !important;
+    border-width: 4px !important;
   }
   .student-row-avatar-wrap .avatar-initials {
-    font-size: 17px !important;
+    font-size: 26px !important;
   }
   .student-row-name {
-    font-size: 18px !important;
+    font-size: 20px !important;
     white-space: normal !important;
     word-break: break-word !important;
   }
@@ -325,8 +325,9 @@
   .student-row-header-part {
     display: flex !important;
     align-items: center !important;
-    gap: var(--space-sm) !important;
+    gap: 12px !important;
     width: 100% !important;
+    min-height: 84px;
   }
   .student-row-details-part {
     display: flex !important;
