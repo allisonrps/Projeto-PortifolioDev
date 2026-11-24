@@ -244,6 +244,18 @@ export default function StudentsPage() {
     return matchesSearch && matchesStatus && matchesSubject && matchesLevel;
   });
 
+  // Contadores para as abas de status
+  const baseStudentsForCount = students.filter(s => {
+    const matchesSearch = !search.trim() || s.name.toLowerCase().includes(search.toLowerCase());
+    const matchesSubject = subjectFilter === 'all' || s.subjectId === subjectFilter;
+    const matchesLevel = levelFilter === 'all' || s.levelId === levelFilter;
+    return matchesSearch && matchesSubject && matchesLevel;
+  });
+
+  const totalCount = baseStudentsForCount.length;
+  const activeCount = baseStudentsForCount.filter(s => s.isActive === true).length;
+  const archivedCount = baseStudentsForCount.filter(s => s.isActive === false).length;
+
   const formAge = calculateAge(form.birthDate);
   const isMinor = formAge !== null && formAge < 18;
 
@@ -259,9 +271,30 @@ export default function StudentsPage() {
 
       <div className="filters-bar animate-fadeIn">
         <div className="filter-group-status">
-          <button className={`filter-btn ${statusFilter === 'active' ? 'active' : ''}`} onClick={() => setStatusFilter('active')}>Ativos</button>
-          <button className={`filter-btn ${statusFilter === 'archived' ? 'active' : ''}`} onClick={() => setStatusFilter('archived')}>Arquivados</button>
-          <button className={`filter-btn ${statusFilter === 'all' ? 'active' : ''}`} onClick={() => setStatusFilter('all')}>Todos</button>
+          <button
+            type="button"
+            className={`filter-btn ${statusFilter === 'all' ? 'active' : ''}`}
+            onClick={() => setStatusFilter('all')}
+          >
+            <span>Todos</span>
+            <span className="filter-badge">{totalCount}</span>
+          </button>
+          <button
+            type="button"
+            className={`filter-btn ${statusFilter === 'active' ? 'active' : ''}`}
+            onClick={() => setStatusFilter('active')}
+          >
+            <span>Ativos</span>
+            <span className="filter-badge">{activeCount}</span>
+          </button>
+          <button
+            type="button"
+            className={`filter-btn ${statusFilter === 'archived' ? 'active' : ''}`}
+            onClick={() => setStatusFilter('archived')}
+          >
+            <span>Arquivados</span>
+            <span className="filter-badge">{archivedCount}</span>
+          </button>
         </div>
 
         <div className="filters-dropdowns">
