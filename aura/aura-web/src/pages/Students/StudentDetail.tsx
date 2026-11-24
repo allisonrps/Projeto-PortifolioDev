@@ -5,7 +5,7 @@ import {
   MdSchedule, MdDelete, MdAdd, MdEdit, MdCheckCircle, MdCancel, MdPercent, MdAttachMoney,
   MdExpandMore, MdExpandLess, MdTimer, MdCake, MdEventAvailable, MdPerson, MdSwapVert,
   MdAssignmentTurnedIn, MdOpenInNew, MdAccessTime, MdShare, MdMenuBook,
-  MdEmojiEvents, MdLocationOn, MdCameraAlt, MdZoomIn, MdZoomOut, MdCheck,
+  MdEmojiEvents, MdLocationOn, MdCameraAlt, MdZoomIn, MdZoomOut, MdCheck, MdClose,
   MdCardMembership, MdVisibility, MdDownload, MdChat
 } from 'react-icons/md';
 import { FaWhatsapp } from 'react-icons/fa';
@@ -1691,9 +1691,16 @@ export default function StudentDetailPage() {
 
         {tab === 'schedules' && (
           <div className="schedules-tab">
-            <div className="tab-toolbar">
-              <h3>Horários Recorrentes</h3>
-              <Button icon={<MdAdd />} onClick={() => openScheduleModal()}>Adicionar Horário</Button>
+            <div className="tab-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: 'var(--space-md)' }}>
+              <h3 style={{ margin: 0 }}>Horários Recorrentes</h3>
+              <button
+                type="button"
+                className="round-add-btn"
+                onClick={() => openScheduleModal()}
+                title="Adicionar Horário"
+              >
+                <MdAdd />
+              </button>
             </div>
             <div className="detail-list">
               {schedules.map(s => {
@@ -1762,7 +1769,7 @@ export default function StudentDetailPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'space-between', width: '100%' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <MdAttachMoney style={{ fontSize: '20px', color: 'var(--accent-primary)' }} />
-                    <strong>Valor da Mensalidade:</strong>
+                    <strong>Valor:</strong>
                     {editingPrice ? (
                       <input
                         type="number"
@@ -1775,12 +1782,14 @@ export default function StudentDetailPage() {
                     )}
                   </div>
                   {editingPrice ? (
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <Button size="sm" variant="ghost" onClick={() => setEditingPrice(false)}>Cancelar</Button>
-                      <Button size="sm" isLoading={savingPrice} onClick={handleSaveMonthlyPrice}>Salvar</Button>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <button type="button" className="icon-btn" onClick={() => setEditingPrice(false)} title="Cancelar"><MdClose /></button>
+                      <button type="button" className="icon-btn icon-btn-primary" onClick={handleSaveMonthlyPrice} disabled={savingPrice} title="Salvar"><MdCheck /></button>
                     </div>
                   ) : (
-                    <Button size="sm" variant="outline" icon={<MdEdit />} onClick={() => setEditingPrice(true)}>Editar</Button>
+                    <button type="button" className="icon-btn icon-btn-primary" onClick={() => setEditingPrice(true)} title="Editar valor da mensalidade">
+                      <MdEdit />
+                    </button>
                   )}
                 </div>
               </Card>
@@ -1835,9 +1844,16 @@ export default function StudentDetailPage() {
         {tab === 'activities' && (
           <div className="activities-tab">
             {/* Atividades Online */}
-            <div className="tab-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)', gap: '12px' }}>
-              <h3 style={{ margin: 0, fontSize: '16px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Provas & Exercícios Online</h3>
-              <Button icon={<MdAdd />} onClick={openAssignModal} title="Atribuir Atividade Online" style={{ padding: '8px', minWidth: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} />
+            <div className="tab-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)', width: '100%' }}>
+              <h3 style={{ margin: 0, fontSize: '16px' }}>Provas & Exercícios Online</h3>
+              <button
+                type="button"
+                className="round-add-btn"
+                onClick={openAssignModal}
+                title="Atribuir Atividade Online"
+              >
+                <MdAdd />
+              </button>
             </div>
 
             {/* Toggle Filtro para o Professor */}
@@ -2106,9 +2122,16 @@ export default function StudentDetailPage() {
             </div>
 
             {/* Provas e Exercícios Presenciais (Lançados Manualmente) */}
-            <div className="tab-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'var(--space-lg)', marginBottom: 'var(--space-md)', gap: '12px' }}>
-              <h3 style={{ margin: 0, fontSize: '16px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Lançamentos</h3>
-              <Button variant="outline" icon={<MdAdd />} onClick={() => openManualModal('exam')} title="Novo Lançamento" style={{ padding: '8px', minWidth: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} />
+            <div className="tab-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'var(--space-lg)', marginBottom: 'var(--space-md)', width: '100%' }}>
+              <h3 style={{ margin: 0, fontSize: '16px' }}>Lançamentos</h3>
+              <button
+                type="button"
+                className="round-add-btn"
+                onClick={() => openManualModal('exam')}
+                title="Novo Lançamento"
+              >
+                <MdAdd />
+              </button>
             </div>
 
             <div className="detail-list">
@@ -2270,9 +2293,6 @@ export default function StudentDetailPage() {
 
                 {/* Lista Padrão de Fichas Liberadas do Aluno */}
                 <div className="sheets-default-list animate-fadeIn" style={{ marginTop: '24px' }}>
-                  <h4 style={{ fontSize: '14px', marginBottom: '12px', color: 'var(--text-secondary)' }}>
-                    Fichas Liberadas para o Aluno ({releasedSheets.length}):
-                  </h4>
                   <div className="detail-list">
                     {releasedSheets.map((sheet: ClassSheet) => {
                       const levelName = allLevels.find((l: Level) => l.id === sheet.levelId)?.name || (sheet.levelId === student.levelId ? student.levelName : 'Outro Nível');
@@ -2325,16 +2345,16 @@ export default function StudentDetailPage() {
 
         {tab === 'certificates' && (
           <div className="certificates-tab animate-fadeIn">
-            <div className="tab-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-              <div>
-                <h3>Certificados e Conquistas do Aluno</h3>
-                <p className="tab-toolbar-info">
-                  Certificados oficiais liberados e visíveis no portal do aluno
-                </p>
-              </div>
-              <Button icon={<MdAdd />} onClick={openNewCertificate}>
-                Novo Certificado
-              </Button>
+            <div className="tab-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: 'var(--space-md)' }}>
+              <h3 style={{ margin: 0 }}>Certificados</h3>
+              <button
+                type="button"
+                className="round-add-btn"
+                onClick={openNewCertificate}
+                title="Novo Certificado"
+              >
+                <MdAdd />
+              </button>
             </div>
 
             {certificates.length === 0 ? (
@@ -3458,13 +3478,8 @@ export default function StudentDetailPage() {
       
         {tab === 'messages' && (
           <div className="messages-tab animate-fadeIn">
-            <div className="tab-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-              <div>
-                <h3>Chat com o Aluno</h3>
-                <p className="tab-toolbar-info">
-                  Conversas sincronizadas em tempo real com data e hora. O aluno visualiza e responde diretamente no Portal do Aluno.
-                </p>
-              </div>
+            <div className="tab-toolbar" style={{ display: 'flex', alignItems: 'center', marginBottom: 'var(--space-sm)' }}>
+              <h3 style={{ margin: 0 }}>Chat</h3>
             </div>
 
             <ChatWindow

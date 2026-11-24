@@ -159,9 +159,6 @@ export default function ChatWindow({
               <MdForum />
             </div>
             <div className="chat-empty-title">Nenhuma mensagem ainda</div>
-            <p className="chat-empty-desc">
-              Envie uma mensagem abaixo para iniciar a conversa! Todas as mensagens marcam data e hora exatas.
-            </p>
           </div>
         ) : (
           messages.map((msg) => {
