@@ -327,9 +327,16 @@
     font-size: 26px !important;
   }
   .student-row-name {
-    font-size: 20px !important;
+    font-size: 24px !important;
+    font-weight: 800 !important;
+    line-height: 1.22 !important;
+    letter-spacing: -0.02em !important;
     white-space: normal !important;
     word-break: break-word !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
   }
   .student-row-content {
     flex-direction: column !important;
@@ -340,9 +347,9 @@
   .student-row-header-part {
     display: flex !important;
     align-items: center !important;
-    gap: 12px !important;
+    gap: 14px !important;
     width: 100% !important;
-    min-height: 84px;
+    min-height: 84px !important;
   }
   .student-row-details-part {
     display: flex !important;
