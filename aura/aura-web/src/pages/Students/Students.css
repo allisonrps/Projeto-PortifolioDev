@@ -139,38 +139,39 @@
 .students-list {
   display: flex;
   flex-direction: column;
-  gap: calc(var(--space-md) + 4px);
-  padding-left: 42px;
+  gap: calc(var(--space-md) + 6px);
+  padding-left: 56px;
   padding-top: 10px;
   padding-bottom: 10px;
 }
 
 .student-row-card {
-  padding: 14px 22px 14px 20px !important;
+  padding: 16px 24px 16px 20px !important;
   overflow: visible !important;
   position: relative;
+  min-height: 80px;
   transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .student-row-avatar-wrap {
   position: relative;
   flex-shrink: 0;
-  margin-left: -44px;
+  margin-left: -60px;
   z-index: 3;
 }
 
 .student-row-avatar-wrap .avatar {
-  width: 70px !important;
-  height: 70px !important;
-  min-width: 70px !important;
+  width: 105px !important;
+  height: 105px !important;
+  min-width: 105px !important;
   border-radius: 50% !important;
-  border: 4px solid var(--bg-card) !important;
+  border: 5px solid var(--bg-card) !important;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5), 0 0 0 2px var(--border-color);
   transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
 }
 
 .student-row-avatar-wrap .avatar-initials {
-  font-size: 22px !important;
+  font-size: 32px !important;
   font-weight: 800 !important;
 }
 
@@ -276,6 +277,20 @@
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md); }
 
 @media (max-width: 1024px) {
+  .students-list {
+    padding-left: 48px;
+  }
+  .student-row-avatar-wrap {
+    margin-left: -52px;
+  }
+  .student-row-avatar-wrap .avatar {
+    width: 92px !important;
+    height: 92px !important;
+    min-width: 92px !important;
+  }
+  .student-row-avatar-wrap .avatar-initials {
+    font-size: 28px !important;
+  }
   .student-row-name {
     font-size: 20px;
   }
