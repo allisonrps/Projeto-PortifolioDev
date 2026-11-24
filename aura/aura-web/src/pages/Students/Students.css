@@ -336,28 +336,33 @@
     width: 100% !important;
     gap: 10px !important;
   }
+  .student-row-actions {
+    order: 1 !important;
+    display: flex !important;
+    justify-content: center !important;
+    gap: 12px !important;
+    width: 100% !important;
+    border-top: 1px solid var(--border-color);
+    padding-top: 10px !important;
+    padding-bottom: 2px !important;
+  }
+  .student-row-actions .icon-btn {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 17px !important;
+  }
   .student-tags {
+    order: 2 !important;
     display: flex !important;
     gap: 6px !important;
     flex-wrap: wrap !important;
+    justify-content: center !important;
     width: 100% !important;
+    padding-bottom: 2px !important;
   }
   .student-tags .badge {
     font-size: 11.5px !important;
     padding: 3px 8px !important;
-  }
-  .student-row-actions {
-    display: flex !important;
-    justify-content: flex-end !important;
-    gap: 8px !important;
-    width: 100% !important;
-    border-top: 1px solid var(--border-color);
-    padding-top: 8px !important;
-  }
-  .student-row-actions .icon-btn {
-    width: 34px !important;
-    height: 34px !important;
-    font-size: 16px !important;
   }
   .filters-bar {
     flex-direction: column;
