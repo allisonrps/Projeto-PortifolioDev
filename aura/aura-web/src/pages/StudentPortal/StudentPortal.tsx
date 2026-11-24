@@ -551,25 +551,31 @@ export default function StudentPortalPage() {
             className={`portal-tab-btn ${activeTab === 'sheets' ? 'active' : ''}`}
             onClick={() => setActiveTab('sheets')}
           >
-            <MdMenuBook /> Fichas ({sheets.length})
+            <MdMenuBook /> <span>Fichas</span>
+            <span className="portal-tab-badge">{sheets.length}</span>
           </button>
           <button
             className={`portal-tab-btn ${activeTab === 'assessments' ? 'active' : ''}`}
             onClick={() => setActiveTab('assessments')}
           >
-            <MdAssignmentTurnedIn /> Atividades ({assessments.length})
+            <MdAssignmentTurnedIn /> <span>Atividades</span>
+            <span className="portal-tab-badge">{assessments.length}</span>
           </button>
           <button
             className={`portal-tab-btn ${activeTab === 'certificates' ? 'active' : ''}`}
             onClick={() => setActiveTab('certificates')}
           >
-            <MdCardMembership /> Certificados ({certificates.length})
+            <MdCardMembership /> <span>Certificados</span>
+            <span className="portal-tab-badge">{certificates.length}</span>
           </button>
           <button
             className={`portal-tab-btn ${activeTab === 'messages' ? 'active' : ''}`}
             onClick={() => setActiveTab('messages')}
           >
-            <MdChat /> Mensagens {chatUnreadCount > 0 && <Badge variant="primary">{chatUnreadCount}</Badge>}
+            <MdChat /> <span>Mensagens</span>
+            <span className={`portal-tab-badge ${chatUnreadCount > 0 ? 'unread' : ''}`}>
+              {chatUnreadCount > 0 ? chatUnreadCount : chatMessages.length}
+            </span>
           </button>
         </div>
 

@@ -1336,7 +1336,7 @@ export default function StudentDetailPage() {
     { key: 'activities' as const, icon: <MdAssignmentTurnedIn />, label: 'Provas & Exercícios', count: studentActivities.length + (student.exams?.length || 0) + (student.exercises?.length || 0) },
     { key: 'sheets' as const, icon: <MdSchool />, label: 'Fichas', count: releasedSheetIds.length },
     { key: 'certificates' as const, icon: <MdCardMembership />, label: 'Certificados', count: certificates.length },
-    { key: 'messages' as const, icon: <MdChat />, label: 'Mensagens', count: chatUnreadCount },
+    { key: 'messages' as const, icon: <MdChat />, label: 'Mensagens', count: chatUnreadCount > 0 ? chatUnreadCount : chatMessages.length, isUnread: chatUnreadCount > 0 },
   ];
 
   return (
@@ -1537,7 +1537,7 @@ export default function StudentDetailPage() {
                 >
                   <span className="tab-icon">{t.icon}</span>
                   <span className="tab-label">{t.label}</span>
-                  <span className="tab-count">{t.count}</span>
+                  <span className={`tab-count ${(t as any).isUnread ? 'unread' : ''}`}>{t.count}</span>
                 </button>
               ))}
             </div>
