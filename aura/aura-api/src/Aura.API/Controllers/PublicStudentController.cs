@@ -439,4 +439,24 @@ public class PublicStudentController : ControllerBase
         var messageDto = _mapper.Map<ChatMessageDto>(message);
         return Created($"/api/public/student/{studentId}/messages/{message.Id}", messageDto);
     }
+
+    [HttpDelete("{studentId}/messages/{messageId}")]
+    public async Task<ActionResult> DeleteStudentMessage(Guid studentId, Guid messageId)
+    {
+        var message = await _context.ChatMessages
+            .FirstOrDefaultAsync(m => m.Id == messageId && m.StudentId == studentId && !m.IsDeleted);
+
+        if (message == null)
+            return NotFound("Mensagem não encontrada.");
+
+        // O aluno só pode apagar mensagens que ele mesmo enviou
+        if (message.SenderType != MessageSenderType.Student)
+            return Forbid();
+
+        message.IsDeleted = true;
+        message.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
 }

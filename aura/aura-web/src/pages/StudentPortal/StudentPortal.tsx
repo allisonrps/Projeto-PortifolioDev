@@ -92,6 +92,17 @@ export default function StudentPortalPage() {
       throw new Error();
     }
   };
+  const handleDeleteMessage = async (messageId: string) => {
+    if (!studentId) return;
+    try {
+      await publicStudentService.deleteMessage(studentId, messageId);
+      setChatMessages(prev => prev.filter(m => m.id !== messageId));
+      toast.success('Mensagem apagada com sucesso!');
+    } catch {
+      toast.error('Erro ao apagar mensagem.');
+      throw new Error();
+    }
+  };
   // Reader Modal states
   const [selectedSheet, setSelectedSheet] = useState<ClassSheet | null>(null);
   const [loadingProgress, setLoadingProgress] = useState(10);
@@ -890,6 +901,7 @@ export default function StudentPortalPage() {
                 otherPartyName="Professor(a)"
                 otherPartySubtitle="Tire dúvidas, envie recados e receba orientações"
                 onSendMessage={handleSendMessage}
+                onDeleteMessage={handleDeleteMessage}
                 loading={chatLoading}
               />
             </div>

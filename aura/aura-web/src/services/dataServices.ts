@@ -113,6 +113,7 @@ export const chatService = {
   getStudentChat: (studentId: string) => api.get<ChatMessage[]>(`/chat/students/${studentId}`),
   sendMessage: (studentId: string, content: string) => api.post<ChatMessage>(`/chat/students/${studentId}`, { content }),
   getUnread: () => api.get<StudentUnreadSummary[]>('/chat/unread'),
+  deleteMessage: (messageId: string) => api.delete(`/chat/messages/${messageId}`),
 };
 
 export const publicStudentService = {
@@ -124,4 +125,5 @@ export const publicStudentService = {
   getCertificates: (studentId: string) => api.get<Certificate[]>(`/public/student/${studentId}/certificates`),
   getMessages: (studentId: string) => api.get<ChatMessage[]>(`/public/student/${studentId}/messages`),
   sendMessage: (studentId: string, content: string) => api.post<ChatMessage>(`/public/student/${studentId}/messages`, { content }),
+  deleteMessage: (studentId: string, messageId: string) => api.delete(`/public/student/${studentId}/messages/${messageId}`),
 };

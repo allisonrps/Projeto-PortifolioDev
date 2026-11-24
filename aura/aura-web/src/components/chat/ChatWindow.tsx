@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { MdSend, MdDone, MdDoneAll, MdForum } from 'react-icons/md';
+import { MdSend, MdDone, MdDoneAll, MdForum, MdDeleteOutline } from 'react-icons/md';
 import { format, isToday, isYesterday } from 'date-fns';
 import type { ChatMessage } from '../../types';
 import './Chat.css';
@@ -11,6 +11,7 @@ interface ChatWindowProps {
   otherPartyAvatarUrl?: string | null;
   otherPartySubtitle?: string;
   onSendMessage: (text: string) => Promise<void>;
+  onDeleteMessage?: (messageId: string) => Promise<void>;
   loading?: boolean;
 }
 
@@ -21,10 +22,12 @@ export default function ChatWindow({
   otherPartyAvatarUrl,
   otherPartySubtitle = 'Mensagens sincronizadas em tempo real',
   onSendMessage,
+  onDeleteMessage,
   loading = false,
 }: ChatWindowProps) {
   const [inputText, setInputText] = useState('');
   const [sending, setSending] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -54,6 +57,18 @@ export default function ChatWindow({
       // O erro já é tratado no callback pai com toast
     } finally {
       setSending(false);
+    }
+  };
+
+  const handleDelete = async (messageId: string) => {
+    if (!onDeleteMessage || deletingId) return;
+    if (!confirm('Deseja realmente apagar esta mensagem?')) return;
+
+    setDeletingId(messageId);
+    try {
+      await onDeleteMessage(messageId);
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -133,12 +148,26 @@ export default function ChatWindow({
               : (currentSenderType === 'professor' ? otherPartyName : 'Professor');
 
             const isRead = currentSenderType === 'professor' ? msg.isReadByStudent : msg.isReadByProfessor;
+            const canDelete = isOutgoing || currentSenderType === 'professor';
 
             return (
               <div
                 key={msg.id}
                 className={`chat-msg-row ${isOutgoing ? 'outgoing' : 'incoming'} animate-fadeIn`}
               >
+                {/* Botão de apagar para mensagens enviadas (à esquerda do balão) */}
+                {isOutgoing && canDelete && onDeleteMessage && (
+                  <button
+                    type="button"
+                    className="chat-msg-delete-btn"
+                    title="Apagar mensagem"
+                    onClick={() => handleDelete(msg.id)}
+                    disabled={deletingId === msg.id}
+                  >
+                    <MdDeleteOutline />
+                  </button>
+                )}
+
                 <div className={`chat-bubble ${isOutgoing ? 'outgoing' : 'incoming'}`}>
                   <div className="chat-bubble-sender">{senderLabel}</div>
                   <div className="chat-bubble-text">{msg.content}</div>
@@ -154,6 +183,19 @@ export default function ChatWindow({
                     )}
                   </div>
                 </div>
+
+                {/* Botão de apagar para professor moderar mensagens recebidas (à direita do balão) */}
+                {!isOutgoing && canDelete && onDeleteMessage && (
+                  <button
+                    type="button"
+                    className="chat-msg-delete-btn"
+                    title="Apagar mensagem"
+                    onClick={() => handleDelete(msg.id)}
+                    disabled={deletingId === msg.id}
+                  >
+                    <MdDeleteOutline />
+                  </button>
+                )}
               </div>
             );
           })

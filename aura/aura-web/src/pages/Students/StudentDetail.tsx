@@ -280,6 +280,17 @@ export default function StudentDetailPage() {
     }
   };
 
+  const handleDeleteMessage = async (messageId: string) => {
+    try {
+      await chatService.deleteMessage(messageId);
+      setChatMessages(prev => prev.filter(m => m.id !== messageId));
+      toast.success('Mensagem apagada com sucesso!');
+    } catch {
+      toast.error('Erro ao apagar mensagem.');
+      throw new Error();
+    }
+  };
+
   // Certificates states
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [certModalOpen, setCertModalOpen] = useState(false);
@@ -3463,6 +3474,7 @@ export default function StudentDetailPage() {
               otherPartyAvatarUrl={student.photoUrl ? getAbsoluteAvatarUrl(student.photoUrl) : undefined}
               otherPartySubtitle={`Aluno(a) • ${student.subjectName} (${student.levelName})`}
               onSendMessage={handleSendMessage}
+              onDeleteMessage={handleDeleteMessage}
               loading={chatLoading}
             />
           </div>

@@ -122,4 +122,22 @@ public class ChatController : BaseApiController
 
         return Ok(grouped);
     }
+
+    [HttpDelete("messages/{messageId}")]
+    public async Task<ActionResult> DeleteMessage(Guid messageId)
+    {
+        var professorId = GetProfessorId();
+
+        var message = await _context.ChatMessages
+            .FirstOrDefaultAsync(m => m.Id == messageId && m.ProfessorId == professorId && !m.IsDeleted);
+
+        if (message == null)
+            return NotFound("Mensagem não encontrada.");
+
+        message.IsDeleted = true;
+        message.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
 }

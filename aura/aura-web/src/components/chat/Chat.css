@@ -127,6 +127,9 @@
 .chat-msg-row {
   display: flex;
   width: 100%;
+  align-items: center;
+  gap: 6px;
+  position: relative;
 }
 
 .chat-msg-row.outgoing {
@@ -135,6 +138,39 @@
 
 .chat-msg-row.incoming {
   justify-content: flex-start;
+}
+
+.chat-msg-delete-btn {
+  opacity: 0;
+  transition: opacity var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.chat-msg-row:hover .chat-msg-delete-btn {
+  opacity: 0.8;
+}
+
+.chat-msg-delete-btn:hover {
+  color: var(--danger);
+  background: rgba(239, 68, 68, 0.12);
+  transform: scale(1.15);
+  opacity: 1 !important;
+}
+
+@media (max-width: 768px) {
+  .chat-msg-delete-btn {
+    opacity: 0.55;
+  }
 }
 
 .chat-bubble {
