@@ -122,6 +122,7 @@ public class MappingProfile : Profile
 
         // Chat
         CreateMap<ChatMessage, ChatMessageDto>()
-            .ForMember(d => d.SenderType, o => o.MapFrom(s => s.SenderType == MessageSenderType.Student ? "student" : "professor"));
+            .ForMember(d => d.SenderType, o => o.MapFrom(s => s.SenderType == MessageSenderType.Student ? "student" : "professor"))
+            .ForMember(d => d.CreatedAt, o => o.MapFrom(s => DateTime.SpecifyKind(s.CreatedAt, DateTimeKind.Utc)));
     }
 }

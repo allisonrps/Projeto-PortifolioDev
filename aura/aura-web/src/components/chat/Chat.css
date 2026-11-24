@@ -174,61 +174,76 @@
 }
 
 .chat-bubble {
-  max-width: 78%;
-  padding: 10px 14px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  max-width: 80%;
+  padding: 8px 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.16);
   position: relative;
   word-break: break-word;
 }
 
 .chat-bubble.outgoing {
-  background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);
-  color: #ffffff;
-  border-radius: 16px 16px 3px 16px;
+  border-radius: 16px 16px 4px 16px;
 }
 
 .chat-bubble.incoming {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 16px 16px 16px 3px;
+  border-radius: 16px 16px 16px 4px;
 }
 
-.chat-bubble-sender {
+/* Balão do Professor (sempre cor primária) */
+.chat-bubble.bubble-professor {
+  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-primary-hover) 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 3px 10px rgba(var(--accent-primary-rgb), 0.22);
+}
+
+/* Balão do Aluno (sempre cor secundária) */
+.chat-bubble.bubble-student {
+  background: linear-gradient(135deg, var(--accent-secondary) 0%, var(--accent-secondary-hover) 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 3px 10px rgba(var(--accent-secondary-rgb), 0.22);
+}
+
+.chat-bubble-line {
+  display: inline;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #ffffff;
+}
+
+.chat-bubble-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   font-size: 11px;
-  font-weight: 700;
-  margin-bottom: 4px;
-  opacity: 0.85;
+  font-weight: 600;
+  line-height: 1;
+  padding: 2.5px 6px;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.22);
+  color: rgba(255, 255, 255, 0.95);
+  margin-right: 8px;
+  vertical-align: middle;
+  letter-spacing: 0.2px;
+  user-select: none;
 }
 
 .chat-bubble-text {
   font-size: 14px;
   line-height: 1.5;
   white-space: pre-wrap;
-}
-
-.chat-bubble-meta {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 4px;
-  font-size: 10.5px;
-  margin-top: 4px;
-  opacity: 0.8;
-}
-
-.chat-bubble.outgoing .chat-bubble-meta {
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.chat-bubble.incoming .chat-bubble-meta {
-  color: var(--text-muted);
+  word-break: break-word;
+  vertical-align: middle;
+  color: #ffffff;
 }
 
 .chat-read-badge {
   display: inline-flex;
   align-items: center;
   font-size: 13px;
+  margin-left: 2px;
+  opacity: 0.95;
 }
 
 .chat-input-bar {

@@ -1005,7 +1005,18 @@ export default function DashboardPage() {
                         "{item.lastMessageContent}"
                       </p>
                       <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                        {format(new Date(item.lastMessageDate), "dd/MM/yyyy 'às' HH:mm")}
+                        {(() => {
+                          try {
+                            const dStr = item.lastMessageDate;
+                            if (!dStr) return '';
+                            const utcStr = dStr.endsWith('Z') || /[+-]\d{2}(:\d{2})?$/.test(dStr) ? dStr : `${dStr}Z`;
+                            const d = new Date(utcStr);
+                            const valid = isNaN(d.getTime()) ? new Date(dStr) : d;
+                            return format(valid, "dd/MM/yyyy 'às' HH:mm");
+                          } catch {
+                            return item.lastMessageDate;
+                          }
+                        })()}
                       </span>
                     </div>
                   </div>

@@ -115,7 +115,7 @@ public class ChatController : BaseApiController
                 StudentPhotoUrl = g.First().Student != null ? g.First().Student.PhotoUrl : null,
                 UnreadCount = g.Count(),
                 LastMessageContent = g.First().Content,
-                LastMessageDate = g.First().CreatedAt
+                LastMessageDate = DateTime.SpecifyKind(g.First().CreatedAt, DateTimeKind.Utc)
             })
             .OrderByDescending(x => x.LastMessageDate)
             .ToList();

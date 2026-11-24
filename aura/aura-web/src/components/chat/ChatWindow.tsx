@@ -79,17 +79,40 @@ export default function ChatWindow({
     }
   };
 
+  const parseMessageDate = (dateStr: string): Date => {
+    if (!dateStr) return new Date();
+    try {
+      const normalized = dateStr.endsWith('Z') || /[+-]\d{2}(:\d{2})?$/.test(dateStr)
+        ? dateStr
+        : `${dateStr}Z`;
+      const d = new Date(normalized);
+      return isNaN(d.getTime()) ? new Date(dateStr) : d;
+    } catch {
+      return new Date();
+    }
+  };
+
   const formatMessageTime = (dateStr: string) => {
     try {
-      const d = new Date(dateStr);
+      const d = parseMessageDate(dateStr);
       if (isNaN(d.getTime())) return '';
       if (isToday(d)) {
-        return `Hoje às ${format(d, 'HH:mm')}`;
+        return format(d, 'HH:mm');
       }
       if (isYesterday(d)) {
-        return `Ontem às ${format(d, 'HH:mm')}`;
+        return `Ontem ${format(d, 'HH:mm')}`;
       }
-      return format(d, "dd/MM/yyyy 'às' HH:mm");
+      return format(d, 'dd/MM HH:mm');
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const formatFullTooltip = (dateStr: string) => {
+    try {
+      const d = parseMessageDate(dateStr);
+      if (isNaN(d.getTime())) return '';
+      return format(d, "dd/MM/yyyy 'às' HH:mm:ss");
     } catch {
       return dateStr;
     }
@@ -143,10 +166,7 @@ export default function ChatWindow({
         ) : (
           messages.map((msg) => {
             const isOutgoing = msg.senderType === currentSenderType;
-            const senderLabel = isOutgoing
-              ? (currentSenderType === 'professor' ? 'Você (Professor)' : 'Você')
-              : (currentSenderType === 'professor' ? otherPartyName : 'Professor');
-
+            const isProfessor = msg.senderType === 'professor';
             const isRead = currentSenderType === 'professor' ? msg.isReadByStudent : msg.isReadByProfessor;
             const canDelete = isOutgoing || currentSenderType === 'professor';
 
@@ -168,19 +188,22 @@ export default function ChatWindow({
                   </button>
                 )}
 
-                <div className={`chat-bubble ${isOutgoing ? 'outgoing' : 'incoming'}`}>
-                  <div className="chat-bubble-sender">{senderLabel}</div>
-                  <div className="chat-bubble-text">{msg.content}</div>
-                  <div className="chat-bubble-meta">
-                    <span>{formatMessageTime(msg.createdAt)}</span>
-                    {isOutgoing && (
-                      <span
-                        className="chat-read-badge"
-                        title={isRead ? 'Visualizada' : 'Enviada'}
-                      >
-                        {isRead ? <MdDoneAll /> : <MdDone />}
-                      </span>
-                    )}
+                <div
+                  className={`chat-bubble ${isProfessor ? 'bubble-professor' : 'bubble-student'} ${isOutgoing ? 'outgoing' : 'incoming'}`}
+                >
+                  <div className="chat-bubble-line">
+                    <span className="chat-bubble-time" title={formatFullTooltip(msg.createdAt)}>
+                      {formatMessageTime(msg.createdAt)}
+                      {isOutgoing && (
+                        <span
+                          className="chat-read-badge"
+                          title={isRead ? 'Visualizada' : 'Enviada'}
+                        >
+                          {isRead ? <MdDoneAll /> : <MdDone />}
+                        </span>
+                      )}
+                    </span>
+                    <span className="chat-bubble-text">{msg.content}</span>
                   </div>
                 </div>
 
