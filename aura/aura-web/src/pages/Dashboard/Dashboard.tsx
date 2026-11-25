@@ -348,7 +348,6 @@ export default function DashboardPage() {
                                 {lesson.subjectName && <Badge variant="primary">{lesson.subjectName}</Badge>}
                                 {lesson.levelName && <Badge variant="secondary">{lesson.levelName}</Badge>}
                               </div>
-                              {lesson.title && <p className="lesson-title" style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>{lesson.title}</p>}
 
                               {/* Rodapé discreto da última aula */}
                               <div className="lesson-last-class-footer" style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '3px', opacity: 0.85 }}>
@@ -494,7 +493,6 @@ export default function DashboardPage() {
                           {lesson.subjectName && <Badge variant="primary">{lesson.subjectName}</Badge>}
                           {lesson.levelName && <Badge variant="secondary">{lesson.levelName}</Badge>}
                         </div>
-                        {lesson.title && <p className="lesson-title" style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>{lesson.title}</p>}
 
                         {/* Rodapé discreto da última aula */}
                         <div className="lesson-last-class-footer" style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '3px', opacity: 0.85 }}>
