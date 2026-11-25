@@ -1527,22 +1527,6 @@ export default function StudentDetailPage() {
                       </span>
                     </div>
                   </div>
-
-                  {/* 7. Student Report Dial */}
-                  <button
-                    type="button"
-                    onClick={() => setReportModalOpen(true)}
-                    className="metric-dial-item metric-dial-report"
-                  >
-                    <div className="metric-dial-circle">
-                      <MdPictureAsPdf />
-                    </div>
-                    <span className="metric-dial-counter">Relatório</span>
-                    <div className="metric-dial-tooltip">
-                      <strong>Relatório do Aluno</strong>
-                      <span>Exportar relatório de frequência, aulas e notas em PDF ou Word</span>
-                    </div>
-                  </button>
                 </div>
               </div>
             </div>

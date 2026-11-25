@@ -249,14 +249,15 @@
 
 @media (max-width: 680px) {
   .profile-dials-row {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    justify-items: center;
-    align-items: start;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
     width: 100%;
-    gap: 16px 12px;
-    margin-top: 14px;
-    padding: 14px 10px 4px 10px;
+    flex-wrap: nowrap;
+    gap: 4px;
+    margin-top: 10px;
+    padding: 10px 0 2px 0;
     box-sizing: border-box;
     border-top: 1px solid var(--border-color);
   }
@@ -265,43 +266,47 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 100%;
-    gap: 6px;
+    justify-content: center;
+    flex: 1;
+    min-width: 0;
+    width: auto;
+    gap: 3px;
   }
 
   .metric-dial-circle {
-    width: 48px;
-    height: 48px;
-    font-size: 22px;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+    width: 38px;
+    height: 38px;
+    font-size: 18px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
   }
 
   .metric-dial-counter {
-    font-size: 11.5px;
-    font-weight: 800;
-    padding: 2px 8px;
+    font-size: 9.5px;
+    font-weight: 700;
+    padding: 1px 4px;
     border-radius: var(--radius-full, 999px);
     white-space: nowrap;
-    overflow: visible;
-    text-overflow: clip;
-    letter-spacing: 0;
-    max-width: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: -0.2px;
+    max-width: 100%;
+    text-align: center;
   }
 }
 
-@media (max-width: 360px) {
+@media (max-width: 380px) {
   .profile-dials-row {
-    gap: 12px 8px;
-    padding: 12px 6px 2px 6px;
+    gap: 2px;
+    padding: 8px 0 2px 0;
   }
   .metric-dial-circle {
-    width: 44px;
-    height: 44px;
-    font-size: 20px;
+    width: 32px;
+    height: 32px;
+    font-size: 15px;
   }
   .metric-dial-counter {
-    font-size: 10.5px;
-    padding: 2px 6px;
+    font-size: 8px;
+    padding: 1px 2px;
   }
 }
 
@@ -529,30 +534,6 @@
   color: #ffffff;
   border-color: #10b981;
   box-shadow: 0 0 16px rgba(16, 185, 129, 0.5);
-}
-
-/* Report Dial (Emerald Green / Official document) */
-.metric-dial-report {
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  font: inherit;
-}
-.metric-dial-report .metric-dial-circle {
-  color: #059669;
-  border-color: rgba(5, 150, 105, 0.45);
-  background: rgba(5, 150, 105, 0.12);
-}
-.metric-dial-report:hover .metric-dial-circle {
-  background: #059669;
-  color: #ffffff;
-  border-color: #059669;
-  box-shadow: 0 0 16px rgba(5, 150, 105, 0.5);
-}
-.metric-dial-report:hover .metric-dial-counter {
-  border-color: #059669;
-  color: #059669;
 }
 
 /* Individual Activity Grade Performance Pills (Red / Orange / Yellow / Green) */
