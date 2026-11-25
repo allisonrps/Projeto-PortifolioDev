@@ -531,6 +531,30 @@
   box-shadow: 0 0 16px rgba(16, 185, 129, 0.5);
 }
 
+/* Report Dial (Emerald Green / Official document) */
+.metric-dial-report {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+}
+.metric-dial-report .metric-dial-circle {
+  color: #059669;
+  border-color: rgba(5, 150, 105, 0.45);
+  background: rgba(5, 150, 105, 0.12);
+}
+.metric-dial-report:hover .metric-dial-circle {
+  background: #059669;
+  color: #ffffff;
+  border-color: #059669;
+  box-shadow: 0 0 16px rgba(5, 150, 105, 0.5);
+}
+.metric-dial-report:hover .metric-dial-counter {
+  border-color: #059669;
+  color: #059669;
+}
+
 /* Individual Activity Grade Performance Pills (Red / Orange / Yellow / Green) */
 .grade-performance-pill {
   display: inline-flex;

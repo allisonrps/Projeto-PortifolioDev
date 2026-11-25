@@ -1,0 +1,532 @@
+/* Estilos para o Modal de Relatório do Aluno */
+
+.report-modal-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+/* Painel de Controles e Filtros */
+.report-controls-panel {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.report-period-selector {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.control-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.period-pills-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.period-pill {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.period-pill:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-color: var(--primary);
+}
+
+.period-pill.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.35);
+}
+
+.period-subcontrols-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  padding-top: var(--space-xs);
+  border-top: 1px dashed var(--border-color);
+}
+
+.select-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.select-group label {
+  font-weight: 600;
+}
+
+.report-select,
+.report-date-input {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.report-select:focus,
+.report-date-input:focus {
+  border-color: var(--primary);
+}
+
+.report-action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.btn-export-pdf {
+  background: #16a34a !important;
+  border-color: #16a34a !important;
+  color: #fff !important;
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.3);
+}
+
+.btn-export-pdf:hover {
+  background: #15803d !important;
+}
+
+.btn-export-doc {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+  color: #fff !important;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+}
+
+.btn-export-doc:hover {
+  background: #1d4ed8 !important;
+}
+
+/* Parecer do Professor Accordion */
+.report-teacher-notes-accordion {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.teacher-notes-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+}
+
+.teacher-notes-textarea {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 52px;
+  outline: none;
+}
+
+.teacher-notes-textarea:focus {
+  border-color: var(--primary);
+}
+
+/* Preview Sheet */
+.report-preview-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #0f172a15;
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.report-preview-badge {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.8px;
+  margin-bottom: var(--space-xs);
+}
+
+/* Folha A4 Simulação Visual */
+.report-document-sheet {
+  background: #ffffff;
+  color: #1e293b;
+  width: 100%;
+  max-width: 820px;
+  padding: 28px 32px;
+  border-radius: 8px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.45;
+}
+
+/* Header */
+.doc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 2px solid #4f46e5;
+  padding-bottom: 12px;
+}
+
+.doc-brand-title {
+  display: block;
+  font-size: 18px;
+  font-weight: 800;
+  color: #4f46e5;
+  letter-spacing: -0.3px;
+}
+
+.doc-brand-sub {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.doc-meta-info {
+  text-align: right;
+  font-size: 11.5px;
+  color: #475569;
+}
+
+.doc-meta-label {
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+.doc-meta-val {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* Perfil do Aluno */
+.doc-student-profile {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+
+.doc-student-photo {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #6366f1;
+}
+
+.doc-student-photo-placeholder {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #e0e7ff;
+  color: #4338ca;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  font-weight: 800;
+  border: 2px solid #c7d2fe;
+}
+
+.doc-student-data-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px 12px;
+}
+
+.doc-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.doc-field-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.doc-field-value {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.student-highlight-name {
+  font-size: 14px;
+  color: #1e1b4b;
+}
+
+.doc-status-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  width: fit-content;
+}
+
+.doc-status-pill.active {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.doc-status-pill.inactive {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* Métricas Row */
+.doc-metrics-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.doc-metric-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.metric-number {
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 2px;
+}
+
+.doc-metric-card.att-rate .metric-number { color: #16a34a; }
+.doc-metric-card.hours .metric-number { color: #4f46e5; }
+.doc-metric-card.absences .metric-number { color: #e11d48; }
+.doc-metric-card.grade .metric-number { color: #d97706; }
+
+.metric-text {
+  font-size: 11px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.metric-sub {
+  font-size: 10px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+/* Seções e Tabelas */
+.doc-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.doc-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+  border-bottom: 1.5px solid #e2e8f0;
+  padding-bottom: 4px;
+  margin: 0;
+}
+
+.doc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11.5px;
+}
+
+.doc-table th {
+  background: #f1f5f9;
+  color: #334155;
+  font-weight: 700;
+  text-align: left;
+  padding: 6px 10px;
+  border: 1px solid #cbd5e1;
+}
+
+.doc-table td {
+  padding: 6px 10px;
+  border: 1px solid #e2e8f0;
+  color: #1e293b;
+}
+
+.doc-table tr:nth-child(even) {
+  background: #f8fafc;
+}
+
+.doc-empty-cell {
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.doc-empty-box {
+  padding: 10px;
+  text-align: center;
+  color: #64748b;
+  font-style: italic;
+  font-size: 12px;
+  background: #f8fafc;
+  border: 1px dashed #e2e8f0;
+  border-radius: 6px;
+}
+
+.doc-table-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.doc-table-notes {
+  font-size: 10.5px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.doc-teacher-notes-view {
+  background: #fffbeb;
+  border: 1px solid #fef3c7;
+  border-left: 4px solid #f59e0b;
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #78350f;
+  white-space: pre-wrap;
+}
+
+/* Assinaturas */
+.doc-signatures-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 28px;
+  padding-top: 14px;
+}
+
+.doc-signature-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 220px;
+}
+
+.doc-signature-line {
+  width: 100%;
+  border-top: 1px solid #475569;
+  margin-bottom: 6px;
+}
+
+.doc-signer-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.doc-signer-sub {
+  font-size: 10px;
+  color: #64748b;
+}
+
+/* Responsividade Mobile para o Modal */
+@media (max-width: 768px) {
+  .period-subcontrols-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .report-action-buttons {
+    margin-left: 0;
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .report-action-buttons button {
+    flex: 1;
+  }
+
+  .report-document-sheet {
+    padding: 16px 14px;
+  }
+
+  .doc-student-profile {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .doc-student-data-grid {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .doc-metrics-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .doc-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .doc-meta-info {
+    text-align: left;
+  }
+
+  .doc-signatures-row {
+    flex-direction: column;
+    gap: 24px;
+    align-items: center;
+  }
+}

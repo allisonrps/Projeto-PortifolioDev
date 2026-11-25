@@ -6,7 +6,7 @@ import {
   MdExpandMore, MdExpandLess, MdTimer, MdCake, MdEventAvailable, MdPerson, MdSwapVert,
   MdAssignmentTurnedIn, MdOpenInNew, MdAccessTime, MdShare, MdMenuBook,
   MdEmojiEvents, MdLocationOn, MdCameraAlt, MdZoomIn, MdZoomOut, MdCheck, MdClose,
-  MdCardMembership, MdVisibility, MdDownload, MdChat
+  MdCardMembership, MdVisibility, MdDownload, MdChat, MdPictureAsPdf
 } from 'react-icons/md';
 import { FaWhatsapp } from 'react-icons/fa';
 import Card from '../../components/ui/Card';
@@ -15,6 +15,7 @@ import Badge from '../../components/ui/Badge';
 import Avatar, { getAbsoluteAvatarUrl } from '../../components/ui/Avatar';
 import Modal from '../../components/ui/Modal';
 import Input from '../../components/ui/Input';
+import StudentReportModal from './StudentReportModal';
 import { studentService } from '../../services/studentService';
 import { activityService } from '../../services/activityService';
 import { scheduleService, lessonService, paymentService, examService, exerciseService, subjectService, levelService, classSheetService, certificateService, chatService } from '../../services/dataServices';
@@ -237,6 +238,9 @@ export default function StudentDetailPage() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatLoading, setChatLoading] = useState(false);
   const [chatUnreadCount, setChatUnreadCount] = useState(0);
+
+  // Relatório do Aluno state
+  const [reportModalOpen, setReportModalOpen] = useState(false);
 
   const loadChat = async (silent = false) => {
     if (!id) return;
@@ -1369,6 +1373,7 @@ export default function StudentDetailPage() {
                 </div>
                 {/* Mobile action buttons on the right of the avatar */}
                 <div className="student-actions-mobile">
+                  <button className="icon-btn" onClick={() => setReportModalOpen(true)} title="Gerar Relatório do Aluno"><MdPictureAsPdf /></button>
                   <button className="icon-btn" onClick={openEditStudentModal} title="Editar Aluno"><MdEdit /></button>
                   <button className="icon-btn icon-btn-danger" onClick={handleDeleteStudent} title="Excluir Aluno"><MdDelete /></button>
                 </div>
@@ -1381,6 +1386,7 @@ export default function StudentDetailPage() {
                     {student.name}
                   </h2>
                   <div className="student-actions student-actions-desktop">
+                    <button className="icon-btn" onClick={() => setReportModalOpen(true)} title="Gerar Relatório do Aluno"><MdPictureAsPdf /></button>
                     <button className="icon-btn" onClick={openEditStudentModal} title="Editar Aluno"><MdEdit /></button>
                     <button className="icon-btn icon-btn-danger" onClick={handleDeleteStudent} title="Excluir Aluno"><MdDelete /></button>
                   </div>
@@ -1521,6 +1527,22 @@ export default function StudentDetailPage() {
                       </span>
                     </div>
                   </div>
+
+                  {/* 7. Student Report Dial */}
+                  <button
+                    type="button"
+                    onClick={() => setReportModalOpen(true)}
+                    className="metric-dial-item metric-dial-report"
+                  >
+                    <div className="metric-dial-circle">
+                      <MdPictureAsPdf />
+                    </div>
+                    <span className="metric-dial-counter">Relatório</span>
+                    <div className="metric-dial-tooltip">
+                      <strong>Relatório do Aluno</strong>
+                      <span>Exportar relatório de frequência, aulas e notas em PDF ou Word</span>
+                    </div>
+                  </button>
                 </div>
               </div>
             </div>
@@ -3689,6 +3711,18 @@ export default function StudentDetailPage() {
             )}
           </div>
         </Modal>
+      )}
+
+      {/* Modal: Relatório de Frequência e Desempenho do Aluno */}
+      {student && (
+        <StudentReportModal
+          isOpen={reportModalOpen}
+          onClose={() => setReportModalOpen(false)}
+          student={student}
+          studentActivities={studentActivities}
+          releasedSheets={releasedSheets}
+          certificates={certificates}
+        />
       )}
 
 </div>
