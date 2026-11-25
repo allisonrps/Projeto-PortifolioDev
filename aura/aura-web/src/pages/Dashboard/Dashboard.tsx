@@ -359,7 +359,7 @@ export default function DashboardPage() {
                                       <strong style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>
                                         {format(new Date(lesson.lastLessonDate), "dd/MM 'às' HH:mm", { locale: ptBR })}
                                       </strong>
-                                      {[lesson.lastLessonTitle, lesson.lastLessonNotes ? `Obs: ${lesson.lastLessonNotes}` : null].filter(Boolean).join(' • ') ? ` • ${[lesson.lastLessonTitle, lesson.lastLessonNotes ? `Obs: ${lesson.lastLessonNotes}` : null].filter(Boolean).join(' • ')}` : ''}
+                                      {lesson.lastLessonNotes ? ` • Obs: ${lesson.lastLessonNotes}` : ''}
                                     </>
                                   ) : (
                                     <span style={{ fontStyle: 'italic' }}>Nenhuma aula anterior</span>
@@ -427,7 +427,7 @@ export default function DashboardPage() {
                                   <strong style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>
                                     {format(new Date(lesson.lastLessonDate), "dd/MM 'às' HH:mm", { locale: ptBR })}
                                   </strong>
-                                  {[lesson.lastLessonTitle, lesson.lastLessonNotes ? `Obs: ${lesson.lastLessonNotes}` : null].filter(Boolean).join(' • ') ? ` • ${[lesson.lastLessonTitle, lesson.lastLessonNotes ? `Obs: ${lesson.lastLessonNotes}` : null].filter(Boolean).join(' • ')}` : ''}
+                                  {lesson.lastLessonNotes ? ` • Obs: ${lesson.lastLessonNotes}` : ''}
                                 </>
                               ) : (
                                 <span style={{ fontStyle: 'italic' }}>Nenhuma aula anterior</span>
@@ -455,7 +455,7 @@ export default function DashboardPage() {
               const endStr = endMin === 0 ? `${endHour}` : format(endTime, 'HH:mm');
               const timeRangeSimplified = `${startStr}-${endStr}h`;
 
-              const lastDetails = [lesson.lastLessonTitle, lesson.lastLessonNotes ? `Obs: ${lesson.lastLessonNotes}` : null].filter(Boolean).join(' • ');
+              const lastDetails = lesson.lastLessonNotes ? `Obs: ${lesson.lastLessonNotes}` : null;
 
               return (
                 <div
