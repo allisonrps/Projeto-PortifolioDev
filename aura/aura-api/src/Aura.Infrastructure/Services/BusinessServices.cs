@@ -527,6 +527,30 @@ public class DashboardService : IDashboardService
             }
         }
 
+        // Mensagens não lidas de alunos
+        var unreadMessagesRaw = await _context.ChatMessages
+            .AsNoTracking()
+            .Include(m => m.Student)
+            .Where(m => m.ProfessorId == professorId && m.SenderType == MessageSenderType.Student && !m.IsReadByProfessor && !m.IsDeleted)
+            .OrderByDescending(m => m.CreatedAt)
+            .ToListAsync();
+
+        var unreadMessagesGrouped = unreadMessagesRaw
+            .GroupBy(m => m.StudentId)
+            .Select(g => new StudentUnreadSummaryDto
+            {
+                StudentId = g.Key,
+                StudentName = g.First().Student != null ? g.First().Student.Name : "Aluno",
+                StudentPhotoUrl = g.First().Student != null ? g.First().Student.PhotoUrl : null,
+                UnreadCount = g.Count(),
+                LastMessageContent = g.First().Content,
+                LastMessageDate = DateTime.SpecifyKind(g.First().CreatedAt, DateTimeKind.Utc)
+            })
+            .OrderByDescending(x => x.LastMessageDate)
+            .ToList();
+
+        var totalUnreadMessagesCount = unreadMessagesRaw.Count;
+
         return new DashboardDto
         {
             TotalStudents = totalStudents,
@@ -548,7 +572,9 @@ public class DashboardService : IDashboardService
             PendingPreviousLessons = _mapper.Map<List<LessonResponseDto>>(pendingPreviousLessons),
             PendingCorrections = pendingCorrections,
             CompletedActivities = completedActivities,
-            PendingPayments = pendingPayments
+            PendingPayments = pendingPayments,
+            UnreadMessages = unreadMessagesGrouped,
+            TotalUnreadMessagesCount = totalUnreadMessagesCount
         };
     }
 

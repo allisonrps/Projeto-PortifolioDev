@@ -93,6 +93,21 @@ export default function DashboardPage() {
       .then(r => setData(r.data))
       .catch(() => {})
       .finally(() => setLoading(false));
+
+    // Atualização automática em background a cada 15 segundos e ao focar na aba
+    const interval = setInterval(() => {
+      dashboardService.get().then(r => setData(r.data)).catch(() => {});
+    }, 15000);
+
+    const handleFocus = () => {
+      dashboardService.get().then(r => setData(r.data)).catch(() => {});
+    };
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
 
   if (loading || !data) return <div className="page-loading"><span className="loading-spinner" /></div>;
