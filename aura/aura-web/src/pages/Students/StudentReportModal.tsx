@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from 'react';
 import {
-  MdDownload, MdPictureAsPdf, MdEditNote, MdFilterAlt
+  MdDownload, MdPictureAsPdf, MdEditNote, MdFilterAlt, MdChecklist
 } from 'react-icons/md';
 import { format, parseISO, isValid, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -20,6 +20,16 @@ interface StudentReportModalProps {
 }
 
 type PeriodType = 'month' | 'year' | 'all' | 'custom';
+
+interface ReportSectionsState {
+  lessons: boolean;
+  activities: boolean;
+  payments: boolean;
+  sheets: boolean;
+  certificates: boolean;
+  teacherNotes: boolean;
+  signatures: boolean;
+}
 
 const MONTH_NAMES = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -42,6 +52,33 @@ export default function StudentReportModal({
   const [customEndDate, setCustomEndDate] = useState<string>(format(endOfMonth(now), 'yyyy-MM-dd'));
   const [teacherObservations, setTeacherObservations] = useState<string>('');
   const [isExporting, setIsExporting] = useState<boolean>(false);
+
+  // Checkboxes para controle fino das seções que vão aparecer no relatório
+  const [includedSections, setIncludedSections] = useState<ReportSectionsState>({
+    lessons: true,
+    activities: true,
+    payments: true,
+    sheets: true,
+    certificates: true,
+    teacherNotes: true,
+    signatures: true,
+  });
+
+  const toggleSection = (section: keyof ReportSectionsState) => {
+    setIncludedSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
+
+  const handleSelectAllSections = (enable: boolean) => {
+    setIncludedSections({
+      lessons: enable,
+      activities: enable,
+      payments: enable,
+      sheets: enable,
+      certificates: enable,
+      teacherNotes: enable,
+      signatures: enable,
+    });
+  };
 
   const reportContainerRef = useRef<HTMLDivElement>(null);
 
@@ -199,7 +236,6 @@ export default function StudentReportModal({
         try {
           const d = parseISO(ex.scheduledAt);
           if (isValid(d) && d >= startDate && d <= endDate) {
-            // Evita duplicata se já está na lista
             if (!list.some(item => item.title === ex.title && item.date === ex.scheduledAt)) {
               const norm = ex.grade != null && ex.maxGrade > 0 ? (ex.grade / ex.maxGrade) * 10 : null;
               list.push({
@@ -325,15 +361,8 @@ export default function StudentReportModal({
   const handleExportPdf = () => {
     setIsExporting(true);
 
-    const printContent = document.getElementById('student-printable-report');
-    if (!printContent) {
-      setIsExporting(false);
-      return;
-    }
-
     const printWindow = window.open('', '_blank', 'width=900,height=800');
     if (!printWindow) {
-      // Fallback: imprime direto se popup bloqueada
       window.print();
       setIsExporting(false);
       return;
@@ -504,7 +533,7 @@ export default function StudentReportModal({
           }
           @media print {
             body { padding: 0; }
-            .no-print { display: none; }
+            .no-print { display: none !important; }
           }
         </style>
       </head>
@@ -571,44 +600,46 @@ export default function StudentReportModal({
           </div>
         </div>
 
-        <h3 class="section-title">
-          <span>Histórico de Aulas no Período (${filteredLessons.length})</span>
-        </h3>
-        ${filteredLessons.length > 0 ? `
-          <table>
-            <thead>
-              <tr>
-                <th style="width: 110px;">Data & Hora</th>
-                <th style="width: 70px;">Duração</th>
-                <th>Conteúdo Abordado / Observações</th>
-                <th style="width: 140px; text-align: center;">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${filteredLessons.map(l => {
-                const badge = getStatusBadge(l.status);
-                const d = parseISO(l.scheduledAt);
-                const dateFmt = isValid(d) ? format(d, 'dd/MM/yyyy • HH:mm') : l.scheduledAt;
-                return `
-                  <tr>
-                    <td><strong>${dateFmt}</strong></td>
-                    <td>${l.durationMinutes || 60} min</td>
-                    <td>${l.notes || l.title || '<span style="color:#94a3b8; font-style: italic;">Aula realizada</span>'}</td>
-                    <td style="text-align: center;">
-                      <span class="badge" style="color: ${badge.color}; background: ${badge.bg};">
-                        ${badge.label}
-                      </span>
-                    </td>
-                  </tr>
-                `;
-              }).join('')}
-            </tbody>
-          </table>
-        ` : `
-          <p style="color: #64748b; font-style: italic; margin-bottom: 16px;">Nenhuma aula registrada neste período.</p>
-        `}
+        ${includedSections.lessons ? `
+          <h3 class="section-title">
+            <span>Histórico de Aulas no Período (${filteredLessons.length})</span>
+          </h3>
+          ${filteredLessons.length > 0 ? `
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 110px;">Data & Hora</th>
+                  <th style="width: 70px;">Duração</th>
+                  <th>Conteúdo Abordado / Observações</th>
+                  <th style="width: 140px; text-align: center;">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${filteredLessons.map(l => {
+                  const badge = getStatusBadge(l.status);
+                  const d = parseISO(l.scheduledAt);
+                  const dateFmt = isValid(d) ? format(d, 'dd/MM/yyyy • HH:mm') : l.scheduledAt;
+                  return `
+                    <tr>
+                      <td><strong>${dateFmt}</strong></td>
+                      <td>${l.durationMinutes || 60} min</td>
+                      <td>${l.notes || l.title || '<span style="color:#94a3b8; font-style: italic;">Aula realizada</span>'}</td>
+                      <td style="text-align: center;">
+                        <span class="badge" style="color: ${badge.color}; background: ${badge.bg};">
+                          ${badge.label}
+                        </span>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          ` : `
+            <p style="color: #64748b; font-style: italic; margin-bottom: 16px;">Nenhuma aula registrada neste período.</p>
+          `}
+        ` : ''}
 
-        ${filteredActivities.length > 0 ? `
+        ${includedSections.activities && filteredActivities.length > 0 ? `
           <h3 class="section-title">
             <span>Avaliações & Exercícios no Período (${filteredActivities.length})</span>
           </h3>
@@ -641,7 +672,7 @@ export default function StudentReportModal({
           </table>
         ` : ''}
 
-        ${filteredPayments.length > 0 ? `
+        ${includedSections.payments && filteredPayments.length > 0 ? `
           <h3 class="section-title">
             <span>Mensalidades no Período (${filteredPayments.length})</span>
           </h3>
@@ -674,7 +705,7 @@ export default function StudentReportModal({
           </table>
         ` : ''}
 
-        ${filteredCertificates.length > 0 ? `
+        ${includedSections.certificates && filteredCertificates.length > 0 ? `
           <h3 class="section-title">
             <span>Certificados Emitidos no Período (${filteredCertificates.length})</span>
           </h3>
@@ -698,7 +729,7 @@ export default function StudentReportModal({
           </table>
         ` : ''}
 
-        ${releasedSheets.length > 0 ? `
+        ${includedSections.sheets && releasedSheets.length > 0 ? `
           <h3 class="section-title">
             <span>Fichas Pedagógicas e Materiais Didáticos (${releasedSheets.length})</span>
           </h3>
@@ -720,23 +751,25 @@ export default function StudentReportModal({
           </table>
         ` : ''}
 
-        ${teacherObservations.trim() ? `
+        ${includedSections.teacherNotes && teacherObservations.trim() ? `
           <h3 class="section-title">Parecer Pedagógico do Professor</h3>
           <div class="obs-box">
             ${teacherObservations}
           </div>
         ` : ''}
 
-        <div class="signature-section">
-          <div class="signature-line">
-            <strong>Professor(a) Responsável</strong><br />
-            Aura Gestão Pedagógica
+        ${includedSections.signatures ? `
+          <div class="signature-section">
+            <div class="signature-line">
+              <strong>Professor(a) Responsável</strong><br />
+              Aura Gestão Pedagógica
+            </div>
+            <div class="signature-line">
+              <strong>Responsável / Aluno</strong><br />
+              Data: _____/_____/_________
+            </div>
           </div>
-          <div class="signature-line">
-            <strong>Responsável / Aluno</strong><br />
-            Data: _____/_____/_________
-          </div>
-        </div>
+        ` : ''}
 
         <script>
           window.onload = function() {
@@ -825,36 +858,38 @@ export default function StudentReportModal({
           </tr>
         </table>
 
-        <h2>AULAS MINISTRADAS NO PERÍODO (${filteredLessons.length})</h2>
-        ${filteredLessons.length > 0 ? `
-          <table>
-            <thead>
-              <tr>
-                <th style='width: 110pt;'>Data / Horário</th>
-                <th style='width: 60pt;'>Duração</th>
-                <th>Conteúdo / Anotações Pedagógicas</th>
-                <th style='width: 90pt;'>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${filteredLessons.map(l => {
-                const badge = getStatusBadge(l.status);
-                const d = parseISO(l.scheduledAt);
-                const dateFmt = isValid(d) ? format(d, 'dd/MM/yyyy HH:mm') : l.scheduledAt;
-                return `
-                  <tr>
-                    <td><strong>${dateFmt}</strong></td>
-                    <td>${l.durationMinutes || 60} min</td>
-                    <td>${l.notes || l.title || 'Aula realizada'}</td>
-                    <td>${badge.label}</td>
-                  </tr>
-                `;
-              }).join('')}
-            </tbody>
-          </table>
-        ` : `<p>Nenhuma aula registrada neste intervalo.</p>`}
+        ${includedSections.lessons ? `
+          <h2>AULAS MINISTRADAS NO PERÍODO (${filteredLessons.length})</h2>
+          ${filteredLessons.length > 0 ? `
+            <table>
+              <thead>
+                <tr>
+                  <th style='width: 110pt;'>Data / Horário</th>
+                  <th style='width: 60pt;'>Duração</th>
+                  <th>Conteúdo / Anotações Pedagógicas</th>
+                  <th style='width: 90pt;'>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${filteredLessons.map(l => {
+                  const badge = getStatusBadge(l.status);
+                  const d = parseISO(l.scheduledAt);
+                  const dateFmt = isValid(d) ? format(d, 'dd/MM/yyyy HH:mm') : l.scheduledAt;
+                  return `
+                    <tr>
+                      <td><strong>${dateFmt}</strong></td>
+                      <td>${l.durationMinutes || 60} min</td>
+                      <td>${l.notes || l.title || 'Aula realizada'}</td>
+                      <td>${badge.label}</td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          ` : `<p>Nenhuma aula registrada neste intervalo.</p>`}
+        ` : ''}
 
-        ${filteredActivities.length > 0 ? `
+        ${includedSections.activities && filteredActivities.length > 0 ? `
           <h2>AVALIAÇÕES & EXERCÍCIOS NO PERÍODO (${filteredActivities.length})</h2>
           <table>
             <thead>
@@ -885,7 +920,7 @@ export default function StudentReportModal({
           </table>
         ` : ''}
 
-        ${filteredPayments.length > 0 ? `
+        ${includedSections.payments && filteredPayments.length > 0 ? `
           <h2>MENSALIDADES NO PERÍODO (${filteredPayments.length})</h2>
           <table>
             <thead>
@@ -909,7 +944,7 @@ export default function StudentReportModal({
           </table>
         ` : ''}
 
-        ${filteredCertificates.length > 0 ? `
+        ${includedSections.certificates && filteredCertificates.length > 0 ? `
           <h2>CERTIFICADOS EMITIDOS NO PERÍODO (${filteredCertificates.length})</h2>
           <table>
             <thead>
@@ -931,7 +966,7 @@ export default function StudentReportModal({
           </table>
         ` : ''}
 
-        ${releasedSheets.length > 0 ? `
+        ${includedSections.sheets && releasedSheets.length > 0 ? `
           <h2>FICHAS PEDAGÓGICAS E MATERIAIS (${releasedSheets.length})</h2>
           <table>
             <thead>
@@ -951,29 +986,31 @@ export default function StudentReportModal({
           </table>
         ` : ''}
 
-        ${teacherObservations.trim() ? `
+        ${includedSections.teacherNotes && teacherObservations.trim() ? `
           <h2>PARECER PEDAGÓGICO DO PROFESSOR</h2>
           <div style='background: #fffbeb; border: 1pt solid #fde68a; padding: 10pt; font-size: 10pt;'>
             ${teacherObservations.replace(/\n/g, '<br/>')}
           </div>
         ` : ''}
 
-        <br/><br/>
-        <table style='width: 100%; border: none; margin-top: 30pt;'>
-          <tr>
-            <td style='border: none; text-align: center; width: 45%;'>
-              ___________________________________________<br/>
-              <strong>Professor(a) Responsável</strong><br/>
-              Aura Gestão Pedagógica
-            </td>
-            <td style='border: none; width: 10%;'></td>
-            <td style='border: none; text-align: center; width: 45%;'>
-              ___________________________________________<br/>
-              <strong>Responsável / Aluno</strong><br/>
-              Data: _____/_____/_________
-            </td>
-          </tr>
-        </table>
+        ${includedSections.signatures ? `
+          <br/><br/>
+          <table style='width: 100%; border: none; margin-top: 30pt;'>
+            <tr>
+              <td style='border: none; text-align: center; width: 45%;'>
+                ___________________________________________<br/>
+                <strong>Professor(a) Responsável</strong><br/>
+                Aura Gestão Pedagógica
+              </td>
+              <td style='border: none; width: 10%;'></td>
+              <td style='border: none; text-align: center; width: 45%;'>
+                ___________________________________________<br/>
+                <strong>Responsável / Aluno</strong><br/>
+                Data: _____/_____/_________
+              </td>
+            </tr>
+          </table>
+        ` : ''}
       </body>
       </html>
     `;
@@ -1130,6 +1167,98 @@ export default function StudentReportModal({
               </Button>
             </div>
           </div>
+
+          {/* Barra de Checkboxes para ligar/desligar seções do relatório */}
+          <div className="report-sections-toggle-row">
+            <div className="sections-toggle-header">
+              <span className="control-label">
+                <MdChecklist style={{ fontSize: '17px', marginRight: '3px' }} />
+                Seções a incluir no relatório:
+              </span>
+              <div className="sections-toggle-quick-actions">
+                <button
+                  type="button"
+                  className="quick-action-link"
+                  onClick={() => handleSelectAllSections(true)}
+                >
+                  Marcar Todas
+                </button>
+                <span className="quick-action-divider">•</span>
+                <button
+                  type="button"
+                  className="quick-action-link"
+                  onClick={() => handleSelectAllSections(false)}
+                >
+                  Desmarcar Todas
+                </button>
+              </div>
+            </div>
+
+            <div className="sections-chip-list">
+              <label className={`section-chip-checkbox ${includedSections.lessons ? 'is-active' : ''}`}>
+                <input
+                  type="checkbox"
+                  checked={includedSections.lessons}
+                  onChange={() => toggleSection('lessons')}
+                />
+                <span className="chip-label">Aulas ({filteredLessons.length})</span>
+              </label>
+
+              <label className={`section-chip-checkbox ${includedSections.activities ? 'is-active' : ''}`}>
+                <input
+                  type="checkbox"
+                  checked={includedSections.activities}
+                  onChange={() => toggleSection('activities')}
+                />
+                <span className="chip-label">Atividades ({filteredActivities.length})</span>
+              </label>
+
+              <label className={`section-chip-checkbox ${includedSections.payments ? 'is-active' : ''}`}>
+                <input
+                  type="checkbox"
+                  checked={includedSections.payments}
+                  onChange={() => toggleSection('payments')}
+                />
+                <span className="chip-label">Mensalidades ({filteredPayments.length})</span>
+              </label>
+
+              <label className={`section-chip-checkbox ${includedSections.sheets ? 'is-active' : ''}`}>
+                <input
+                  type="checkbox"
+                  checked={includedSections.sheets}
+                  onChange={() => toggleSection('sheets')}
+                />
+                <span className="chip-label">Fichas ({releasedSheets.length})</span>
+              </label>
+
+              <label className={`section-chip-checkbox ${includedSections.certificates ? 'is-active' : ''}`}>
+                <input
+                  type="checkbox"
+                  checked={includedSections.certificates}
+                  onChange={() => toggleSection('certificates')}
+                />
+                <span className="chip-label">Certificados ({filteredCertificates.length})</span>
+              </label>
+
+              <label className={`section-chip-checkbox ${includedSections.teacherNotes ? 'is-active' : ''}`}>
+                <input
+                  type="checkbox"
+                  checked={includedSections.teacherNotes}
+                  onChange={() => toggleSection('teacherNotes')}
+                />
+                <span className="chip-label">Parecer do Professor</span>
+              </label>
+
+              <label className={`section-chip-checkbox ${includedSections.signatures ? 'is-active' : ''}`}>
+                <input
+                  type="checkbox"
+                  checked={includedSections.signatures}
+                  onChange={() => toggleSection('signatures')}
+                />
+                <span className="chip-label">Assinaturas</span>
+              </label>
+            </div>
+          </div>
         </div>
 
         {/* Campo opcional para o professor adicionar parecer/observação antes de exportar */}
@@ -1150,7 +1279,7 @@ export default function StudentReportModal({
         {/* Visualização Prévia do Relatório em Folha Estilo Documento */}
         <div className="report-preview-container">
           <div className="report-preview-badge">
-            <span>Pré-visualização do Documento (A4)</span>
+            <span>Pré-visualização do Documento (A4) — Clique nos checkboxes das seções para incluir ou omitir</span>
           </div>
 
           <div id="student-printable-report" ref={reportContainerRef} className="report-document-sheet">
@@ -1252,208 +1381,337 @@ export default function StudentReportModal({
 
             {/* Seção 1: Resumo Pedagógico das Aulas */}
             <div className="doc-section">
-              <h4 className="doc-section-title">
-                <span>Histórico de Aulas Ministradas ({filteredLessons.length})</span>
-              </h4>
-              {filteredLessons.length > 0 ? (
-                <table className="doc-table">
-                  <thead>
-                    <tr>
-                      <th style={{ width: '130px' }}>Data & Horário</th>
-                      <th style={{ width: '70px' }}>Duração</th>
-                      <th>Conteúdo Abordado / Observações</th>
-                      <th style={{ width: '130px', textAlign: 'center' }}>Situação</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredLessons.map(l => {
-                      const badge = getStatusBadge(l.status);
-                      const d = parseISO(l.scheduledAt);
-                      const dateFmt = isValid(d) ? format(d, 'dd/MM/yyyy • HH:mm') : l.scheduledAt;
-                      return (
-                        <tr key={l.id}>
-                          <td><strong>{dateFmt}</strong></td>
-                          <td>{l.durationMinutes || 60} min</td>
-                          <td>{l.notes || l.title || <span className="doc-empty-cell">Aula ministrada normalmente</span>}</td>
-                          <td style={{ textAlign: 'center' }}>
-                            <span
-                              className="doc-table-badge"
-                              style={{ color: badge.color, backgroundColor: badge.bg }}
-                            >
-                              {badge.label}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+              <div className="doc-section-header">
+                <h4 className="doc-section-title">
+                  <span>Histórico de Aulas Ministradas ({filteredLessons.length})</span>
+                </h4>
+                <label className="doc-section-toggle no-print" title="Marque ou desmarque para incluir ou ocultar esta seção do relatório">
+                  <input
+                    type="checkbox"
+                    checked={includedSections.lessons}
+                    onChange={() => toggleSection('lessons')}
+                  />
+                  <span>Incluir Aulas</span>
+                </label>
+              </div>
+
+              {includedSections.lessons ? (
+                filteredLessons.length > 0 ? (
+                  <table className="doc-table">
+                    <thead>
+                      <tr>
+                        <th style={{ width: '130px' }}>Data & Horário</th>
+                        <th style={{ width: '70px' }}>Duração</th>
+                        <th>Conteúdo Abordado / Observações</th>
+                        <th style={{ width: '130px', textAlign: 'center' }}>Situação</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredLessons.map(l => {
+                        const badge = getStatusBadge(l.status);
+                        const d = parseISO(l.scheduledAt);
+                        const dateFmt = isValid(d) ? format(d, 'dd/MM/yyyy • HH:mm') : l.scheduledAt;
+                        return (
+                          <tr key={l.id}>
+                            <td><strong>{dateFmt}</strong></td>
+                            <td>{l.durationMinutes || 60} min</td>
+                            <td>{l.notes || l.title || <span className="doc-empty-cell">Aula ministrada normalmente</span>}</td>
+                            <td style={{ textAlign: 'center' }}>
+                              <span
+                                className="doc-table-badge"
+                                style={{ color: badge.color, backgroundColor: badge.bg }}
+                              >
+                                {badge.label}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div className="doc-empty-box">Nenhuma aula registrada neste período.</div>
+                )
               ) : (
-                <div className="doc-empty-box">Nenhuma aula registrada neste período.</div>
+                <div className="doc-section-excluded no-print" onClick={() => toggleSection('lessons')}>
+                  <span>🚫 Seção de <strong>Aulas</strong> desativada. Clique aqui para incluir no relatório.</span>
+                </div>
               )}
             </div>
 
             {/* Seção 2: Avaliações e Exercícios */}
-            {filteredActivities.length > 0 && (
-              <div className="doc-section">
+            <div className="doc-section">
+              <div className="doc-section-header">
                 <h4 className="doc-section-title">
                   <span>Avaliações & Exercícios no Período ({filteredActivities.length})</span>
                 </h4>
-                <table className="doc-table">
-                  <thead>
-                    <tr>
-                      <th>Título da Atividade</th>
-                      <th style={{ width: '90px', textAlign: 'center' }}>Tipo</th>
-                      <th style={{ width: '110px' }}>Data</th>
-                      <th style={{ width: '90px', textAlign: 'center' }}>Nota</th>
-                      <th style={{ width: '90px', textAlign: 'center' }}>Aproveitamento</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredActivities.map(a => {
-                      const d = parseISO(a.date);
-                      const dateFmt = isValid(d) ? format(d, 'dd/MM/yyyy') : a.date;
-                      const perc = a.grade != null && a.maxGrade > 0 ? Math.round((a.grade / a.maxGrade) * 100) : null;
-                      return (
-                        <tr key={a.id}>
-                          <td>
-                            <strong>{a.title}</strong>
-                            {a.notes && <div className="doc-table-notes">{a.notes}</div>}
-                          </td>
-                          <td style={{ textAlign: 'center', textTransform: 'capitalize' }}>
-                            {a.type === 'exam' ? 'Prova' : 'Exercício'}
-                          </td>
-                          <td>{dateFmt}</td>
-                          <td style={{ textAlign: 'center', fontWeight: 'bold' }}>
-                            {a.grade != null ? `${a.grade} / ${a.maxGrade}` : '—'}
-                          </td>
-                          <td style={{ textAlign: 'center', fontWeight: 'bold', color: perc != null && perc >= 70 ? '#16a34a' : '#ea580c' }}>
-                            {perc != null ? `${perc}%` : '—'}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                <label className="doc-section-toggle no-print" title="Marque ou desmarque para incluir ou ocultar esta seção do relatório">
+                  <input
+                    type="checkbox"
+                    checked={includedSections.activities}
+                    onChange={() => toggleSection('activities')}
+                  />
+                  <span>Incluir Atividades</span>
+                </label>
               </div>
-            )}
+
+              {includedSections.activities ? (
+                filteredActivities.length > 0 ? (
+                  <table className="doc-table">
+                    <thead>
+                      <tr>
+                        <th>Título da Atividade</th>
+                        <th style={{ width: '90px', textAlign: 'center' }}>Tipo</th>
+                        <th style={{ width: '110px' }}>Data</th>
+                        <th style={{ width: '90px', textAlign: 'center' }}>Nota</th>
+                        <th style={{ width: '90px', textAlign: 'center' }}>Aproveitamento</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredActivities.map(a => {
+                        const d = parseISO(a.date);
+                        const dateFmt = isValid(d) ? format(d, 'dd/MM/yyyy') : a.date;
+                        const perc = a.grade != null && a.maxGrade > 0 ? Math.round((a.grade / a.maxGrade) * 100) : null;
+                        return (
+                          <tr key={a.id}>
+                            <td>
+                              <strong>{a.title}</strong>
+                              {a.notes && <div className="doc-table-notes">{a.notes}</div>}
+                            </td>
+                            <td style={{ textAlign: 'center', textTransform: 'capitalize' }}>
+                              {a.type === 'exam' ? 'Prova' : 'Exercício'}
+                            </td>
+                            <td>{dateFmt}</td>
+                            <td style={{ textAlign: 'center', fontWeight: 'bold' }}>
+                              {a.grade != null ? `${a.grade} / ${a.maxGrade}` : '—'}
+                            </td>
+                            <td style={{ textAlign: 'center', fontWeight: 'bold', color: perc != null && perc >= 70 ? '#16a34a' : '#ea580c' }}>
+                              {perc != null ? `${perc}%` : '—'}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div className="doc-empty-box">Nenhuma avaliação ou exercício registrado neste período.</div>
+                )
+              ) : (
+                <div className="doc-section-excluded no-print" onClick={() => toggleSection('activities')}>
+                  <span>🚫 Seção de <strong>Atividades</strong> desativada. Clique aqui para incluir no relatório.</span>
+                </div>
+              )}
+            </div>
 
             {/* Seção 3: Situação Financeira no Período */}
-            {filteredPayments.length > 0 && (
-              <div className="doc-section">
+            <div className="doc-section">
+              <div className="doc-section-header">
                 <h4 className="doc-section-title">
                   <span>Mensalidades no Período ({filteredPayments.length})</span>
                 </h4>
-                <table className="doc-table">
-                  <thead>
-                    <tr>
-                      <th>Referência</th>
-                      <th style={{ width: '120px' }}>Valor</th>
-                      <th style={{ width: '120px', textAlign: 'center' }}>Situação</th>
-                      <th style={{ width: '130px' }}>Data de Pagamento</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredPayments.map(p => {
-                      const paidDateFmt = p.paidAt ? format(parseISO(p.paidAt), 'dd/MM/yyyy') : '—';
-                      return (
-                        <tr key={p.id}>
-                          <td><strong>{MONTH_NAMES[p.month - 1]} de {p.year}</strong></td>
-                          <td>R$ {p.amount.toFixed(2)}</td>
-                          <td style={{ textAlign: 'center' }}>
-                            <span
-                              className="doc-table-badge"
-                              style={{
-                                color: p.isPaid ? '#16a34a' : '#dc2626',
-                                backgroundColor: p.isPaid ? '#dcfce7' : '#fee2e2'
-                              }}
-                            >
-                              {p.isPaid ? 'Pago' : 'Pendente'}
-                            </span>
-                          </td>
-                          <td>{paidDateFmt}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                <label className="doc-section-toggle no-print" title="Marque ou desmarque para incluir ou ocultar esta seção do relatório">
+                  <input
+                    type="checkbox"
+                    checked={includedSections.payments}
+                    onChange={() => toggleSection('payments')}
+                  />
+                  <span>Incluir Mensalidades</span>
+                </label>
               </div>
-            )}
+
+              {includedSections.payments ? (
+                filteredPayments.length > 0 ? (
+                  <table className="doc-table">
+                    <thead>
+                      <tr>
+                        <th>Referência</th>
+                        <th style={{ width: '120px' }}>Valor</th>
+                        <th style={{ width: '120px', textAlign: 'center' }}>Situação</th>
+                        <th style={{ width: '130px' }}>Data de Pagamento</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredPayments.map(p => {
+                        const paidDateFmt = p.paidAt ? format(parseISO(p.paidAt), 'dd/MM/yyyy') : '—';
+                        return (
+                          <tr key={p.id}>
+                            <td><strong>{MONTH_NAMES[p.month - 1]} de {p.year}</strong></td>
+                            <td>R$ {p.amount.toFixed(2)}</td>
+                            <td style={{ textAlign: 'center' }}>
+                              <span
+                                className="doc-table-badge"
+                                style={{
+                                  color: p.isPaid ? '#16a34a' : '#dc2626',
+                                  backgroundColor: p.isPaid ? '#dcfce7' : '#fee2e2'
+                                }}
+                              >
+                                {p.isPaid ? 'Pago' : 'Pendente'}
+                              </span>
+                            </td>
+                            <td>{paidDateFmt}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div className="doc-empty-box">Nenhuma mensalidade registrada neste período.</div>
+                )
+              ) : (
+                <div className="doc-section-excluded no-print" onClick={() => toggleSection('payments')}>
+                  <span>🚫 Seção de <strong>Mensalidades</strong> desativada. Clique aqui para incluir no relatório.</span>
+                </div>
+              )}
+            </div>
 
             {/* Seção 4: Certificados Emitidos */}
-            {filteredCertificates.length > 0 && (
-              <div className="doc-section">
+            <div className="doc-section">
+              <div className="doc-section-header">
                 <h4 className="doc-section-title">
                   <span>Certificados Emitidos no Período ({filteredCertificates.length})</span>
                 </h4>
-                <table className="doc-table">
-                  <thead>
-                    <tr>
-                      <th>Título do Certificado</th>
-                      <th style={{ width: '140px' }}>Data de Emissão</th>
-                      <th>Descrição / Conquista</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredCertificates.map(c => (
-                      <tr key={c.id}>
-                        <td><strong>{c.title}</strong></td>
-                        <td>{format(parseISO(c.issueDate), 'dd/MM/yyyy')}</td>
-                        <td>{c.description || 'Conclusão de módulo pedagógico'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <label className="doc-section-toggle no-print" title="Marque ou desmarque para incluir ou ocultar esta seção do relatório">
+                  <input
+                    type="checkbox"
+                    checked={includedSections.certificates}
+                    onChange={() => toggleSection('certificates')}
+                  />
+                  <span>Incluir Certificados</span>
+                </label>
               </div>
-            )}
+
+              {includedSections.certificates ? (
+                filteredCertificates.length > 0 ? (
+                  <table className="doc-table">
+                    <thead>
+                      <tr>
+                        <th>Título do Certificado</th>
+                        <th style={{ width: '140px' }}>Data de Emissão</th>
+                        <th>Descrição / Conquista</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredCertificates.map(c => (
+                        <tr key={c.id}>
+                          <td><strong>{c.title}</strong></td>
+                          <td>{format(parseISO(c.issueDate), 'dd/MM/yyyy')}</td>
+                          <td>{c.description || 'Conclusão de módulo pedagógico'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div className="doc-empty-box">Nenhum certificado emitido neste período.</div>
+                )
+              ) : (
+                <div className="doc-section-excluded no-print" onClick={() => toggleSection('certificates')}>
+                  <span>🚫 Seção de <strong>Certificados</strong> desativada. Clique aqui para incluir no relatório.</span>
+                </div>
+              )}
+            </div>
 
             {/* Seção 5: Fichas Pedagógicas e Materiais Liberados */}
-            {releasedSheets.length > 0 && (
-              <div className="doc-section">
+            <div className="doc-section">
+              <div className="doc-section-header">
                 <h4 className="doc-section-title">
                   <span>Fichas Pedagógicas e Materiais Didáticos ({releasedSheets.length})</span>
                 </h4>
-                <table className="doc-table">
-                  <thead>
-                    <tr>
-                      <th>Título do Material / Ficha</th>
-                      <th style={{ width: '160px' }}>Nível / Categoria</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {releasedSheets.map(s => (
-                      <tr key={s.id}>
-                        <td><strong>{s.title}</strong></td>
-                        <td>{s.levelName || student.levelName || 'Geral'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <label className="doc-section-toggle no-print" title="Marque ou desmarque para incluir ou ocultar esta seção do relatório">
+                  <input
+                    type="checkbox"
+                    checked={includedSections.sheets}
+                    onChange={() => toggleSection('sheets')}
+                  />
+                  <span>Incluir Fichas</span>
+                </label>
               </div>
-            )}
+
+              {includedSections.sheets ? (
+                releasedSheets.length > 0 ? (
+                  <table className="doc-table">
+                    <thead>
+                      <tr>
+                        <th>Título do Material / Ficha</th>
+                        <th style={{ width: '160px' }}>Nível / Categoria</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {releasedSheets.map(s => (
+                        <tr key={s.id}>
+                          <td><strong>{s.title}</strong></td>
+                          <td>{s.levelName || student.levelName || 'Geral'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div className="doc-empty-box">Nenhuma ficha pedagógica liberada.</div>
+                )
+              ) : (
+                <div className="doc-section-excluded no-print" onClick={() => toggleSection('sheets')}>
+                  <span>🚫 Seção de <strong>Fichas</strong> desativada. Clique aqui para incluir no relatório.</span>
+                </div>
+              )}
+            </div>
 
             {/* Parecer do Professor */}
             {teacherObservations.trim() && (
               <div className="doc-section">
-                <h4 className="doc-section-title">Parecer Pedagógico do Professor</h4>
-                <div className="doc-teacher-notes-view">
-                  {teacherObservations}
+                <div className="doc-section-header">
+                  <h4 className="doc-section-title">Parecer Pedagógico do Professor</h4>
+                  <label className="doc-section-toggle no-print" title="Marque ou desmarque para incluir ou ocultar esta seção do relatório">
+                    <input
+                      type="checkbox"
+                      checked={includedSections.teacherNotes}
+                      onChange={() => toggleSection('teacherNotes')}
+                    />
+                    <span>Incluir Parecer</span>
+                  </label>
                 </div>
+                {includedSections.teacherNotes ? (
+                  <div className="doc-teacher-notes-view">
+                    {teacherObservations}
+                  </div>
+                ) : (
+                  <div className="doc-section-excluded no-print" onClick={() => toggleSection('teacherNotes')}>
+                    <span>🚫 Parecer desativado. Clique aqui para incluir no relatório.</span>
+                  </div>
+                )}
               </div>
             )}
 
             {/* Assinaturas */}
-            <div className="doc-signatures-row">
-              <div className="doc-signature-block">
-                <div className="doc-signature-line" />
-                <span className="doc-signer-title">Professor(a) Responsável</span>
-                <span className="doc-signer-sub">Aura Gestão Pedagógica</span>
+            <div className="doc-section">
+              <div className="doc-section-header no-print" style={{ borderBottom: 'none', paddingBottom: 0 }}>
+                <span style={{ fontSize: '11.5px', fontWeight: 600, color: '#64748b' }}>Campo de Assinaturas</span>
+                <label className="doc-section-toggle no-print" title="Marque ou desmarque para incluir ou ocultar as assinaturas">
+                  <input
+                    type="checkbox"
+                    checked={includedSections.signatures}
+                    onChange={() => toggleSection('signatures')}
+                  />
+                  <span>Incluir Assinaturas</span>
+                </label>
               </div>
-              <div className="doc-signature-block">
-                <div className="doc-signature-line" />
-                <span className="doc-signer-title">Responsável / Aluno</span>
-                <span className="doc-signer-sub">Data: _____ / _____ / _________</span>
-              </div>
+
+              {includedSections.signatures ? (
+                <div className="doc-signatures-row">
+                  <div className="doc-signature-block">
+                    <div className="doc-signature-line" />
+                    <span className="doc-signer-title">Professor(a) Responsável</span>
+                    <span className="doc-signer-sub">Aura Gestão Pedagógica</span>
+                  </div>
+                  <div className="doc-signature-block">
+                    <div className="doc-signature-line" />
+                    <span className="doc-signer-title">Responsável / Aluno</span>
+                    <span className="doc-signer-sub">Data: _____ / _____ / _________</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="doc-section-excluded no-print" onClick={() => toggleSection('signatures')}>
+                  <span>🚫 Campo de <strong>Assinaturas</strong> desativado. Clique aqui para incluir no relatório.</span>
+                </div>
+              )}
             </div>
           </div>
         </div>

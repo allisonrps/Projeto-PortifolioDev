@@ -133,6 +133,92 @@
   background: #1d4ed8 !important;
 }
 
+/* Nova Linha: Checkboxes de Seções */
+.report-sections-toggle-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 10px;
+  margin-top: 4px;
+  border-top: 1px solid var(--border-color);
+}
+
+.sections-toggle-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sections-toggle-quick-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+}
+
+.quick-action-link {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: opacity 0.2s ease;
+}
+
+.quick-action-link:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+.quick-action-divider {
+  color: var(--text-muted);
+}
+
+.sections-chip-list {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.section-chip-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  transition: all var(--transition-fast);
+}
+
+.section-chip-checkbox input[type="checkbox"] {
+  cursor: pointer;
+  accent-color: var(--primary);
+  width: 14px;
+  height: 14px;
+}
+
+.section-chip-checkbox:hover {
+  border-color: var(--primary);
+  color: var(--text-primary);
+}
+
+.section-chip-checkbox.is-active {
+  background: rgba(99, 102, 241, 0.12);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
 /* Parecer do Professor Accordion */
 .report-teacher-notes-accordion {
   display: flex;
@@ -185,6 +271,7 @@
   color: var(--text-muted);
   letter-spacing: 0.8px;
   margin-bottom: var(--space-xs);
+  text-align: center;
 }
 
 /* Folha A4 Simulação Visual */
@@ -365,22 +452,81 @@
   margin-top: 2px;
 }
 
-/* Seções e Tabelas */
+/* Seções e Cabeçalhos com Checkbox na Pré-visualização */
 .doc-section {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
+.doc-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1.5px solid #e2e8f0;
+  padding-bottom: 4px;
+}
+
 .doc-section-title {
   font-size: 13px;
   font-weight: 700;
   color: #1e293b;
-  border-bottom: 1.5px solid #e2e8f0;
-  padding-bottom: 4px;
   margin: 0;
+  border: none;
+  padding: 0;
 }
 
+.doc-section-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #4f46e5;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  padding: 2px 8px;
+  border-radius: 12px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.doc-section-toggle:hover {
+  background: #e0e7ff;
+  border-color: #818cf8;
+}
+
+.doc-section-toggle input[type="checkbox"] {
+  cursor: pointer;
+  accent-color: #4f46e5;
+  width: 13px;
+  height: 13px;
+}
+
+/* Banner de Seção Ocultada/Desativada */
+.doc-section-excluded {
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  color: #64748b;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 11.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.doc-section-excluded:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #334155;
+}
+
+/* Tabelas */
 .doc-table {
   width: 100%;
   border-collapse: collapse;
@@ -479,6 +625,13 @@
   color: #64748b;
 }
 
+/* Impressão: oculta tudo que for controle na tela */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
+
 /* Responsividade Mobile para o Modal */
 @media (max-width: 768px) {
   .period-subcontrols-row {
@@ -528,5 +681,11 @@
     flex-direction: column;
     gap: 24px;
     align-items: center;
+  }
+
+  .doc-section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
   }
 }
